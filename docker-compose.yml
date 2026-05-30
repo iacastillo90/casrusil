@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Base de Datos PostgreSQL con extensión pgvector para LangChain4j
+  sii-db:
+    image: ankane/pgvector:latest
+    container_name: sii-erp-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: sii_erp_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - sii_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis para caché de sesiones y respuestas rápidas
+  sii-redis:
+    image: redis:7-alpine
+    container_name: sii-erp-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - sii_redis_data:/data
+
+  # El Backend Spring Boot
+  sii-backend:
+    build: 
+      context: ./SII-ERP-AI-BACK
+      dockerfile: Dockerfile
+    container_name: sii-erp-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      sii-db:
+        condition: service_healthy
+      sii-redis:
+        condition: service_started
+    environment:
+      - POSTGRES_HOST=sii-db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=sii_erp_ai
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://sii-db:5432/sii_erp_ai
+      - SPRING_PROFILES_ACTIVE=prod
+      # Las keys de IA se deben inyectar en el entorno real o pasarlas en .env
+    restart: unless-stopped
+
+volumes:
+  sii_db_data:
+  sii_redis_data:
