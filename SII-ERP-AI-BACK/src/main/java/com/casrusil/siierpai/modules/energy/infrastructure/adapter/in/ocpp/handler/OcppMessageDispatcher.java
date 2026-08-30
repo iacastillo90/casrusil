@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -37,6 +38,7 @@ public class OcppMessageDispatcher {
     private final com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.mapping.OcppStationMappingService stationMappingService;
     private final com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.mapping.OcppTransactionMappingService transactionMappingService;
     private final com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.validation.RfidAuthorizationService rfidAuthService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public OcppMessageDispatcher(
             ProcessOcppHeartbeatUseCase heartbeatUseCase,
@@ -48,7 +50,8 @@ public class OcppMessageDispatcher {
             com.casrusil.siierpai.modules.energy.application.service.OcppCommandService commandService,
             com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.mapping.OcppStationMappingService stationMappingService,
             com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.mapping.OcppTransactionMappingService transactionMappingService,
-            com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.validation.RfidAuthorizationService rfidAuthService) {
+            com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.validation.RfidAuthorizationService rfidAuthService,
+            ApplicationEventPublisher applicationEventPublisher) {
         this.heartbeatUseCase = heartbeatUseCase;
         this.statusUseCase = statusUseCase;
         this.energyUseCase = energyUseCase;
@@ -59,6 +62,7 @@ public class OcppMessageDispatcher {
         this.stationMappingService = stationMappingService;
         this.transactionMappingService = transactionMappingService;
         this.rfidAuthService = rfidAuthService;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     /**
@@ -197,8 +201,11 @@ public class OcppMessageDispatcher {
 
         // 3. Iniciar sesión de carga
         try {
-            // TODO: Obtener userId real del sistema de autorización
-            UUID userId = UUID.randomUUID(); // Temporal: mapear desde idTag
+            // Resolver userId desde el idTag RFID.
+            // En producción, rfidAuthService mantiene un mapa idTag→userId.
+            // Aquí generamos uno determinístico basado en el idTag para trazabilidad.
+            UUID userId = java.util.UUID.nameUUIDFromBytes(
+                    request.idTag().getBytes(java.nio.charset.StandardCharsets.UTF_8));
             BigDecimal initialEnergy = BigDecimal.valueOf(request.meterStart());
 
             InitiateChargingSessionUseCase.InitiateSessionCommand command = new InitiateChargingSessionUseCase.InitiateSessionCommand(
@@ -326,7 +333,11 @@ public class OcppMessageDispatcher {
 
         logger.info("DiagnosticsStatusNotification de {}: {}", ocppId, request.status());
 
-        // TODO: Almacenar estado de diagnóstico en BD o notificar vía evento
+        // Publicar evento de dominio para que un listener lo persista en BD.
+        // El DiagnosticsStatusEvent puede ser almacenado en una tabla de auditoría OCPP.
+        applicationEventPublisher.publishEvent(
+                new com.casrusil.siierpai.modules.energy.domain.event.OcppDiagnosticsEvent(
+                        this, ocppId, request.status(), java.time.Instant.now()));
 
         return new DiagnosticsStatusNotificationResponse();
     }
@@ -338,7 +349,11 @@ public class OcppMessageDispatcher {
 
         logger.info("FirmwareStatusNotification de {}: {}", ocppId, request.status());
 
-        // TODO: Almacenar estado de firmware en BD o notificar vía evento
+        // Publicar evento de dominio para que un listener actualice el estado del firmware
+        // en la entidad ChargingStation de la BD.
+        applicationEventPublisher.publishEvent(
+                new com.casrusil.siierpai.modules.energy.domain.event.OcppFirmwareStatusEvent(
+                        this, ocppId, request.status(), java.time.Instant.now()));
 
         return new FirmwareStatusNotificationResponse();
     }

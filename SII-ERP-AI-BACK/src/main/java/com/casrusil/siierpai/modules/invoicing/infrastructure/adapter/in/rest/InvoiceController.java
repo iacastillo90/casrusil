@@ -8,6 +8,8 @@ import com.casrusil.siierpai.modules.invoicing.domain.port.in.SearchInvoicesUseC
 import com.casrusil.siierpai.modules.invoicing.domain.service.InvoiceDispatchService;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,7 +54,7 @@ public class InvoiceController {
         }
 
         @PostMapping
-        public ResponseEntity<Invoice> createInvoice(@RequestBody CreateInvoiceRequest request) {
+        public ResponseEntity<Invoice> createInvoice(@Valid @RequestBody CreateInvoiceRequest request) {
                 CompanyId companyId = CompanyContext.requireCompanyId();
                 Invoice invoice = Invoice.create(
                                 companyId,
@@ -93,23 +95,63 @@ public class InvoiceController {
                                 line.totalAmount(), "UN");
         }
 
+        /**
+         * DTO de creación de factura con validaciones.
+         * Todos los campos obligatorios generan errores 400 claros si se omiten.
+         */
         public record CreateInvoiceRequest(
+                        @NotNull(message = "El tipo de DTE es obligatorio")
+                        @Min(value = 33, message = "Tipo DTE mínimo es 33 (Factura Afecta)")
+                        @Max(value = 112, message = "Tipo DTE máximo es 112")
                         Integer tipoDte,
+
+                        @NotNull(message = "El folio es obligatorio")
+                        @Positive(message = "El folio debe ser un número positivo")
                         Long folio,
+
+                        @NotBlank(message = "El RUT del emisor es obligatorio")
+                        @Pattern(regexp = "^\\d{1,8}-[\\dkK]$", message = "Formato de RUT inválido (ej: 12345678-9)")
                         String rutEmisor,
-                        String rutReceptor, // Added field
+
+                        @Pattern(regexp = "^\\d{1,8}-[\\dkK]$", message = "Formato de RUT receptor inválido")
+                        String rutReceptor,
+
+                        @NotBlank(message = "La razón social del emisor es obligatoria")
+                        @Size(max = 100, message = "Razón social máxima de 100 caracteres")
                         String razonSocialEmisor,
+
+                        @NotNull(message = "La fecha de emisión es obligatoria")
                         LocalDate fechaEmision,
+
+                        @NotNull(message = "El monto total es obligatorio")
+                        @DecimalMin(value = "0.0", inclusive = false, message = "El monto total debe ser mayor a 0")
                         BigDecimal montoTotal,
+
+                        @NotNull(message = "El monto neto es obligatorio")
+                        @DecimalMin(value = "0.0", inclusive = false, message = "El monto neto debe ser mayor a 0")
                         BigDecimal montoNeto,
+
+                        @NotNull(message = "El monto IVA es obligatorio")
+                        @DecimalMin(value = "0.0", message = "El monto IVA no puede ser negativo")
                         BigDecimal montoIva,
+
+                        @NotNull(message = "Las líneas de la factura son obligatorias")
+                        @Size(min = 1, message = "Debe incluir al menos una línea de detalle")
                         List<InvoiceLineRequest> lines) {
         }
 
         public record InvoiceLineRequest(
+                        @NotBlank(message = "La descripción del ítem es obligatoria")
+                        @Size(max = 80, message = "Descripción máxima de 80 caracteres")
                         String description,
+
+                        @NotNull @DecimalMin(value = "0.0", inclusive = false)
                         BigDecimal quantity,
+
+                        @NotNull @DecimalMin(value = "0.0", inclusive = false)
                         BigDecimal unitPrice,
+
+                        @NotNull @DecimalMin(value = "0.0", inclusive = false)
                         BigDecimal totalAmount) {
         }
 }

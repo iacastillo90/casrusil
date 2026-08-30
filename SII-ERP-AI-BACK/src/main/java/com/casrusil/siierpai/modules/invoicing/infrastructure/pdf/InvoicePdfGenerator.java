@@ -71,10 +71,21 @@ public class InvoicePdfGenerator {
             PdfPTable clientTable = new PdfPTable(1);
             clientTable.setWidthPercentage(100);
             PdfPCell clientCell = new PdfPCell();
-            clientCell.addElement(new Paragraph("Señor(es): " + "CLIENTE DEMO", FONT_BOLD)); // TODO: Get real name
+
+            // FIX #15: Usar datos reales del receptor desde el modelo Invoice.
+            // businessName contiene la razón social del emisor/receptor según el tipo de DTE.
+            String nombreReceptor = (invoice.getBusinessName() != null && !invoice.getBusinessName().isBlank())
+                    ? invoice.getBusinessName()
+                    : "RUT: " + invoice.getReceiverRut(); // Fallback al RUT si no hay nombre
+
+            clientCell.addElement(new Paragraph("Señor(es): " + nombreReceptor, FONT_BOLD));
             clientCell.addElement(new Paragraph("R.U.T.: " + invoice.getReceiverRut(), FONT_BOLD));
             clientCell.addElement(new Paragraph(
                     "Fecha Emisión: " + invoice.getDate().format(DateTimeFormatter.ISO_DATE), FONT_NORMAL));
+            if (invoice.getDueDate() != null && !invoice.getDueDate().equals(invoice.getDate())) {
+                clientCell.addElement(new Paragraph(
+                        "Fecha Vencimiento: " + invoice.getDueDate().format(DateTimeFormatter.ISO_DATE), FONT_NORMAL));
+            }
             clientTable.addCell(clientCell);
             document.add(clientTable);
 

@@ -6,6 +6,7 @@ import com.casrusil.siierpai.modules.inventory.domain.dto.ProductResponse;
 import com.casrusil.siierpai.modules.inventory.domain.dto.StockMovementRequest;
 import com.casrusil.siierpai.modules.inventory.domain.dto.StockMovementResponse;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +38,7 @@ public class InventoryController {
 
     @PostMapping("/products")
     public ResponseEntity<ProductResponse> createProduct(
-            @RequestBody ProductRequest request) {
+            @Valid @RequestBody ProductRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(inventoryUseCase.createProduct(request, getCompanyId()));
     }
@@ -45,7 +46,7 @@ public class InventoryController {
     @PutMapping("/products/{id}")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Long id,
-            @RequestBody ProductRequest request) {
+            @Valid @RequestBody ProductRequest request) {
         return ResponseEntity.ok(inventoryUseCase.updateProduct(id, request, getCompanyId()));
     }
 
@@ -68,7 +69,7 @@ public class InventoryController {
     @PostMapping("/products/{productId}/movements")
     public ResponseEntity<StockMovementResponse> registerMovement(
             @PathVariable Long productId,
-            @RequestBody StockMovementRequest request) {
+            @Valid @RequestBody StockMovementRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(inventoryUseCase.registerMovement(productId, request, getCompanyId()));
     }

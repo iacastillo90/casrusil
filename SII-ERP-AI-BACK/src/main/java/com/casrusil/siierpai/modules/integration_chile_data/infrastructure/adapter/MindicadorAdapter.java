@@ -40,7 +40,7 @@ public class MindicadorAdapter implements EconomicIndicatorsProvider {
     }
 
     @Override
-    @Cacheable("indicators")
+    @Cacheable(value = "indicadores", key = "#date.toString()")
     public Map<String, BigDecimal> getIndicators(LocalDate date) {
         log.info("Fetching economic indicators from Mindicador API for date: {}", date);
 
