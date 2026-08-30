@@ -6,33 +6,40 @@ services:
     image: ankane/pgvector:latest
     container_name: sii-erp-db
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: sii_erp_ai
+      POSTGRES_DB: ${POSTGRES_DB:-sii_erp_ai}
     ports:
       - "5432:5432"
     volumes:
       - sii_db_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  # Redis para caché de sesiones y respuestas rápidas
+  # Redis para caché, rate limiting e invalidación de tokens
   sii-redis:
     image: redis:7-alpine
     container_name: sii-erp-redis
+    # SEGURIDAD: Redis con password requerido para producción
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
       - "6379:6379"
     restart: unless-stopped
     volumes:
       - sii_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # El Backend Spring Boot
   sii-backend:
-    build: 
+    build:
       context: ./SII-ERP-AI-BACK
       dockerfile: Dockerfile
     container_name: sii-erp-backend
@@ -42,16 +49,44 @@ services:
       sii-db:
         condition: service_healthy
       sii-redis:
-        condition: service_started
+        condition: service_healthy
     environment:
+      # --- Base de Datos ---
       - POSTGRES_HOST=sii-db
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=sii_erp_ai
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://sii-db:5432/sii_erp_ai
-      - SPRING_PROFILES_ACTIVE=prod
-      # Las keys de IA se deben inyectar en el entorno real o pasarlas en .env
+      - POSTGRES_DB=${POSTGRES_DB:-sii_erp_ai}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://sii-db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-sii_erp_ai}
+      # --- Spring Profile ---
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      # --- JWT ---
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+      # --- Certificado SII ---
+      - SII_CERTIFICATE_PATH=${SII_CERTIFICATE_PATH:-classpath:dummy.p12}
+      - SII_CERTIFICATE_PASSWORD=${SII_CERTIFICATE_PASSWORD}
+      # --- Redis ---
+      - SPRING_REDIS_HOST=sii-redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD}
+      # --- IA / LLM ---
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL_NAME=${GEMINI_MODEL_NAME:-gemini-pro}
+      - XAI_API_KEY=${XAI_API_KEY}
+      - PGVECTOR_DIMENSION=${PGVECTOR_DIMENSION:-1536}
+      # --- Frontend / CORS ---
+      - APP_FRONTEND_URL=${APP_FRONTEND_URL:-http://localhost:3000}
+      - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      # --- Email ---
+      - MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      # --- Observabilidad ---
+      - TRACING_SAMPLING_PROBABILITY=${TRACING_SAMPLING_PROBABILITY:-0.1}
+      - OTLP_TRACING_ENDPOINT=${OTLP_TRACING_ENDPOINT:-http://localhost:4318/v1/traces}
     restart: unless-stopped
 
 volumes:

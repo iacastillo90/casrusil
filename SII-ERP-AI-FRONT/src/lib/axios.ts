@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import Cookies from '../../node_modules/@types/js-cookie';
+// CORRECCIÓN: importar desde el paquete real, no desde node_modules/@types
+import Cookies from 'js-cookie';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
 
 // Asegúrate de que apunte al BACKEND (puerto 8080), no al frontend

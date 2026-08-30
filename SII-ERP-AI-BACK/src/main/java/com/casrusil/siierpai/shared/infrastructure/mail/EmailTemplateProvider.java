@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.shared.infrastructure.mail;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -8,6 +9,10 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class EmailTemplateProvider {
+
+    /** URL del frontend inyectada desde la variable de entorno {@code app.frontend.url}. */
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
 
     private static final String BASE_STYLE = """
             <style>
@@ -42,7 +47,7 @@ public class EmailTemplateProvider {
                 </body>
                 </html>
                 """
-                .formatted(BASE_STYLE, userName, companyName, "http://localhost:3000"); // TODO: Use env var for URL
+                .formatted(BASE_STYLE, userName, companyName, frontendUrl);
     }
 
     public String getInvitationTemplate(String inviteLink, String companyName, String companyRut, String logoUrl,

@@ -2,7 +2,8 @@ import api from "@/lib/axios";
 import { useAuthStore } from '../stores/auth.store';
 import { LoginCredentials, RegisterData, AuthResponse } from '../types/auth.types';
 import { UpdateCompanyRequest, CreateUserRequest } from '../types/auth-requests.types';
-import Cookies from '../../../../node_modules/@types/js-cookie';
+// CORRECCIÓN: importar desde el paquete real, no desde @types/
+import Cookies from 'js-cookie';
 
 export const authService = {
     login: async (credentials: LoginCredentials) => {
@@ -19,7 +20,17 @@ export const authService = {
 
     handleAuthSuccess: (data: AuthResponse, email: string) => {
         if (data.token) {
-            Cookies.set('token', data.token, { expires: 1 });
+            // SEGURIDAD: Cookie con flags seguros.
+            // - secure: solo se envía por HTTPS (en prod)
+            // - sameSite: 'strict' protege contra CSRF
+            // - httpOnly: no puede ser accedida desde JS (protege contra XSS)
+            // Nota: httpOnly solo puede setearse desde el servidor via Set-Cookie header.
+            // Desde el cliente, usamos 'strict' + 'secure' como capa adicional.
+            Cookies.set('token', data.token, {
+                expires: 1,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict'
+            });
 
             const user = {
                 id: data.userId,
@@ -32,11 +43,10 @@ export const authService = {
                 user,
                 data.token,
                 data.companyId,
-                [] // companies - not in flat response, sending empty array
+                [] // companies array
             );
-
-            // Legacy/Duplicate storage if needed, but store should handle it
-            localStorage.setItem('user_data', JSON.stringify(user));
+            // SEGURIDAD: No guardar datos de usuario en localStorage (vulnerable a XSS).
+            // El estado se maneja en Zustand (sin incluir el token en el persist).
         }
     },
 

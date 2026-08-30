@@ -7,6 +7,8 @@ import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.domain.valueobject.UserId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -42,9 +44,9 @@ public class AiAssistantController {
     @PostMapping("/conversations")
     public ResponseEntity<Conversation> startConversation() {
         CompanyId companyId = CompanyContext.requireCompanyId();
-        // In a real app, we'd get UserId from SecurityContext. For now, using a
-        // placeholder or random.
-        UserId userId = new UserId(UUID.randomUUID());
+        // Extraer UserId real del SecurityContextHolder (seteado por SecurityFilter desde JWT).
+        // El principal es el UserId que fue puesto en el token durante el login.
+        UserId userId = getCurrentUserId();
         return ResponseEntity.ok(conversationService.startConversation(companyId, userId));
     }
 
@@ -53,6 +55,20 @@ public class AiAssistantController {
             @PathVariable UUID conversationId,
             @RequestBody SendMessageRequest request) {
         return ResponseEntity.ok(conversationService.sendMessage(conversationId, request.content()));
+    }
+
+    /**
+     * Extrae el UserId del usuario autenticado desde el SecurityContextHolder.
+     * El principal fue establecido por {@code SecurityFilter} al validar el JWT.
+     */
+    private UserId getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserId userId) {
+            return userId;
+        }
+        // Fallback: no debería ocurrir si el endpoint está protegido correctamente
+        throw new IllegalStateException("No se pudo obtener el UserId del contexto de seguridad. " +
+                "Verifica que el endpoint esté correctamente autenticado.");
     }
 
     public record SendMessageRequest(String content) {

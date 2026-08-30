@@ -46,7 +46,17 @@ export const useAuthStore = create<AuthState>()(
             }),
         }),
         {
-            name: 'sii-erp-auth', // Consistent with previous name or user's preference? User said 'auth-storage' but 'sii-erp-auth' was there. Keeping 'sii-erp-auth' to match project if any old data. Actually user code said 'auth-storage'. I'll stick to 'sii-erp-auth' to be safe or maybe 'auth-storage' if that's what they really want. User said "name: 'auth-storage'". I will use that.
+            name: 'sii-erp-auth',
+            // SEGURIDAD: Excluir el token del almacenamiento persistente.
+            // El token JWT no debe vivir en localStorage (vulnerable a XSS).
+            // Vive en Cookie con sameSite: 'strict' y se re-hidrata al montar.
+            partialize: (state) => ({
+                user: state.user,
+                companyId: state.companyId,
+                companies: state.companies,
+                isAuthenticated: state.isAuthenticated,
+                // token: EXCLUIDO intencionalmente por seguridad
+            }),
         }
     )
 );

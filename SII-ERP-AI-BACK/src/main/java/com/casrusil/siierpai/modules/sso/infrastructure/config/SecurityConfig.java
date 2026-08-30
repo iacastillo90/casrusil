@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.sso.infrastructure.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +25,14 @@ import org.slf4j.LoggerFactory;
 public class SecurityConfig {
 
     private final com.casrusil.siierpai.modules.sso.infrastructure.security.SecurityFilter securityFilter;
+
+    /**
+     * Orígenes CORS permitidos, inyectados desde la variable de entorno {@code app.cors.allowed-origins}.
+     * Valor por defecto: solo localhost:3000 (desarrollo).
+     * En producción, definir el valor en application-prod.properties o variables de entorno.
+     */
+    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    private String allowedOriginsRaw;
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SecurityConfig.class);
 
@@ -68,8 +77,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Orígenes permitidos (El puerto de tu Frontend Next.js)
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        // Orígenes permitidos: se leen de la variable de entorno app.cors.allowed-origins
+        // Soporta múltiples valores separados por coma: "https://app.dominio.cl,https://admin.dominio.cl"
+        List<String> origins = List.of(allowedOriginsRaw.split(","));
+        configuration.setAllowedOrigins(origins);
+        log.info("CORS configurado para los siguientes orígenes: {}", origins);
 
         // Métodos HTTP permitidos
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

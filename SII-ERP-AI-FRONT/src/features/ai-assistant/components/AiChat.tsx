@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { api } from "@/lib/api";
+import { useState, useRef, useEffect } from "react";
+import api from "@/lib/axios";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,28 +12,61 @@ interface Message {
   content: string;
 }
 
+/**
+ * Componente de chat con el Asistente IA Financiero.
+ *
+ * Flujo correcto:
+ * 1. Al primer mensaje, crea una conversación (POST /ai/conversations)
+ * 2. Cada mensaje subsiguiente se envía a la conversación activa
+ *    (POST /ai/conversations/{id}/messages)
+ */
 export function AiChat() {
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "¡Hola! Soy tu asistente contable IA del SII-ERP. Tengo acceso al Libro Mayor, Inventario y Remuneraciones. ¿En qué te puedo ayudar hoy?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll al último mensaje
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage = { role: "user" as const, content: input };
+    const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
-      // Ajustar con la ruta real del Controller de Chat
-      const response = await api.post('/ai-assistant/chat', { message: userMessage.content });
-      setMessages((prev) => [...prev, { role: "assistant", content: response.data.reply || response.data }]);
+      let activeConversationId = conversationId;
+
+      // Paso 1: Si no existe conversación activa, crearla
+      if (!activeConversationId) {
+        const conversationRes = await api.post('/ai/conversations');
+        activeConversationId = conversationRes.data.id;
+        setConversationId(activeConversationId);
+      }
+
+      // Paso 2: Enviar el mensaje a la conversación activa
+      const messageRes = await api.post(
+        `/ai/conversations/${activeConversationId}/messages`,
+        { content: userMessage.content }
+      );
+
+      const reply = messageRes.data?.content || messageRes.data?.reply || "Sin respuesta del asistente.";
+      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+
     } catch (error) {
-      console.error("Error sending message to AI:", error);
-      setMessages((prev) => [...prev, { role: "assistant", content: "Error de conexión con la IA. Por favor, verifica que el servicio LangChain4j esté configurado." }]);
+      console.error("Error comunicando con el asistente IA:", error);
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: "⚠️ Error de conexión con la IA. Verifica que el servicio LangChain4j/Gemini esté configurado y el backend esté corriendo."
+      }]);
     } finally {
       setLoading(false);
     }
@@ -62,15 +95,16 @@ export function AiChat() {
                   </div>
                 </div>
               )}
+              <div ref={bottomRef} />
             </div>
           </ScrollArea>
         </CardContent>
         <CardFooter className="pt-4 border-t">
           <form className="flex w-full space-x-2" onSubmit={(e) => { e.preventDefault(); sendMessage(); }}>
-            <Input 
-              value={input} 
-              onChange={(e) => setInput(e.target.value)} 
-              placeholder="Pregúntale sobre tus balances, impuestos o stock..." 
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Pregúntale sobre tus balances, impuestos o stock..."
               disabled={loading}
             />
             <Button type="submit" disabled={loading || !input.trim()}>

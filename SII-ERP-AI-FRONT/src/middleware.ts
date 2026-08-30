@@ -6,28 +6,30 @@ export function middleware(request: NextRequest) {
     const isAuthPage = request.nextUrl.pathname.startsWith('/login') ||
         request.nextUrl.pathname.startsWith('/register')
 
-    // 1. Si intenta entrar a dashboard/protegido SIN token -> Login
+    // 1. Si intenta entrar a cualquier ruta protegida SIN token → Login
     if (!token && !isAuthPage && request.nextUrl.pathname !== '/') {
-        return NextResponse.redirect(new URL('/login', request.url))
+        const loginUrl = new URL('/login', request.url)
+        // Guardar la URL original para redirigir después del login
+        loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+        return NextResponse.redirect(loginUrl)
     }
 
-    // 2. Comentado: Permitir acceso al login aunque tenga token, para que el usuario pueda cambiar de cuenta si lo desea explicitamente.
-    /*
+    // 2. Si ya tiene token e intenta entrar a login/register → Dashboard
     if (token && isAuthPage) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-    */
 
     return NextResponse.next()
 }
 
-// Configurar qué rutas protege el middleware
+// SEGURIDAD: Proteger TODAS las rutas excepto:
+// - _next/static: archivos estáticos de Next.js
+// - _next/image: optimización de imágenes
+// - favicon y archivos de imagen raíz
+// - /api/: si tuviéramos endpoints internos de Next.js
+// El patrón negativo '(?!...)' excluye las rutas públicas.
 export const config = {
     matcher: [
-        '/dashboard/:path*',
-        '/login',
-        '/register',
-        '/invoices/:path*',
-        '/accounting/:path*'
+        '/((?!login|register|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }
