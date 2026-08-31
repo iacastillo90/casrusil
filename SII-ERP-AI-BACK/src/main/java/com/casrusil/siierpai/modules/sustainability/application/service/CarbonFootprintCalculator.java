@@ -54,9 +54,10 @@ public class CarbonFootprintCalculator {
 
         for (InvoiceItemEntity item : items) {
             String sanitizedName = item.getItemName() != null ? item.getItemName().toUpperCase() : "";
-            EmissionFactor factor = findFactor(sanitizedName);
+            var factorOpt = findFactor(sanitizedName);
 
-            if (factor != null) {
+            if (factorOpt.isPresent()) {
+                EmissionFactor factor = factorOpt.get();
                 // Asumimos que la cantidad viene en la unidad correcta por ahora
                 // (simplificación)
                 // En una versión más avanzada, habría conversión de unidades.
@@ -81,21 +82,21 @@ public class CarbonFootprintCalculator {
         return new CarbonFootprintResult(totalFootprint, predominantCategory, finalConfidence);
     }
 
-    private EmissionFactor findFactor(String itemName) {
+    private java.util.Optional<EmissionFactor> findFactor(String itemName) {
         if (itemName.contains("GASOLINA") || itemName.contains("DIESEL") || itemName.contains("PETROLEO")
                 || itemName.contains("COMBUSTIBLE")) {
-            return emissionFactors.get("COMBUSTIBLE");
+            return java.util.Optional.ofNullable(emissionFactors.get("COMBUSTIBLE"));
         }
         if (itemName.contains("ELECTRICIDAD") || itemName.contains("LUZ") || itemName.contains("ENERGIA")) {
-            return emissionFactors.get("ELECTRICIDAD");
+            return java.util.Optional.ofNullable(emissionFactors.get("ELECTRICIDAD"));
         }
         if (itemName.contains("PAPEL") || itemName.contains("IMPRESORA") || itemName.contains("ARCHIVADOR")) {
-            return emissionFactors.get("PAPELERIA");
+            return java.util.Optional.ofNullable(emissionFactors.get("PAPELERIA"));
         }
         if (itemName.contains("FLETE") || itemName.contains("TRANSPORTE") || itemName.contains("ENVIO")
                 || itemName.contains("DESPACHO")) {
-            return emissionFactors.get("TRANSPORTE");
+            return java.util.Optional.ofNullable(emissionFactors.get("TRANSPORTE"));
         }
-        return null;
+        return java.util.Optional.empty();
     }
 }
