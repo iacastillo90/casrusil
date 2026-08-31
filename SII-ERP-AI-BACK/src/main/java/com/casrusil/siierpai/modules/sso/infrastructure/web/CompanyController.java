@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.sso.infrastructure.web;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.sso.application.service.CompanyManagementService;
 import com.casrusil.siierpai.modules.sso.domain.model.Company;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
@@ -36,7 +38,7 @@ public class CompanyController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<Company> updateProfile(@RequestBody UpdateCompanyRequest request) {
+    public ResponseEntity<Company> updateProfile(@Valid @RequestBody UpdateCompanyRequest request) {
         CompanyId companyId = CompanyContext.getCompanyId();
         if (companyId == null) {
             return ResponseEntity.status(403).build();
