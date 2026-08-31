@@ -36,9 +36,9 @@ public class InventoryExcelExporter {
                 row.createCell(0).setCellValue(p.getId() != null ? p.getId() : 0);
                 row.createCell(1).setCellValue(p.getSku());
                 row.createCell(2).setCellValue(p.getName());
-                row.createCell(3).setCellValue(p.getQuantity());
-                row.createCell(4).setCellValue(p.getUnitCost() != null ? p.getUnitCost().doubleValue() : 0);
-                row.createCell(5).setCellValue(p.getTotalValue() != null ? p.getTotalValue().doubleValue() : 0);
+                row.createCell(3).setCellValue(p.getCurrentStock().doubleValue());
+                row.createCell(4).setCellValue(p.getAverageCost() != null ? p.getAverageCost().doubleValue() : 0);
+                row.createCell(5).setCellValue(p.getCurrentStock() != null && p.getAverageCost() != null ? p.getCurrentStock().multiply(p.getAverageCost()).doubleValue() : 0);
             }
             
             // Autosize
