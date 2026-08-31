@@ -10,6 +10,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio de aprendizaje automático que implementa el Feedback Loop (Phase
@@ -72,6 +73,7 @@ public class LearningService {
      * Escucha eventos de corrección y aprende de ellos.
      */
     @EventListener
+    @Transactional
     public void onEntryCorrected(EntryCorrectedEvent event) {
         logger.info("🧠 Learning from correction: {}", event.extractMainChange());
 
