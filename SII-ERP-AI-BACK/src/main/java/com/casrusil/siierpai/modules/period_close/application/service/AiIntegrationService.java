@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ public class AiIntegrationService {
     private final AiInsightRepositoryPort aiInsightRepository;
     private final ChatLanguageModel chatLanguageModel;
 
+    @Transactional
     public String analyzeMismatches(List<String> discrepancies, String companyId) {
         if (discrepancies.isEmpty()) {
             return "No discrepancies found. The period is perfectly balanced.";
