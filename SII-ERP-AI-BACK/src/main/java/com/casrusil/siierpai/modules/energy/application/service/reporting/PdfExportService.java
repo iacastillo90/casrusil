@@ -1,6 +1,15 @@
 package com.casrusil.siierpai.modules.energy.application.service.reporting;
 
 import com.casrusil.siierpai.modules.energy.domain.model.reporting.EnergyReport;
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -35,11 +44,10 @@ public class PdfExportService {
         logger.info("Exporting report {} to PDF", report.getId());
 
         try {
-            // For now, generate a formatted text representation
-            // In production, use a proper PDF library
-            String content = generatePdfContent(report);
+            // Generate PDF with OpenPDF
+            byte[] content = generatePdfContent(report);
 
-            return content.getBytes("UTF-8");
+            return content;
 
         } catch (Exception e) {
             logger.error("Failed to export report to PDF: {}", e.getMessage());
@@ -52,101 +60,93 @@ public class PdfExportService {
      * 
      * TODO: Replace with proper PDF library (iText, PDFBox, etc.)
      */
-    private String generatePdfContent(EnergyReport report) {
-        StringBuilder pdf = new StringBuilder();
+    private byte[] generatePdfContent(EnergyReport report) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Document document = new Document();
+        PdfWriter.getInstance(document, baos);
 
-        // Header
-        pdf.append("═══════════════════════════════════════════════════════════\n");
-        pdf.append("                    ENERGY REPORT\n");
-        pdf.append("═══════════════════════════════════════════════════════════\n\n");
+        document.open();
+
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+
+        // Title
+        Paragraph title = new Paragraph("ENERGY REPORT", titleFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
+        document.add(new Paragraph(" "));
 
         // Report Info
-        pdf.append("Report Type:     ").append(report.getType()).append("\n");
-        pdf.append("Period:          ").append(report.getPeriod()).append("\n");
-        pdf.append("Generated:       ").append(report.getGeneratedAt().format(DATETIME_FORMATTER)).append("\n");
-        pdf.append("\n");
+        document.add(new Paragraph("Report Type: " + report.getType(), normalFont));
+        document.add(new Paragraph("Period: " + report.getPeriod(), normalFont));
+        document.add(new Paragraph("Generated: " + report.getGeneratedAt().format(DATETIME_FORMATTER), normalFont));
+        document.add(new Paragraph(" "));
 
         // Summary Section
-        pdf.append("───────────────────────────────────────────────────────────\n");
-        pdf.append("                    SUMMARY\n");
-        pdf.append("───────────────────────────────────────────────────────────\n\n");
+        document.add(new Paragraph("SUMMARY", headerFont));
+        PdfPTable summaryTable = new PdfPTable(2);
+        summaryTable.setWidthPercentage(100);
+        summaryTable.setSpacingBefore(10f);
+        summaryTable.setSpacingAfter(10f);
 
-        pdf.append(String.format("%-30s %15s\n", "Total Energy Consumed:",
-                report.getTotalEnergyConsumed() + " kWh"));
-        pdf.append(String.format("%-30s %15s\n", "Total Revenue:",
-                "$" + report.getTotalRevenue()));
-        pdf.append(String.format("%-30s %15s\n", "Total Cost:",
-                "$" + report.getTotalCost()));
-        pdf.append(String.format("%-30s %15s\n", "Net Profit:",
-                "$" + report.getNetProfit()));
-        pdf.append(String.format("%-30s %15s\n", "Profit Margin:",
-                report.getProfitMargin() + "%"));
-        pdf.append("\n");
+        addTableRow(summaryTable, "Total Energy Consumed:", report.getTotalEnergyConsumed() + " kWh", normalFont);
+        addTableRow(summaryTable, "Total Revenue:", "$" + report.getTotalRevenue(), normalFont);
+        addTableRow(summaryTable, "Total Cost:", "$" + report.getTotalCost(), normalFont);
+        addTableRow(summaryTable, "Net Profit:", "$" + report.getNetProfit(), normalFont);
+        addTableRow(summaryTable, "Profit Margin:", report.getProfitMargin() + "%", normalFont);
+        document.add(summaryTable);
 
         // Session Statistics
-        pdf.append("───────────────────────────────────────────────────────────\n");
-        pdf.append("                SESSION STATISTICS\n");
-        pdf.append("───────────────────────────────────────────────────────────\n\n");
+        document.add(new Paragraph("SESSION STATISTICS", headerFont));
+        PdfPTable sessionTable = new PdfPTable(2);
+        sessionTable.setWidthPercentage(100);
+        sessionTable.setSpacingBefore(10f);
+        sessionTable.setSpacingAfter(10f);
 
-        pdf.append(String.format("%-30s %15s\n", "Total Sessions:",
-                report.getSessionCount()));
-        pdf.append(String.format("%-30s %15s\n", "Avg Energy/Session:",
-                report.getAverageEnergyPerSession() + " kWh"));
-        pdf.append(String.format("%-30s %15s\n", "Avg Revenue/Session:",
-                "$" + report.getAverageRevenuePerSession()));
+        addTableRow(sessionTable, "Total Sessions:", String.valueOf(report.getSessionCount()), normalFont);
+        addTableRow(sessionTable, "Avg Energy/Session:", report.getAverageEnergyPerSession() + " kWh", normalFont);
+        addTableRow(sessionTable, "Avg Revenue/Session:", "$" + report.getAverageRevenuePerSession(), normalFont);
 
         if (report.getAverageSessionDuration() != null) {
             long hours = report.getAverageSessionDuration().toHours();
             long minutes = report.getAverageSessionDuration().toMinutesPart();
-            pdf.append(String.format("%-30s %15s\n", "Avg Session Duration:",
-                    hours + "h " + minutes + "m"));
+            addTableRow(sessionTable, "Avg Session Duration:", hours + "h " + minutes + "m", normalFont);
         }
-        pdf.append("\n");
-
-        // Peak Usage Hours
-        if (!report.getPeakUsageHours().isEmpty()) {
-            pdf.append("───────────────────────────────────────────────────────────\n");
-            pdf.append("                PEAK USAGE HOURS\n");
-            pdf.append("───────────────────────────────────────────────────────────\n\n");
-
-            pdf.append(String.format("%-10s %-20s %-15s\n", "Hour", "Energy (kWh)", "Sessions"));
-            pdf.append("─────────────────────────────────────────────────────\n");
-
-            report.getPeakUsageHours().forEach(hour -> {
-                pdf.append(String.format("%-10s %-20s %-15s\n",
-                        hour.hour() + ":00",
-                        hour.energyConsumed(),
-                        hour.sessionCount()));
-            });
-            pdf.append("\n");
-        }
+        document.add(sessionTable);
 
         // Top Stations
         if (!report.getTopStations().isEmpty()) {
-            pdf.append("───────────────────────────────────────────────────────────\n");
-            pdf.append("                TOP STATIONS\n");
-            pdf.append("───────────────────────────────────────────────────────────\n\n");
-
-            pdf.append(String.format("%-25s %-15s %-15s %-10s\n",
-                    "Station", "Energy (kWh)", "Revenue", "Sessions"));
-            pdf.append("─────────────────────────────────────────────────────────────────\n");
+            document.add(new Paragraph("TOP STATIONS", headerFont));
+            PdfPTable topStationsTable = new PdfPTable(4);
+            topStationsTable.setWidthPercentage(100);
+            topStationsTable.setSpacingBefore(10f);
+            
+            topStationsTable.addCell(new Phrase("Station", headerFont));
+            topStationsTable.addCell(new Phrase("Energy (kWh)", headerFont));
+            topStationsTable.addCell(new Phrase("Revenue", headerFont));
+            topStationsTable.addCell(new Phrase("Sessions", headerFont));
 
             report.getTopStations().forEach(station -> {
-                pdf.append(String.format("%-25s %-15s %-15s %-10s\n",
-                        station.stationName(),
-                        station.energyConsumed(),
-                        "$" + station.revenue(),
-                        station.sessionCount()));
+                topStationsTable.addCell(new Phrase(station.stationName(), normalFont));
+                topStationsTable.addCell(new Phrase(String.valueOf(station.energyConsumed()), normalFont));
+                topStationsTable.addCell(new Phrase("$" + station.revenue(), normalFont));
+                topStationsTable.addCell(new Phrase(String.valueOf(station.sessionCount()), normalFont));
             });
-            pdf.append("\n");
+            document.add(topStationsTable);
         }
 
-        // Footer
-        pdf.append("═══════════════════════════════════════════════════════════\n");
-        pdf.append("                 End of Report\n");
-        pdf.append("═══════════════════════════════════════════════════════════\n");
+        document.close();
+        return baos.toByteArray();
+    }
 
-        return pdf.toString();
+    private void addTableRow(PdfPTable table, String key, String value, Font font) {
+        PdfPCell cell1 = new PdfPCell(new Phrase(key, font));
+        cell1.setBorder(0);
+        PdfPCell cell2 = new PdfPCell(new Phrase(value, font));
+        cell2.setBorder(0);
+        table.addCell(cell1);
+        table.addCell(cell2);
     }
 
     /**
