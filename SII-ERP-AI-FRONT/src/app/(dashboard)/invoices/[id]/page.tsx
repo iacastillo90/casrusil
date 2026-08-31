@@ -164,7 +164,7 @@ export default function InvoiceDetailPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {invoice.lines.map((line) => (
+                                    {invoice.lines.map((line: any) => (
                                         <TableRow key={line.id}>
                                             <TableCell>{line.description}</TableCell>
                                             <TableCell className="text-right">{line.quantity}</TableCell>
