@@ -1,139 +1,92 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { complianceService } from "@/features/compliance/services/compliance.service";
-import PeriodSelector from "@/components/shared/PeriodSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, AlertTriangle, XCircle, BrainCircuit } from "lucide-react";
-import { SkeletonLoader } from "@/components/shared/SkeletonLoader";
-import { formatCLP } from "@/lib/formatters";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, ShieldCheck, Calculator, FileWarning } from "lucide-react";
+import { useComplianceDashboard } from "@/features/compliance/hooks/useCompliance";
+import { formatCLP } from "@/lib/utils/currency";
 
-export default function CompliancePage() {
-    const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+export default function ComplianceCenterPage() {
+    const { data: dashboard, isLoading } = useComplianceDashboard();
 
-    const { data, isLoading, error } = useQuery<any>({
-        queryKey: ['compliance', period],
-        queryFn: () => complianceService.getDashboard(period),
-    });
+    if (isLoading) {
+        return <div className="p-8 text-center text-muted-foreground animate-pulse">Consultando estado tributario SII...</div>;
+    }
 
-    if (isLoading) return <SkeletonLoader />;
-    if (error) return <div className="text-red-500">Error cargando el panel de control.</div>;
-    if (!data) return null;
+    if (!dashboard) return null;
 
     return (
-        <div className="space-y-6 p-6">
-            {/* HEADER & SCORE */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Centro de Control (Modo Dios)</h1>
-                    <p className="text-muted-foreground">Inteligencia Financiera y Tributaria Unificada</p>
-                </div>
-                <div className="flex items-center gap-4">
-                    <PeriodSelector value={period} onChange={setPeriod} />
-                    <div className={`flex flex-col items-center p-4 rounded-xl border-2 ${data.globalHealthScore > 80 ? 'border-green-500 bg-green-50' : 'border-yellow-500 bg-yellow-50'
-                        }`}>
-                        <span className="text-xs font-bold uppercase">Salud Global</span>
-                        <span className="text-3xl font-black">{data.globalHealthScore}%</span>
-                    </div>
-                </div>
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">Centro de Salud Tributaria (SII)</h1>
+                <p className="text-muted-foreground mt-1">Cruce de DTEs, Alertas de Acuse de Recibo y Simulador de F29.</p>
             </div>
 
-            {/* ALERTAS IA (Prioridad Alta) */}
-            {data.aiAlerts.length > 0 && (
-                <Card className="border-l-4 border-l-purple-500 bg-purple-50/20">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-lg text-purple-700">
-                            <BrainCircuit className="h-5 w-5" />
-                            Insights de Inteligencia Artificial
-                        </CardTitle>
+            {/* KPIs */}
+            <div className="grid gap-4 md:grid-cols-3">
+                <Card className={dashboard.healthScore >= 80 ? "border-green-500/50" : "border-amber-500/50"}>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Salud Tributaria General</CardTitle>
+                        <ShieldCheck className={`h-4 w-4 ${dashboard.healthScore >= 80 ? 'text-green-500' : 'text-amber-500'}`} />
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        {data.aiAlerts.map((alert: any, idx: number) => (
-                            <Alert key={idx} variant={alert.severity === 'CRITICAL' ? 'destructive' : 'default'} className="bg-white">
-                                <AlertTriangle className="h-4 w-4" />
-                                <AlertTitle>{alert.code}</AlertTitle>
-                                <AlertDescription>{alert.message}</AlertDescription>
-                            </Alert>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* GRID DE CONTROL */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                {/* 1. Radar SII */}
-                <Card>
-                    <CardHeader><CardTitle>Conciliación SII</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="flex justify-between mb-2">
-                            <span>En ERP:</span> <span className="font-bold">{data.siiStatus.totalErp}</span>
-                        </div>
-                        <div className="flex justify-between mb-4">
-                            <span>En SII:</span> <span className="font-bold">{data.siiStatus.totalSii}</span>
-                        </div>
-                        {data.siiStatus.isBalanced ? (
-                            <Alert className="bg-green-100 border-green-200">
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                <AlertTitle className="text-green-800">Conciliado</AlertTitle>
-                            </Alert>
-                        ) : (
-                            <Alert variant="destructive">
-                                <XCircle className="h-4 w-4" />
-                                <AlertTitle>Descuadre: {data.siiStatus.missingInErp} docs faltantes</AlertTitle>
-                            </Alert>
-                        )}
+                        <div className="text-2xl font-bold">{dashboard.healthScore}%</div>
+                        <p className="text-xs text-muted-foreground mt-1">Basado en discrepancias SII y alertas.</p>
                     </CardContent>
                 </Card>
 
-                {/* 2. Predicción F29 */}
                 <Card>
-                    <CardHeader><CardTitle>Impuestos (F29)</CardTitle></CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex justify-between text-sm">
-                            <span>Débito (Ventas):</span>
-                            <span className="text-red-500 font-mono">{formatCLP(data.f29Preview.vatDebit)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span>Crédito (Compras):</span>
-                            <span className="text-green-600 font-mono">{formatCLP(data.f29Preview.vatCredit)}</span>
-                        </div>
-                        <div className="border-t pt-2 mt-2 flex justify-between font-bold text-lg">
-                            <span>A Pagar:</span>
-                            <span>{formatCLP(data.f29Preview.totalTax)}</span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* 3. Salud Contable */}
-                <Card>
-                    <CardHeader><CardTitle>Integridad Contable</CardTitle></CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">IVA Proporcional Determinado</CardTitle>
+                        <Calculator className="h-4 w-4 text-blue-500" />
+                    </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span>Asientos Descuadrados</span>
-                                <span className={`px-2 py-1 rounded font-bold ${data.accountingStatus.unbalancedEntries > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100'}`}>
-                                    {data.accountingStatus.unbalancedEntries}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span>Pendientes de Clasificar</span>
-                                <span className={`px-2 py-1 rounded font-bold ${data.accountingStatus.pendingClassification > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100'}`}>
-                                    {data.accountingStatus.pendingClassification}
-                                </span>
-                            </div>
-                            {data.accountingStatus.pendingClassification > 0 && (
-                                <button className="w-full mt-2 text-sm text-blue-600 hover:underline">
-                                    Resolver Clasificaciones &rarr;
-                                </button>
-                            )}
-                        </div>
+                        <div className="text-2xl font-bold">{formatCLP(dashboard.f29Report.vatToPay || 0)}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Factor de IVA ajustado por ventas exentas.</p>
                     </CardContent>
                 </Card>
-
+                
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Parámetros Dinámicos (2024)</CardTitle>
+                        <Calculator className="h-4 w-4 text-purple-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-sm font-bold mt-2">Retención BHE: {dashboard.taxParameters?.bheRetentionRate}%</div>
+                        <p className="text-xs text-muted-foreground mt-1">UTM: {formatCLP(dashboard.taxParameters?.utmValue)}</p>
+                    </CardContent>
+                </Card>
             </div>
+
+            {/* Acuse de Recibo */}
+            <Card className="border-red-500/20 shadow-sm">
+                <CardHeader>
+                    <CardTitle className="text-lg text-red-600 flex items-center">
+                        <AlertTriangle className="mr-2 h-5 w-5" /> 
+                        Alertas Urgentes: Ley Pago a 30 Días (Acuse de Recibo)
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {dashboard.acuseReciboAlerts?.length > 0 ? (
+                        <div className="space-y-4">
+                            {dashboard.acuseReciboAlerts.map((alert: any, idx: number) => (
+                                <div key={idx} className="flex items-start justify-between p-4 bg-red-50 rounded-lg border border-red-100">
+                                    <div className="flex items-start">
+                                        <FileWarning className="h-5 w-5 text-red-500 mt-0.5 mr-3" />
+                                        <div>
+                                            <p className="text-sm font-medium text-red-900">{alert.message}</p>
+                                            <p className="text-xs text-red-700 mt-1">Identificado: {alert.detectedAt}</p>
+                                        </div>
+                                    </div>
+                                    <Badge variant="destructive">Acción Requerida</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">No hay facturas por vencer sin acuse de recibo.</p>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }
