@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.controller;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.energy.application.service.OcppCommandService;
 import com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.dto.command.*;
 import com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.dto.smartcharging.*;
@@ -129,7 +131,7 @@ public class OcppRemoteController {
         public CompletableFuture<ResponseEntity<SetChargingProfileResponse>> setChargingProfile(
                         @RequestParam String ocppId,
                         @RequestParam int connectorId,
-                        @RequestBody ChargingProfile chargingProfile) {
+                        @Valid @RequestBody ChargingProfile chargingProfile) {
                 return commandService.setChargingProfile(ocppId, connectorId, chargingProfile)
                                 .thenApply(ResponseEntity::ok)
                                 .exceptionally(ex -> ResponseEntity.internalServerError().build());
