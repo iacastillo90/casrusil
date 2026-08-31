@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.banking.infrastructure.adapter.in.rest;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.banking.application.dto.ReconciliationDashboardDTO;
 import com.casrusil.siierpai.modules.banking.application.service.BankReconciliationWorkbenchService;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
@@ -27,7 +29,7 @@ public class BankReconciliationController {
     }
 
     @PostMapping("/match")
-    public ResponseEntity<Void> matchTransaction(@RequestBody MatchRequest request) {
+    public ResponseEntity<Void> matchTransaction(@Valid @RequestBody MatchRequest request) {
         CompanyId companyId = CompanyContext.requireCompanyId();
         workbenchService.processMatch(companyId, request.bankId(), request.erpId());
         return ResponseEntity.ok().build();
