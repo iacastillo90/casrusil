@@ -6,14 +6,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import lombok.RequiredArgsConstructor;
+
 /**
  * Event listener for maintenance notifications.
- * Logs maintenance events and can be extended to send email/SMS notifications.
+ * Logs maintenance events and sends email notifications.
  */
 @Component
+@RequiredArgsConstructor
 public class MaintenanceNotificationListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MaintenanceNotificationListener.class);
+    private final JavaMailSender mailSender;
+    private static final String OPS_EMAIL = "operations@siierp.com";
 
     @EventListener
     public void onMaintenanceScheduled(MaintenanceEvent.MaintenanceScheduled event) {
@@ -23,8 +30,11 @@ public class MaintenanceNotificationListener {
                 event.type(),
                 event.description());
 
-        // TODO: Send email notification to maintenance team
-        // TODO: Create calendar event
+        sendEmail(
+                "Maintenance Scheduled: " + event.stationId(),
+                String.format("A maintenance (%s) has been scheduled for %s. Description: %s", 
+                        event.type(), event.scheduledDate(), event.description())
+        );
     }
 
     @EventListener
@@ -34,8 +44,10 @@ public class MaintenanceNotificationListener {
                 event.technician(),
                 event.startedAt());
 
-        // TODO: Send SMS to operations manager
-        // TODO: Update dashboard status
+        sendEmail(
+                "Maintenance Started: " + event.stationId(),
+                String.format("Maintenance started by %s at %s.", event.technician(), event.startedAt())
+        );
     }
 
     @EventListener
@@ -46,8 +58,11 @@ public class MaintenanceNotificationListener {
                 event.cost(),
                 event.notes());
 
-        // TODO: Send completion report via email
-        // TODO: Update maintenance history dashboard
+        sendEmail(
+                "Maintenance Completed: " + event.stationId(),
+                String.format("Maintenance completed at %s. Cost: $%s. Notes: %s", 
+                        event.completedAt(), event.cost(), event.notes())
+        );
     }
 
     @EventListener
@@ -57,8 +72,10 @@ public class MaintenanceNotificationListener {
                 event.failedAt(),
                 event.reason());
 
-        // TODO: Send urgent notification to maintenance supervisor
-        // TODO: Create follow-up task
+        sendEmail(
+                "URGENT: Maintenance Failed - " + event.stationId(),
+                String.format("Maintenance failed at %s. Reason: %s", event.failedAt(), event.reason())
+        );
     }
 
     @EventListener
@@ -68,8 +85,10 @@ public class MaintenanceNotificationListener {
                 event.cancelledAt(),
                 event.reason());
 
-        // TODO: Notify scheduled technician
-        // TODO: Update resource allocation
+        sendEmail(
+                "Maintenance Cancelled: " + event.stationId(),
+                String.format("Maintenance cancelled at %s. Reason: %s", event.cancelledAt(), event.reason())
+        );
     }
 
     @EventListener
@@ -79,8 +98,24 @@ public class MaintenanceNotificationListener {
                 event.scheduledDate(),
                 event.detectedAt());
 
-        // TODO: Send urgent alert to operations manager
-        // TODO: Escalate to management if overdue > 24 hours
-        // TODO: Auto-reschedule if possible
+        sendEmail(
+                "URGENT: Maintenance Overdue - " + event.stationId(),
+                String.format("Maintenance scheduled for %s is overdue as of %s.", 
+                        event.scheduledDate(), event.detectedAt())
+        );
+    }
+
+    private void sendEmail(String subject, String text) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("system@siierp.com");
+            message.setTo(OPS_EMAIL);
+            message.setSubject(subject);
+            message.setText(text);
+            mailSender.send(message);
+            logger.debug("Email sent: {}", subject);
+        } catch (Exception e) {
+            logger.error("Failed to send email notification: {}", e.getMessage());
+        }
     }
 }
