@@ -28,6 +28,13 @@ public class PayslipRepositoryAdapter implements PayslipRepositoryPort {
                 .map(this::mapToDomain)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<Payslip> findByEmployeeId(String employeeId) {
+        return jpaRepository.findByEmployeeId(employeeId).stream()
+                .map(this::mapToDomain)
+                .collect(Collectors.toList());
+    }
     
     private PayslipEntity mapToEntity(Payslip domain) {
         PayslipEntity entity = new PayslipEntity();
