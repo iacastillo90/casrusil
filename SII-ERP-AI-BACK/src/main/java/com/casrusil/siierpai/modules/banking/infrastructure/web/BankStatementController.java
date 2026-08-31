@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.banking.infrastructure.web;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.banking.application.service.BankStatementParser;
 import com.casrusil.siierpai.modules.banking.application.service.ReconciliationService;
 import com.casrusil.siierpai.modules.banking.domain.model.BankTransaction;
@@ -98,7 +100,7 @@ public class BankStatementController {
      * POST /api/v1/bank/reconciliation/apply
      */
     @PostMapping("/reconciliation/apply")
-    public ResponseEntity<Map<String, String>> applyReconciliation(@RequestBody ReconciliationMatchRequest request) {
+    public ResponseEntity<Map<String, String>> applyReconciliation(@Valid @RequestBody ReconciliationMatchRequest request) {
         ReconciliationMatch match = new ReconciliationMatch(
                 request.bankTransactionId(),
                 request.accountingEntryId(),
