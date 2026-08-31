@@ -20,7 +20,7 @@ import java.util.UUID;
  * @since 1.0
  */
 @Entity
-@Table(name = "accounting_entries", schema = "accounting")
+@Table(name = "accounting_entries", schema = "accounting", indexes = { @Index(name = "idx_accounting_entry_company", columnList = "company_id") })
 public class AccountingEntryEntity {
 
     @Id
