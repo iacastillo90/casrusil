@@ -21,14 +21,23 @@ import java.math.RoundingMode;
  * 
  * @since 2.0 - Ferrari Engine Phase 2
  */
+import com.casrusil.siierpai.modules.sustainability.application.service.CorfoBenefitSimulator;
+import com.casrusil.siierpai.modules.sustainability.application.service.EsgReportService;
+
 @RestController
 @RequestMapping("/api/v1/sustainability")
 public class SustainabilityController {
 
     private final GreenMetricsRepository greenMetricsRepository;
+    private final EsgReportService esgReportService;
+    private final CorfoBenefitSimulator corfoBenefitSimulator;
 
-    public SustainabilityController(GreenMetricsRepository greenMetricsRepository) {
+    public SustainabilityController(GreenMetricsRepository greenMetricsRepository, 
+                                    EsgReportService esgReportService, 
+                                    CorfoBenefitSimulator corfoBenefitSimulator) {
         this.greenMetricsRepository = greenMetricsRepository;
+        this.esgReportService = esgReportService;
+        this.corfoBenefitSimulator = corfoBenefitSimulator;
     }
 
     /**
@@ -75,6 +84,35 @@ public class SustainabilityController {
                 carbonFootprint,
                 greenSuppliers,
                 riskLevel));
+    }
+
+    @GetMapping("/esg-report")
+    public ResponseEntity<EsgReportService.EsgReport> getEsgReport() {
+        CompanyId companyId = CompanyContext.requireCompanyId();
+        return ResponseEntity.ok(esgReportService.generateReport(companyId));
+    }
+
+    @GetMapping("/corfo-simulator")
+    public ResponseEntity<CorfoBenefitSimulator.CorfoBenefitSimulation> simulateCorfoBenefits() {
+        // We get the passport first to simulate the benefits
+        CompanyId companyId = CompanyContext.requireCompanyId();
+        
+        BigDecimal carbonFootprint = greenMetricsRepository.calculateTotalCarbonFootprint(companyId);
+        BigDecimal greenScore = greenMetricsRepository.calculateTotalGreenScore(companyId);
+        long greenSuppliers = greenMetricsRepository.countGreenSuppliers(companyId);
+        
+        BigDecimal environmentalHealth = calculateEnvironmentalHealth(greenScore, carbonFootprint);
+        BigDecimal financialHealth = new BigDecimal("75.0"); // Placeholder
+        String riskLevel = calculateRiskLevel(financialHealth, environmentalHealth);
+        
+        GreenPassportDTO passport = new GreenPassportDTO(
+                financialHealth,
+                environmentalHealth,
+                carbonFootprint,
+                greenSuppliers,
+                riskLevel);
+                
+        return ResponseEntity.ok(corfoBenefitSimulator.simulate(passport));
     }
 
     /**
