@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Service
@@ -76,6 +77,13 @@ public class PayrollServiceImpl implements PayrollUseCase {
         // Mock generation of 105-column flat text file for Previred integration
         String mockTxtContent = "01;88888888-8;EMP NAME;105_FIELDS_MOCKED...\n";
         return mockTxtContent.getBytes();
+    }
+
+    @Override
+    public List<PayslipResponse> getEmployeePayslips(String employeeId) {
+        return payslipRepository.findByEmployeeId(employeeId).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     private Payslip calculatePayslip(Employee employee, PayrollPeriod period) {
