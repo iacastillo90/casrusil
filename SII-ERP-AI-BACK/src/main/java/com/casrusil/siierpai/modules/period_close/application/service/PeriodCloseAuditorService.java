@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,7 @@ public class PeriodCloseAuditorService implements PeriodCloseUseCase {
     private final DepreciationServiceImpl depreciationService;
 
     @Override
+    @Transactional
     public PeriodAuditResponse auditPeriod(PeriodCloseRequest request, String companyId) {
         YearMonth period = YearMonth.of(request.getYear(), request.getMonth());
         List<String> discrepancies = new ArrayList<>();
