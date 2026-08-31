@@ -61,8 +61,8 @@ public class TedGenerator {
         sb.append("<TD>").append(invoice.getType().getCode()).append("</TD>");
         sb.append("<F>").append(invoice.getFolio()).append("</F>");
         sb.append("<FE>").append(invoice.getDate().format(DateTimeFormatter.ISO_DATE)).append("</FE>");
-        sb.append("<RR>").append("66666666-6").append("</RR>"); // TODO: Receiver RUT
-        sb.append("<RSR>").append("RECEIVER NAME").append("</RSR>"); // TODO: Receiver Name
+        sb.append("<RR>").append(invoice.getReceiverRut() != null ? invoice.getReceiverRut() : "").append("</RR>");
+        sb.append("<RSR>").append(invoice.getBusinessName() != null ? invoice.getBusinessName() : "").append("</RSR>");
         sb.append("<MNT>").append(invoice.getTotalAmount()).append("</MNT>");
 
         // Item 1 Detail (Optional but recommended to include at least one)
