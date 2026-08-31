@@ -8,4 +8,5 @@ import java.util.List;
 public interface PayrollUseCase {
     List<PayslipResponse> calculatePayrollForPeriod(PayrollProcessRequest request, String companyId);
     byte[] generatePreviredFile(PayrollProcessRequest request, String companyId);
+    List<PayslipResponse> getEmployeePayslips(String employeeId);
 }
