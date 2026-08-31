@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio de Aplicación: Gestión de Estaciones de Carga.
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
  * 
  * Patrón: Application Service (Hexagonal Architecture)
  */
+@Transactional
 @Service
 public class ChargingStationService implements
                 RegisterChargingStationUseCase,
