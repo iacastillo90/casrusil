@@ -1,6 +1,7 @@
 package com.casrusil.siierpai.modules.user.application.service;
 
 import com.casrusil.siierpai.modules.user.domain.model.*;
+import com.casrusil.siierpai.modules.user.domain.port.out.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,9 +20,11 @@ public class UserManagementService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserManagementService.class);
 
-    // In-memory storage (TODO: replace with repository)
-    private final Map<UserId, User> users = new ConcurrentHashMap<>();
-    private final Map<String, UserId> emailIndex = new ConcurrentHashMap<>();
+    private final UserRepository userRepository;
+
+    public UserManagementService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     /**
      * Creates a new user.
@@ -35,13 +38,12 @@ public class UserManagementService {
 
         logger.info("Creating user: {}", email);
 
-        if (emailIndex.containsKey(email.toLowerCase())) {
+        if (userRepository.findByEmail(email.toLowerCase()).isPresent()) {
             throw new IllegalArgumentException("Email already exists: " + email);
         }
 
         User user = User.create(organizationId, email, firstName, lastName, passwordHash);
-        users.put(user.getId(), user);
-        emailIndex.put(email.toLowerCase(), user.getId());
+        user = userRepository.save(user);
 
         logger.info("User created: {}", user.getId());
         return user;
@@ -58,13 +60,12 @@ public class UserManagementService {
 
         logger.info("Inviting user: {}", email);
 
-        if (emailIndex.containsKey(email.toLowerCase())) {
+        if (userRepository.findByEmail(email.toLowerCase()).isPresent()) {
             throw new IllegalArgumentException("Email already exists: " + email);
         }
 
         User user = User.createInvited(organizationId, email, firstName, lastName);
-        users.put(user.getId(), user);
-        emailIndex.put(email.toLowerCase(), user.getId());
+        user = userRepository.save(user);
 
         logger.info("User invited: {}", user.getId());
         return user;
@@ -74,35 +75,29 @@ public class UserManagementService {
      * Gets user by ID.
      */
     public User getUser(UserId id) {
-        User user = users.get(id);
-        if (user == null) {
-            throw new IllegalArgumentException("User not found: " + id);
-        }
-        return user;
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
     }
 
     /**
      * Gets user by email.
      */
     public Optional<User> getUserByEmail(String email) {
-        UserId userId = emailIndex.get(email.toLowerCase());
-        return userId != null ? Optional.of(users.get(userId)) : Optional.empty();
+        return userRepository.findByEmail(email.toLowerCase());
     }
 
     /**
      * Lists all users.
      */
     public List<User> getAllUsers() {
-        return new ArrayList<>(users.values());
+        return userRepository.findAll();
     }
 
     /**
      * Lists users by organization.
      */
     public List<User> getUsersByOrganization(OrganizationId organizationId) {
-        return users.values().stream()
-                .filter(user -> user.getOrganizationId().equals(organizationId))
-                .collect(Collectors.toList());
+        return userRepository.findByOrganizationId(organizationId);
     }
 
     /**
@@ -118,8 +113,7 @@ public class UserManagementService {
 
         User user = getUser(id);
         user.updateProfile(firstName, lastName, phone);
-
-        return user;
+        return userRepository.save(user);
     }
 
     /**
@@ -130,8 +124,7 @@ public class UserManagementService {
 
         User user = getUser(id);
         user.verifyEmail();
-
-        return user;
+        return userRepository.save(user);
     }
 
     /**
@@ -142,8 +135,7 @@ public class UserManagementService {
 
         User user = getUser(id);
         user.activate(passwordHash);
-
-        return user;
+        return userRepository.save(user);
     }
 
     /**
@@ -154,8 +146,7 @@ public class UserManagementService {
 
         User user = getUser(id);
         user.suspend();
-
-        return user;
+        return userRepository.save(user);
     }
 
     /**
@@ -166,8 +157,7 @@ public class UserManagementService {
 
         User user = getUser(userId);
         user.assignRole(roleId);
-
-        return user;
+        return userRepository.save(user);
     }
 
     /**
@@ -178,7 +168,6 @@ public class UserManagementService {
 
         User user = getUser(userId);
         user.removeRole(roleId);
-
-        return user;
+        return userRepository.save(user);
     }
 }
