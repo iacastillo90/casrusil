@@ -8,25 +8,29 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatCLP } from "@/lib/formatters";
 
-// Mock Data
-const MOCK_INVENTORY = [
-    { id: "INV-001", name: "Laptop ThinkPad T14", sku: "TECH-TP14", stock: 12, minStock: 5, price: 850000, category: "Electrónica" },
-    { id: "INV-002", name: "Monitor Dell 27'", sku: "TECH-MD27", stock: 3, minStock: 10, price: 250000, category: "Electrónica" },
-    { id: "INV-003", name: "Silla Ergonómica Pro", sku: "FURN-SEP", stock: 45, minStock: 15, price: 120000, category: "Mobiliario" },
-    { id: "INV-004", name: "Escritorio Elevable", sku: "FURN-EE", stock: 8, minStock: 5, price: 350000, category: "Mobiliario" },
-    { id: "INV-005", name: "MacBook Pro 16", sku: "TECH-MBP16", stock: 2, minStock: 3, price: 2150000, category: "Electrónica" },
-];
+import { useInventory } from "@/features/inventory/hooks/useInventory";
 
 export default function InventoryPage() {
     const [searchTerm, setSearchTerm] = useState("");
 
-    const filteredItems = MOCK_INVENTORY.filter(item => 
+    const { data: inventoryData, isLoading, error } = useInventory();
+    const inventory = inventoryData || [];
+
+    const filteredItems = inventory.filter(item => 
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         item.sku.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const totalValue = MOCK_INVENTORY.reduce((acc, curr) => acc + (curr.stock * curr.price), 0);
-    const lowStockCount = MOCK_INVENTORY.filter(i => i.stock <= i.minStock).length;
+    const totalValue = inventory.reduce((acc, curr) => acc + (curr.stock * curr.price), 0);
+    const lowStockCount = inventory.filter(i => i.stock <= i.minStock).length;
+
+    if (isLoading) {
+        return <div className="p-6 text-center text-slate-500">Cargando inventario...</div>;
+    }
+
+    if (error) {
+        return <div className="p-6 text-center text-red-500">Error al cargar el inventario.</div>;
+    }
 
     return (
         <div className="space-y-6 p-6 animate-in fade-in duration-500">
@@ -70,7 +74,7 @@ export default function InventoryPage() {
                         <CardTitle className="text-sm font-medium text-slate-500">Total Productos</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-slate-900">{MOCK_INVENTORY.length}</div>
+                        <div className="text-3xl font-bold text-slate-900">{inventory.length}</div>
                         <p className="text-xs text-slate-500 mt-1">SKUs activos en bodega</p>
                     </CardContent>
                 </Card>
