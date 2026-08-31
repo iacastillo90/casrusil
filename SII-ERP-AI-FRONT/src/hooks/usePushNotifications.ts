@@ -5,41 +5,36 @@ export const usePushNotifications = () => {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        let eventSource: any = null;
-
-        // Check if user has granted permission for browser notifications involved? 
-        // For now, we simulate in-app toast notifications stream.
+        let eventSource: EventSource | null = null;
 
         const connect = () => {
-            // Ideally should check auth state before connecting
-            // const token = Cookies.get('token'); 
-            // const url = new URL('http://localhost:8080/api/v1/notifications/stream');
-            // url.searchParams.append('token', token);
+            try {
+                // Connect to real SSE endpoint. In a real app, pass the userId or token.
+                // For demo purposes, we pass userId=1
+                eventSource = new EventSource('http://localhost:8080/api/v1/notifications/subscribe?userId=1');
 
-            // Mocking the connection for now as backend might mock it too or it's behind auth
-            setIsConnected(true);
+                eventSource.onopen = () => {
+                    setIsConnected(true);
+                };
 
-            // In a real implementation:
-            /*
-            eventSource = new EventSourceWithAuth('/notifications/stream');
-            
-            eventSource.onopen = () => {
-                setIsConnected(true);
-            };
+                eventSource.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        toast(data.title || 'Notificación', {
+                            description: data.message || data.content,
+                        });
+                    } catch (e) {
+                        console.error('Error parsing notification', e);
+                    }
+                };
 
-            eventSource.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                toast(data.title, {
-                    description: data.message,
-                    // action: ...
-                });
-            };
-
-            eventSource.onerror = () => {
-                setIsConnected(false);
-                eventSource?.close();
-            };
-            */
+                eventSource.onerror = () => {
+                    setIsConnected(false);
+                    eventSource?.close();
+                };
+            } catch (err) {
+                console.error("Failed to connect to SSE", err);
+            }
         };
 
         connect();
