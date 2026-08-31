@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.payroll.infrastructure.web;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.payroll.application.service.PayrollUseCase;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayrollProcessRequest;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayslipResponse;
@@ -23,14 +25,14 @@ public class PayrollController {
     @PostMapping("/calculate")
     public ResponseEntity<List<PayslipResponse>> calculatePayroll(
             @RequestHeader(COMPANY_HEADER) String companyId,
-            @RequestBody PayrollProcessRequest request) {
+            @Valid @RequestBody PayrollProcessRequest request) {
         return ResponseEntity.ok(payrollUseCase.calculatePayrollForPeriod(request, companyId));
     }
 
     @PostMapping("/previred/export")
     public ResponseEntity<byte[]> exportPreviredFile(
             @RequestHeader(COMPANY_HEADER) String companyId,
-            @RequestBody PayrollProcessRequest request) {
+            @Valid @RequestBody PayrollProcessRequest request) {
             
         byte[] fileContent = payrollUseCase.generatePreviredFile(request, companyId);
         
@@ -40,5 +42,12 @@ public class PayrollController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.TEXT_PLAIN)
                 .body(fileContent);
+    }
+
+    @GetMapping("/employee/payslips")
+    public ResponseEntity<List<PayslipResponse>> getMyPayslips(
+            @RequestHeader(value = "X-Employee-Id", defaultValue = "00000000-0000-0000-0000-000000000000") String employeeId) {
+        // In a real scenario, employeeId is extracted from JWT (SecurityContextHolder).
+        return ResponseEntity.ok(payrollUseCase.getEmployeePayslips(employeeId));
     }
 }
