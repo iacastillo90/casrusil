@@ -1,6 +1,7 @@
 package com.casrusil.siierpai.modules.user.application.service;
 
 import com.casrusil.siierpai.modules.user.domain.model.*;
+import com.casrusil.siierpai.modules.user.domain.port.out.OrganizationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,8 +20,11 @@ public class OrganizationService {
 
     private static final Logger logger = LoggerFactory.getLogger(OrganizationService.class);
 
-    // In-memory storage (TODO: replace with repository)
-    private final Map<OrganizationId, Organization> organizations = new ConcurrentHashMap<>();
+    private final OrganizationRepository organizationRepository;
+
+    public OrganizationService(OrganizationRepository organizationRepository) {
+        this.organizationRepository = organizationRepository;
+    }
 
     /**
      * Creates a new organization.
@@ -29,7 +33,7 @@ public class OrganizationService {
         logger.info("Creating organization: {}", name);
 
         Organization organization = Organization.create(name, type);
-        organizations.put(organization.getId(), organization);
+        organization = organizationRepository.save(organization);
 
         logger.info("Organization created: {}", organization.getId());
         return organization;
@@ -45,12 +49,12 @@ public class OrganizationService {
 
         logger.info("Creating child organization: {} under parent: {}", name, parentId);
 
-        if (!organizations.containsKey(parentId)) {
+        if (organizationRepository.findById(parentId).isEmpty()) {
             throw new IllegalArgumentException("Parent organization not found: " + parentId);
         }
 
         Organization organization = Organization.createChild(name, type, parentId);
-        organizations.put(organization.getId(), organization);
+        organization = organizationRepository.save(organization);
 
         logger.info("Child organization created: {}", organization.getId());
         return organization;
@@ -60,27 +64,22 @@ public class OrganizationService {
      * Gets organization by ID.
      */
     public Organization getOrganization(OrganizationId id) {
-        Organization org = organizations.get(id);
-        if (org == null) {
-            throw new IllegalArgumentException("Organization not found: " + id);
-        }
-        return org;
+        return organizationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + id));
     }
 
     /**
      * Lists all organizations.
      */
     public List<Organization> getAllOrganizations() {
-        return new ArrayList<>(organizations.values());
+        return organizationRepository.findAll();
     }
 
     /**
      * Lists active organizations.
      */
     public List<Organization> getActiveOrganizations() {
-        return organizations.values().stream()
-                .filter(Organization::isActive)
-                .collect(Collectors.toList());
+        return organizationRepository.findActive();
     }
 
     /**
@@ -95,8 +94,7 @@ public class OrganizationService {
 
         Organization organization = getOrganization(id);
         organization.update(name, type);
-
-        return organization;
+        return organizationRepository.save(organization);
     }
 
     /**
@@ -107,8 +105,7 @@ public class OrganizationService {
 
         Organization organization = getOrganization(id);
         organization.suspend();
-
-        return organization;
+        return organizationRepository.save(organization);
     }
 
     /**
@@ -119,8 +116,7 @@ public class OrganizationService {
 
         Organization organization = getOrganization(id);
         organization.activate();
-
-        return organization;
+        return organizationRepository.save(organization);
     }
 
     /**
@@ -132,9 +128,7 @@ public class OrganizationService {
         hierarchy.add(root);
 
         // Find all children
-        organizations.values().stream()
-                .filter(org -> rootId.equals(org.getParentId()))
-                .forEach(hierarchy::add);
+        hierarchy.addAll(organizationRepository.findByParentId(rootId));
 
         return hierarchy;
     }
