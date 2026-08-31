@@ -21,7 +21,7 @@ import java.util.UUID;
  * @since 1.0
  */
 @Entity
-@Table(name = "bank_transactions")
+@Table(name = "bank_transactions", indexes = { @Index(name = "idx_bank_tx_company", columnList = "company_id") })
 public class BankTransactionEntity {
 
     @Id
