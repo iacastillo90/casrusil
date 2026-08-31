@@ -19,6 +19,7 @@ public class AccountConstants {
 
     // ========== PASIVOS (2.x.xx.xxx) ==========
     public static final String PROVEEDORES_NACIONALES = "2.1.01.001";
+    public static final String PROVEEDORES_ENERGIA = "2.1.01.005";
     public static final String IVA_DEBITO = "2.1.04.001";
 
     // ========== PATRIMONIO (3.x.xx.xxx) ==========
