@@ -1,6 +1,8 @@
 package com.casrusil.siierpai.modules.banking.application.service;
 
 import com.casrusil.siierpai.modules.banking.domain.model.ReconciliationLearningRecord;
+import com.casrusil.siierpai.modules.banking.infrastructure.persistence.ReconciliationLearningEntity;
+import com.casrusil.siierpai.modules.banking.infrastructure.persistence.ReconciliationLearningJpaRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 🧠 FERRARI ENGINE PHASE 3: Servicio de aprendizaje de conciliación.
@@ -44,11 +47,11 @@ public class ReconciliationLearningService {
 
     private static final Logger logger = LoggerFactory.getLogger(ReconciliationLearningService.class);
 
-    // TODO: Inyectar ReconciliationLearningRepository cuando se cree
-    // private final ReconciliationLearningRepository repository;
+    private final ReconciliationLearningJpaRepository repository;
 
-    // Por ahora, almacenamiento en memoria (MVP)
-    private final List<ReconciliationLearningRecord> learningRecords = new ArrayList<>();
+    public ReconciliationLearningService(ReconciliationLearningJpaRepository repository) {
+        this.repository = repository;
+    }
 
     /**
      * Registra la decisión del usuario sobre un match sugerido.
@@ -60,6 +63,7 @@ public class ReconciliationLearningService {
      * @param userConfirmed       Si el usuario confirmó el match
      * @param userFeedback        Feedback opcional del usuario
      */
+    @Transactional
     public void recordDecision(
             CompanyId companyId,
             UUID bankTransactionId,
@@ -76,8 +80,17 @@ public class ReconciliationLearningService {
                 userConfirmed,
                 userFeedback);
 
-        learningRecords.add(record);
-        // TODO: repository.save(record);
+        // Persist to DB
+        ReconciliationLearningEntity entity = new ReconciliationLearningEntity();
+        entity.setId(record.getId());
+        entity.setCompanyId(record.getCompanyId().value().toString());
+        entity.setBankTransactionId(record.getBankTransactionId());
+        entity.setAccountingEntryId(record.getAccountingEntryId());
+        entity.setSuggestedConfidence(record.getSuggestedConfidence());
+        entity.setUserConfirmed(record.isUserConfirmed());
+        entity.setUserFeedback(record.getUserFeedback());
+        entity.setCreatedAt(record.getCreatedAt());
+        repository.save(entity);
 
         // Analizar si es un caso interesante para logging
         if (suggestedConfidence >= 0.8 && !userConfirmed) {
@@ -99,19 +112,10 @@ public class ReconciliationLearningService {
      * @return Precision (0.0 - 1.0)
      */
     public double calculatePrecision(CompanyId companyId) {
-        List<ReconciliationLearningRecord> companyRecords = learningRecords.stream()
-                .filter(r -> r.getCompanyId().equals(companyId))
-                .toList();
-
-        if (companyRecords.isEmpty()) {
-            return 0.0;
-        }
-
-        long confirmed = companyRecords.stream()
-                .filter(ReconciliationLearningRecord::isUserConfirmed)
-                .count();
-
-        return (double) confirmed / companyRecords.size();
+        var records = repository.findByCompanyId(companyId.value().toString());
+        if (records.isEmpty()) return 0.0;
+        long confirmed = records.stream().filter(ReconciliationLearningEntity::isUserConfirmed).count();
+        return (double) confirmed / records.size();
     }
 
     /**
@@ -121,9 +125,7 @@ public class ReconciliationLearningService {
      * @return Estadísticas en formato legible
      */
     public String getStats(CompanyId companyId) {
-        List<ReconciliationLearningRecord> companyRecords = learningRecords.stream()
-                .filter(r -> r.getCompanyId().equals(companyId))
-                .toList();
+        var companyRecords = repository.findByCompanyId(companyId.value().toString());
 
         if (companyRecords.isEmpty()) {
             return "Sin datos de aprendizaje aún";
@@ -131,7 +133,7 @@ public class ReconciliationLearningService {
 
         long total = companyRecords.size();
         long confirmed = companyRecords.stream()
-                .filter(ReconciliationLearningRecord::isUserConfirmed)
+                .filter(r -> r.isUserConfirmed())
                 .count();
         long rejected = total - confirmed;
 
@@ -160,9 +162,7 @@ public class ReconciliationLearningService {
      */
     public List<String> suggestAlgorithmAdjustments(CompanyId companyId) {
         List<String> suggestions = new ArrayList<>();
-        List<ReconciliationLearningRecord> companyRecords = learningRecords.stream()
-                .filter(r -> r.getCompanyId().equals(companyId))
-                .toList();
+        var companyRecords = repository.findByCompanyId(companyId.value().toString());
 
         if (companyRecords.size() < 10) {
             suggestions.add("Necesitas al menos 10 decisiones para sugerencias precisas");
