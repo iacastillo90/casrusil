@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface PayslipJpaRepository extends JpaRepository<PayslipEntity, Long> {
     List<PayslipEntity> findByPeriodIdAndCompanyId(Long periodId, String companyId);
+    List<PayslipEntity> findByEmployeeId(String employeeId);
 }
