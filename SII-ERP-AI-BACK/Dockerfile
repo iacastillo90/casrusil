@@ -1,22 +1,27 @@
+# Etapa 1: Build
 FROM eclipse-temurin:21-jdk-alpine AS builder
-WORKDIR /workspace/app
-
-# Copy gradle wrapper and config files
+WORKDIR /app
+# Copiar wrappers y configuración
+COPY gradlew .
 COPY gradle gradle
-COPY build.gradle settings.gradle gradlew ./
+COPY build.gradle .
+COPY settings.gradle .
+COPY gradle.properties .
+# Otorgar permisos al wrapper y descargar dependencias
+RUN chmod +x gradlew
+RUN ./gradlew dependencies --no-daemon
+
+# Copiar el código fuente y compilar
 COPY src src
+RUN ./gradlew bootJar -x test --no-daemon
 
-# Make gradlew executable and build the application (skip tests for faster build)
-RUN chmod +x ./gradlew
-RUN ./gradlew build -x test
-
-# Stage 2: Create the minimal runtime image
+# Etapa 2: Runtime
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=builder /workspace/app/build/libs/*.jar app.jar
+COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Expose the application port
+# Exponer el puerto
 EXPOSE 8080
 
-# Run the jar file
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# Comando de inicio
+ENTRYPOINT ["java", "-jar", "app.jar"]
