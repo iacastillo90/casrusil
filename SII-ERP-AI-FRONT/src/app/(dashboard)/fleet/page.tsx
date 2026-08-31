@@ -3,7 +3,14 @@
 import { Truck, MapPin, Activity, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+import { useFleet } from '@/features/fleet/hooks/useFleet';
+
 export default function FleetPage() {
+    const { metrics, isLoading } = useFleet();
+
+    if (isLoading || !metrics) {
+        return <div className="p-6 text-center text-slate-500">Cargando flota...</div>;
+    }
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
@@ -18,8 +25,8 @@ export default function FleetPage() {
                         <Truck className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">12</div>
-                        <p className="text-xs text-muted-foreground">De 15 totales</p>
+                        <div className="text-2xl font-bold">{metrics.activeVehicles}</div>
+                        <p className="text-xs text-muted-foreground">De {metrics.totalVehicles} totales</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -28,7 +35,7 @@ export default function FleetPage() {
                         <MapPin className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">8</div>
+                        <div className="text-2xl font-bold">{metrics.enRoute}</div>
                         <p className="text-xs text-muted-foreground">+2 desde ayer</p>
                     </CardContent>
                 </Card>
@@ -38,7 +45,7 @@ export default function FleetPage() {
                         <Activity className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">94%</div>
+                        <div className="text-2xl font-bold">{metrics.efficiencyPercent}%</div>
                         <p className="text-xs text-muted-foreground">+2.1% esta semana</p>
                     </CardContent>
                 </Card>
@@ -48,7 +55,7 @@ export default function FleetPage() {
                         <CheckCircle2 className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">2</div>
+                        <div className="text-2xl font-bold">{metrics.maintenanceScheduled}</div>
                         <p className="text-xs text-muted-foreground">Vehículos programados</p>
                     </CardContent>
                 </Card>
