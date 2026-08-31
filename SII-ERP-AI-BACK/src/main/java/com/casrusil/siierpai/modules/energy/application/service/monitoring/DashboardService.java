@@ -52,9 +52,9 @@ public class DashboardService {
                                 .filter(s -> s.getEndedAt() == null)
                                 .toList();
 
-                // Get all stations (simplified - using findByStationId as proxy)
-                int totalStations = 10; // TODO: Get from configuration or count unique stations
-                int activeStations = 8; // TODO: Calculate from actual station status
+                // Get all stations count
+                int totalStations = (int) stationRepository.count();
+                int activeStations = (int) stationRepository.countByStatus(com.casrusil.siierpai.modules.energy.domain.model.StationStatus.OPERATIONAL);
                 int offlineStations = totalStations - activeStations;
 
                 // Calculate session metrics
