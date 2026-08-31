@@ -1,6 +1,7 @@
 package com.casrusil.siierpai.modules.user.application.service;
 
 import com.casrusil.siierpai.modules.user.domain.model.*;
+import com.casrusil.siierpai.modules.user.domain.port.out.RoleRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,12 +20,14 @@ public class RoleService {
 
     private static final Logger logger = LoggerFactory.getLogger(RoleService.class);
 
-    // In-memory storage (TODO: replace with repository)
-    private final Map<RoleId, Role> roles = new ConcurrentHashMap<>();
+    private final RoleRepository roleRepository;
 
-    public RoleService() {
-        // Initialize system roles
-        initializeSystemRoles();
+    public RoleService(RoleRepository roleRepository) {
+        this.roleRepository = roleRepository;
+        // Initialize system roles if empty
+        if (roleRepository.findSystemRoles().isEmpty()) {
+            initializeSystemRoles();
+        }
     }
 
     /**
@@ -39,7 +42,7 @@ public class RoleService {
         logger.info("Creating role: {} for organization: {}", name, organizationId);
 
         Role role = Role.createCustom(organizationId, name, description, permissions);
-        roles.put(role.getId(), role);
+        role = roleRepository.save(role);
 
         logger.info("Role created: {}", role.getId());
         return role;
@@ -49,37 +52,29 @@ public class RoleService {
      * Gets role by ID.
      */
     public Role getRole(RoleId id) {
-        Role role = roles.get(id);
-        if (role == null) {
-            throw new IllegalArgumentException("Role not found: " + id);
-        }
-        return role;
+        return roleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + id));
     }
 
     /**
      * Lists all roles.
      */
     public List<Role> getAllRoles() {
-        return new ArrayList<>(roles.values());
+        return roleRepository.findAll();
     }
 
     /**
      * Lists system roles.
      */
     public List<Role> getSystemRoles() {
-        return roles.values().stream()
-                .filter(Role::isSystemRole)
-                .collect(Collectors.toList());
+        return roleRepository.findSystemRoles();
     }
 
     /**
      * Lists roles by organization.
      */
     public List<Role> getRolesByOrganization(OrganizationId organizationId) {
-        return roles.values().stream()
-                .filter(role -> !role.isSystemRole() &&
-                        organizationId.equals(role.getOrganizationId()))
-                .collect(Collectors.toList());
+        return roleRepository.findByOrganizationId(organizationId);
     }
 
     /**
@@ -90,8 +85,7 @@ public class RoleService {
 
         Role role = getRole(id);
         role.update(name, description);
-
-        return role;
+        return roleRepository.save(role);
     }
 
     /**
@@ -102,8 +96,7 @@ public class RoleService {
 
         Role role = getRole(id);
         role.updatePermissions(permissions);
-
-        return role;
+        return roleRepository.save(role);
     }
 
     /**
@@ -116,7 +109,7 @@ public class RoleService {
                 "System Administrator with full access",
                 Set.of(
                         Permission.fullAccess("*", PermissionScope.ALL)));
-        roles.put(admin.getId(), admin);
+        roleRepository.save(admin);
 
         // Manager role
         Role manager = Role.createSystem(
@@ -127,7 +120,7 @@ public class RoleService {
                         Permission.fullAccess("users", PermissionScope.ORGANIZATION),
                         Permission.fullAccess("stations", PermissionScope.ORGANIZATION),
                         Permission.fullAccess("sessions", PermissionScope.ORGANIZATION)));
-        roles.put(manager.getId(), manager);
+        roleRepository.save(manager);
 
         // Operator role
         Role operator = Role.createSystem(
@@ -138,7 +131,7 @@ public class RoleService {
                         Permission.readOnly("users", PermissionScope.ORGANIZATION),
                         Permission.fullAccess("stations", PermissionScope.ORGANIZATION),
                         Permission.fullAccess("sessions", PermissionScope.ORGANIZATION)));
-        roles.put(operator.getId(), operator);
+        roleRepository.save(operator);
 
         // Viewer role
         Role viewer = Role.createSystem(
@@ -146,8 +139,8 @@ public class RoleService {
                 "Read-only Viewer",
                 Set.of(
                         Permission.readOnly("*", PermissionScope.ORGANIZATION)));
-        roles.put(viewer.getId(), viewer);
+        roleRepository.save(viewer);
 
-        logger.info("Initialized {} system roles", roles.size());
+        logger.info("Initialized system roles");
     }
 }
