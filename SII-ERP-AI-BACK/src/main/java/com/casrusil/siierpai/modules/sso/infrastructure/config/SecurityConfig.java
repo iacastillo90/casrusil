@@ -57,7 +57,7 @@ public class SecurityConfig {
                 // 4. Reglas de Autorización
                 .authorizeHttpRequests(auth -> auth
                         // Permitir acceso público a endpoints de autenticación y Swagger si lo usas
-                        .requestMatchers("/api/v1/auth/**", "/error").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/error", "/actuator/**").permitAll()
                         // Permitir OPTIONS (pre-flight requests de CORS)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         // Todo lo demás requiere autenticación
