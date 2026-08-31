@@ -21,18 +21,7 @@ export function RecentInvoices() {
         setMounted(true);
     }, []);
 
-    // Mock data for demo if backend is unavailable
-    const MOCK_INVOICES: Partial<Invoice>[] = [
-        { id: '1', recipientName: 'Tech Solutions SpA', folio: 1024, issueDate: '2025-12-10T10:00:00Z', status: 'ACCEPTED', totalAmount: '1250000' },
-        { id: '2', recipientName: 'Consultora Green', folio: 1023, issueDate: '2025-12-09T14:30:00Z', status: 'SENT', totalAmount: '850000' },
-        { id: '3', recipientName: 'Transportes Rápidos', folio: 1022, issueDate: '2025-12-08T09:15:00Z', status: 'REJECTED', totalAmount: '450000' },
-        { id: '4', recipientName: 'Servicios Integrales', folio: 1021, issueDate: '2025-12-07T16:45:00Z', status: 'ACCEPTED', totalAmount: '2100000' },
-        { id: '5', recipientName: 'Innovación Digital', folio: 1020, issueDate: '2025-12-05T11:20:00Z', status: 'ACCEPTED', totalAmount: '180000' },
-    ];
-
-    // Take only the last 5 invoices, or use mock if empty/undefined
-    const dbInvoices = invoices?.invoices?.slice(0, 5) || [];
-    const recentInvoices = dbInvoices.length > 0 ? dbInvoices : (MOCK_INVOICES as Invoice[]);
+    const recentInvoices = invoices?.invoices?.slice(0, 5) || [];
 
     if (!mounted || isLoading) {
         return <SkeletonLoader variant="card" />;
