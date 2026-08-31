@@ -60,8 +60,8 @@ node_modules/
 
 coverage/
 .next/
-out/
-build/
+SII-ERP-AI-FRONT/out/
+SII-ERP-AI-FRONT/build/
 
 .DS_Store
 *.pem
