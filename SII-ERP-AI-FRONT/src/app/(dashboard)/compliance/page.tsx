@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, ShieldCheck, Calculator, FileWarning } from "lucide-react";
 import { useComplianceDashboard } from "@/features/compliance/hooks/useCompliance";
-import { formatCLP } from "@/lib/utils/currency";
+import { formatCLP } from "@/lib/formatters";
 
 export default function ComplianceCenterPage() {
     const { data: dashboard, isLoading } = useComplianceDashboard();

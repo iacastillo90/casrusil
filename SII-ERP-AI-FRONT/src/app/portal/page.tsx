@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, CreditCard, Clock } from "lucide-react";
 import { useCustomerOrders, usePayOrder } from "@/features/b2b/hooks/useB2b";
-import { formatCLP } from "@/lib/utils/currency";
+import { formatCLP } from "@/lib/formatters";
 import { toast } from "sonner";
 
 export default function PortalDashboard() {

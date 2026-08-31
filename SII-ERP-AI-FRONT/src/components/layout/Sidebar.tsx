@@ -25,8 +25,7 @@ import {
     UserCircle2,
     Landmark,
     Factory,
-    PackageSearch,
-    FileText
+    PackageSearch
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APP_ROUTES } from '@/lib/constants';

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useFixedAssets, useRunDepreciation } from "@/features/fixed_assets/hooks/useFixedAssets";
 import { Calculator, Monitor, Truck, Cog } from "lucide-react";
-import { formatCLP } from "@/lib/utils/currency";
+import { formatCLP } from "@/lib/formatters";
 import { toast } from "sonner";
 
 export default function FixedAssetsPage() {
