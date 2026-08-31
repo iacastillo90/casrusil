@@ -17,6 +17,11 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.casrusil.siierpai.modules.compliance.infrastructure.persistence.entity.TaxParameterEntity;
+import com.casrusil.siierpai.modules.compliance.infrastructure.persistence.repository.TaxParameterJpaRepository;
+import java.math.RoundingMode;
+
+
 /**
  * Service for calculating Chilean F29 (VAT Declaration).
  * Based on standard Chilean accounting codes and SII regulations.
@@ -35,12 +40,16 @@ public class F29CalculatorService {
     private final FeeReceiptRepository feeReceiptRepository;
     private final AnomalyDetectionService anomalyDetectionService;
 
+    private final TaxParameterJpaRepository taxParameterRepository;
+
     public F29CalculatorService(AccountingEntryRepository accountingEntryRepository,
             FeeReceiptRepository feeReceiptRepository,
-            AnomalyDetectionService anomalyDetectionService) {
+            AnomalyDetectionService anomalyDetectionService,
+            TaxParameterJpaRepository taxParameterRepository) {
         this.accountingEntryRepository = accountingEntryRepository;
         this.feeReceiptRepository = feeReceiptRepository;
         this.anomalyDetectionService = anomalyDetectionService;
+        this.taxParameterRepository = taxParameterRepository;
     }
 
     /**
@@ -112,8 +121,25 @@ public class F29CalculatorService {
             }
         }
 
-        // Calculate net VAT payable (positive = pay to SII, negative = recoverable)
-        BigDecimal vatPayable = vatDebit.subtract(vatCredit);
+        // --- PROPORTIONAL IVA LOGIC (Ley de IVA Art. 43) ---
+        BigDecimal factorProporcionalidad = BigDecimal.ONE;
+        if (totalSalesExempt.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal totalVentas = totalSalesTaxable.add(totalSalesExempt);
+            if (totalVentas.compareTo(BigDecimal.ZERO) > 0) {
+                factorProporcionalidad = totalSalesTaxable.divide(totalVentas, 4, RoundingMode.HALF_UP);
+            }
+        }
+        
+        // El crédito fiscal utilizable se castiga según el factor
+        BigDecimal usableVatCredit = vatCredit.multiply(factorProporcionalidad).setScale(0, RoundingMode.HALF_UP);
+
+        // Calculate net VAT payable
+        BigDecimal vatPayable = vatDebit.subtract(usableVatCredit);
+
+        // Fetch Tax Parameters
+        BigDecimal bheRate = taxParameterRepository.findById("YEAR_2024")
+                .map(TaxParameterEntity::getBheRetentionRate)
+                .orElse(new BigDecimal("13.75"));
 
         // Sum Fee Retentions for the period
         List<FeeReceipt> fees = feeReceiptRepository.findByCompanyIdAndIssueDateBetween(companyId, start, end);
@@ -142,7 +168,7 @@ public class F29CalculatorService {
         // Créditos (Compras)
         if (vatCredit.compareTo(BigDecimal.ZERO) > 0) {
             // Code 520: Crédito Fiscal IVA
-            details.add(new F29Report.F29Line("520", "Crédito Fiscal IVA", vatCredit));
+            details.add(new F29Report.F29Line("520", "Crédito Fiscal IVA", usableVatCredit));
         }
 
         if (vatToPay.compareTo(BigDecimal.ZERO) > 0) {
@@ -153,7 +179,7 @@ public class F29CalculatorService {
         }
 
         if (feeWithholding.compareTo(BigDecimal.ZERO) > 0) {
-            details.add(new F29Report.F29Line("151", "Retención Honorarios (13.75%)", feeWithholding));
+            details.add(new F29Report.F29Line("151", String.format("Retención Honorarios (%s%%)", bheRate), feeWithholding));
         }
 
         return new F29Report(
