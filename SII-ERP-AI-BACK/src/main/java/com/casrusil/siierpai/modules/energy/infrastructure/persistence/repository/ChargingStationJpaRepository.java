@@ -27,6 +27,11 @@ public interface ChargingStationJpaRepository extends JpaRepository<ChargingStat
     List<ChargingStationEntity> findByStatus(StationStatus status);
 
     /**
+     * Cuenta estaciones por estado.
+     */
+    long countByStatus(StationStatus status);
+
+    /**
      * Busca estaciones operativas.
      */
     default List<ChargingStationEntity> findAllOperational() {
