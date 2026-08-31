@@ -20,6 +20,7 @@ import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntry;
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntryLine;
 import com.casrusil.siierpai.modules.accounting.domain.model.EntryType;
 import com.casrusil.siierpai.modules.accounting.domain.port.out.AccountingEntryRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BankReconciliationWorkbenchService {
@@ -96,7 +97,7 @@ public class BankReconciliationWorkbenchService {
         return a.subtract(b).abs().compareTo(tolerance) <= 0;
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public void processMatch(CompanyId companyId, java.util.UUID bankId, java.util.UUID erpId) {
         BankTransaction bank = bankTransactionRepository.findById(bankId);
         Invoice invoice = invoiceRepository.findById(erpId)
