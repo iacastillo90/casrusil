@@ -5,6 +5,8 @@ import { sustainabilityService } from "@/features/sustainability/services/sustai
 import { EcoScoreGauge } from "@/features/sustainability/components/EcoScoreGauge";
 import { SustainablePurchasesChart } from "@/features/sustainability/components/SustainablePurchasesChart";
 import { TopGreenProviders } from "@/features/sustainability/components/TopGreenProviders";
+import { EsgReportPanel } from "@/features/sustainability/components/EsgReportPanel";
+import { CorfoSimulatorPanel } from "@/features/sustainability/components/CorfoSimulatorPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Leaf, Award, TrendingUp, Sparkles } from "lucide-react";
@@ -133,40 +135,15 @@ export default function SustainabilityDashboardPage() {
                 </div>
             </div>
 
-            {/* Top Green Providers */}
-            <TopGreenProviders providers={greenPassport.topGreenProviders} />
-
-            {/* CORFO Call-to-Action */}
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-                <CardContent className="pt-6">
-                    <div className="flex items-start gap-4">
-                        <div className="p-3 rounded-full bg-primary/10 border border-primary/20 shrink-0">
-                            <Award className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-lg font-semibold mb-2">
-                                ¿Listo para postular a CORFO?
-                            </h3>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                Tu Eco-Score de <strong>{greenPassport.ecoScore}/100</strong> y el{' '}
-                                <strong>{greenPassport.sustainablePercentage.toFixed(1)}%</strong> de compras sostenibles
-                                demuestran tu compromiso ambiental. Estos datos pueden fortalecer tu postulación a fondos CORFO
-                                para empresas sustentables.
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                <Badge variant="default" className="gap-1">
-                                    <Sparkles className="h-3 w-3" />
-                                    Datos verificables
-                                </Badge>
-                                <Badge variant="outline" className="gap-1">
-                                    <TrendingUp className="h-3 w-3" />
-                                    Tendencia positiva
-                                </Badge>
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Advanced AI and ESG Section */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                <EsgReportPanel />
+                <div className="space-y-6">
+                    <CorfoSimulatorPanel />
+                    {/* Top Green Providers */}
+                    <TopGreenProviders providers={greenPassport.topGreenProviders} />
+                </div>
+            </div>
         </div>
     );
 }
