@@ -36,18 +36,20 @@ public class CashManagementService {
         List<AccountingEntryLine> lines = new ArrayList<>();
         String cashAccount = "110101"; // Caja
 
-        if (transaction.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+        BigDecimal convertedAmount = transaction.getAmount().multiply(transaction.getExchangeRate());
+
+        if (convertedAmount.compareTo(BigDecimal.ZERO) > 0) {
             // Cash IN (Debit Cash, Credit Category/Revenue)
-            lines.add(AccountingEntryLine.debit(cashAccount, "Cash Deposit", transaction.getAmount()));
+            lines.add(AccountingEntryLine.debit(cashAccount, "Cash Deposit (" + transaction.getCurrency() + ")", convertedAmount));
             // Determine credit account based on category
             String creditAccount = determineAccountFromCategory(transaction.getCategory(), false);
-            lines.add(AccountingEntryLine.credit(creditAccount, "Revenue/Category", transaction.getAmount()));
+            lines.add(AccountingEntryLine.credit(creditAccount, "Revenue/Category", convertedAmount));
         } else {
             // Cash OUT (Debit Category/Expense, Credit Cash)
-            BigDecimal amount = transaction.getAmount().abs();
+            BigDecimal absAmount = convertedAmount.abs();
             String debitAccount = determineAccountFromCategory(transaction.getCategory(), true);
-            lines.add(AccountingEntryLine.debit(debitAccount, "Expense/Category", amount));
-            lines.add(AccountingEntryLine.credit(cashAccount, "Cash Withdrawal", amount));
+            lines.add(AccountingEntryLine.debit(debitAccount, "Expense/Category", absAmount));
+            lines.add(AccountingEntryLine.credit(cashAccount, "Cash Withdrawal (" + transaction.getCurrency() + ")", absAmount));
         }
 
         AccountingEntry entry = new AccountingEntry(
