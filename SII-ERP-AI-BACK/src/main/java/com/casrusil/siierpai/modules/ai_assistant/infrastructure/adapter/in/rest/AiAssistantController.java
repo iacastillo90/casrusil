@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.ai_assistant.infrastructure.adapter.in.rest;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.ai_assistant.application.service.ConversationService;
 import com.casrusil.siierpai.modules.ai_assistant.domain.model.Conversation;
 import com.casrusil.siierpai.modules.ai_assistant.domain.model.Message;
@@ -53,7 +55,7 @@ public class AiAssistantController {
     @PostMapping("/conversations/{conversationId}/messages")
     public ResponseEntity<Message> sendMessage(
             @PathVariable UUID conversationId,
-            @RequestBody SendMessageRequest request) {
+            @Valid @RequestBody SendMessageRequest request) {
         return ResponseEntity.ok(conversationService.sendMessage(conversationId, request.content()));
     }
 
