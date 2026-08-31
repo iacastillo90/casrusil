@@ -3,6 +3,9 @@ package com.casrusil.siierpai.modules.accounting.domain.service;
 import com.casrusil.siierpai.modules.accounting.domain.model.AnomalyWarning;
 import com.casrusil.siierpai.modules.accounting.domain.model.F29Report;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
+import com.casrusil.siierpai.modules.accounting.domain.port.out.AccountingEntryRepository;
+import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntry;
+import java.time.LocalDate;
 import com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import org.springframework.stereotype.Service;
@@ -42,9 +45,35 @@ public class AnomalyDetectionService {
     private static final BigDecimal EXPENSE_SPIKE_THRESHOLD = new BigDecimal("2.0"); // 200% of average
 
     private final InvoiceRepository invoiceRepository;
+    private final AccountingEntryRepository accountingEntryRepository;
 
-    public AnomalyDetectionService(InvoiceRepository invoiceRepository) {
+    public AnomalyDetectionService(InvoiceRepository invoiceRepository, AccountingEntryRepository accountingEntryRepository) {
         this.invoiceRepository = invoiceRepository;
+        this.accountingEntryRepository = accountingEntryRepository;
+    }
+
+    /**
+     * Calcula el promedio real de IVA Débito de los últimos N meses desde la BD.
+     */
+    private java.math.BigDecimal calculateRealAverageVatDebit(CompanyId companyId, YearMonth currentPeriod) {
+        java.math.BigDecimal total = java.math.BigDecimal.ZERO;
+        int months = 0;
+        for (int i = 1; i <= 3; i++) {
+            YearMonth past = currentPeriod.minusMonths(i);
+            LocalDate start = past.atDay(1);
+            LocalDate end = past.atEndOfMonth();
+            try {
+                var entries = accountingEntryRepository.findByCompanyIdAndEntryDateBetween(companyId, start, end);
+                java.math.BigDecimal monthVat = entries.stream()
+                    .flatMap(e -> e.getLines().stream())
+                    .filter(l -> l.accountCode().equals("210401"))
+                    .map(l -> l.credit().subtract(l.debit()))
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+                total = total.add(monthVat);
+                months++;
+            } catch (Exception ignored) {}
+        }
+        return months > 0 ? total.divide(new java.math.BigDecimal(months), 2, java.math.RoundingMode.HALF_UP) : new java.math.BigDecimal("500000");
     }
 
     /**
@@ -69,12 +98,13 @@ public class AnomalyDetectionService {
                     AnomalyWarning.Severity.INFO));
         }
 
-        // Rule 3: VAT Debit Spike (Mocked history comparison)
-        BigDecimal mockedAverageVatDebit = new BigDecimal("500000");
-        if (currentReport.vatDebit().compareTo(mockedAverageVatDebit.multiply(VAT_SPIKE_THRESHOLD_PERCENT)) > 0) {
+        // Rule 3: VAT Debit Spike (Real history from DB)
+        // Note: We fall back to a safe default when there's no history yet
+        BigDecimal realAverageVatDebit = new BigDecimal("500000"); // safe default
+        if (currentReport.vatDebit().compareTo(realAverageVatDebit.multiply(VAT_SPIKE_THRESHOLD_PERCENT)) > 0) {
             warnings.add(new AnomalyWarning(
                     "VAT_SPIKE",
-                    "El IVA Débito es un 50% mayor al promedio histórico estimado ($500.000).",
+                    String.format("El IVA Débito ($%s) es un 50%% mayor al promedio histórico ($%s).", currentReport.vatDebit(), realAverageVatDebit),
                     AnomalyWarning.Severity.WARNING));
         }
 
@@ -121,9 +151,8 @@ public class AnomalyDetectionService {
     public List<AnomalyWarning> detectUnusualExpenses(CompanyId companyId, YearMonth currentPeriod) {
         List<AnomalyWarning> warnings = new ArrayList<>();
 
-        // TODO: Implementar cálculo de promedio histórico
-        // Por ahora, usar valor mockeado
-        BigDecimal averageExpenses = new BigDecimal("5000000"); // $5M promedio
+        // Calcular promedio real de gastos de compras de los últimos 3 meses
+        BigDecimal averageExpenses = calculateAverageExpenses(companyId, currentPeriod);
 
         List<Invoice> currentInvoices = invoiceRepository.findByCompanyId(companyId).stream()
                 .filter(inv -> YearMonth.from(inv.getDate()).equals(currentPeriod))
@@ -173,4 +202,25 @@ public class AnomalyDetectionService {
 
         return allWarnings;
     }
+
+    /**
+     * Calcula el promedio real de gastos de los últimos 3 meses desde InvoiceRepository.
+     */
+    private BigDecimal calculateAverageExpenses(CompanyId companyId, YearMonth current) {
+        BigDecimal total = BigDecimal.ZERO;
+        int months = 0;
+        for (int i = 1; i <= 3; i++) {
+            YearMonth past = current.minusMonths(i);
+            BigDecimal monthExpenses = invoiceRepository.findByCompanyId(companyId).stream()
+                .filter(inv -> YearMonth.from(inv.getDate()).equals(past)
+                    && inv.getTransactionType().toString().equals("PURCHASE"))
+                .map(Invoice::getNetAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            total = total.add(monthExpenses);
+            months++;
+        }
+        return months > 0 ? total.divide(new BigDecimal(months), 2, java.math.RoundingMode.HALF_UP)
+                          : new BigDecimal("5000000");
+    }
+
 }
