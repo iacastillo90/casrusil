@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Sparkles, UploadCloud, CalendarAlert } from "lucide-react";
+import { FileText, Sparkles, UploadCloud, CalendarDays } from "lucide-react";
 import { useDocuments, useAnalyzeDocument } from "@/features/dms/hooks/useDms";
 import { toast } from "sonner";
 
@@ -52,7 +52,7 @@ export default function DmsPage() {
                                         {doc.aiSummary}
                                     </div>
                                     <div className="flex items-center gap-2 text-sm font-medium text-red-600 bg-red-50 p-2 rounded-md border border-red-100">
-                                        <CalendarAlert className="h-4 w-4" />
+                                        <CalendarDays className="h-4 w-4" />
                                         Vence el: {doc.expirationDate}
                                     </div>
                                 </div>

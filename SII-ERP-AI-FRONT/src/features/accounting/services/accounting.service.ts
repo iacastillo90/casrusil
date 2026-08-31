@@ -5,7 +5,7 @@ export const accountingService = {
     getInvoiceAuditTrail: async (id: string) => {
         return [];
     },
-    getBalanceSheet: async (dateTo: Date) => {
-        return null;
+    getBalanceSheet: async (dateTo: Date): Promise<any> => {
+        return { totalAssets: 0, totalLiabilities: 0, totalEquity: 0 };
     }
 };
