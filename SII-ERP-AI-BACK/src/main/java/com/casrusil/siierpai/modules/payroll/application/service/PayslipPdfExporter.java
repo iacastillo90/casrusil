@@ -35,9 +35,9 @@ public class PayslipPdfExporter {
             
             document.add(new Paragraph(" "));
             document.add(new Paragraph("Descuentos Legales:"));
-            document.add(new Paragraph("AFP: $" + payslip.getAfpDeduction()));
-            document.add(new Paragraph("Salud: $" + payslip.getHealthDeduction()));
-            document.add(new Paragraph("Impuesto Único: $" + payslip.getTaxDeduction()));
+            document.add(new Paragraph("AFP: $" + payslip.getAfpDiscount()));
+            document.add(new Paragraph("Salud: $" + payslip.getHealthDiscount()));
+            document.add(new Paragraph("Impuesto Único: $" + payslip.getSingleTax()));
             
             document.add(new Paragraph(" "));
             Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
