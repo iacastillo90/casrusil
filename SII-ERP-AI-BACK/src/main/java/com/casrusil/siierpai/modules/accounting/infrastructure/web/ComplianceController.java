@@ -4,14 +4,23 @@ import com.casrusil.siierpai.modules.accounting.application.service.*;
 import com.casrusil.siierpai.modules.accounting.domain.dto.SiiAuditReportDTO;
 import com.casrusil.siierpai.modules.accounting.domain.model.*;
 import com.casrusil.siierpai.modules.accounting.domain.service.AnomalyDetectionService;
+import com.casrusil.siierpai.modules.accounting.domain.service.BalanceSheetService;
 import com.casrusil.siierpai.modules.accounting.domain.service.F29CalculatorService;
 import com.casrusil.siierpai.modules.accounting.infrastructure.web.dto.ComplianceDashboardDTO;
 import com.casrusil.siierpai.modules.sustainability.infrastructure.adapter.in.rest.dto.GreenPassportDTO;
 import com.casrusil.siierpai.modules.sustainability.domain.port.out.GreenMetricsRepository;
 import com.casrusil.siierpai.modules.banking.infrastructure.web.dto.ReconciliationStatsDTO;
+import com.casrusil.siierpai.modules.banking.application.service.BankReconciliationWorkbenchService;
+import com.casrusil.siierpai.modules.banking.application.service.ReconciliationLearningService;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
+import java.math.RoundingMode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import com.casrusil.siierpai.modules.compliance.application.service.AcuseReciboScheduler;
+import com.casrusil.siierpai.modules.compliance.infrastructure.persistence.repository.TaxParameterJpaRepository;
+import com.casrusil.siierpai.modules.compliance.infrastructure.persistence.entity.TaxParameterEntity;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -36,18 +45,33 @@ public class ComplianceController {
     private final F29CalculatorService f29CalculatorService;
     private final TaxAuditService taxAuditService;
     private final GreenMetricsRepository greenMetricsRepository;
+    private final BalanceSheetService balanceSheetService;
+    private final AcuseReciboScheduler acuseScheduler;
+    private final TaxParameterJpaRepository taxRepo;
+    private final BankReconciliationWorkbenchService bankWorkbench;
+    private final ReconciliationLearningService learningService;
 
     public ComplianceController(
             SiiAuditorService siiAuditorService,
             AnomalyDetectionService anomalyDetectionService,
             F29CalculatorService f29CalculatorService,
             TaxAuditService taxAuditService,
-            GreenMetricsRepository greenMetricsRepository) {
+            GreenMetricsRepository greenMetricsRepository,
+            BalanceSheetService balanceSheetService,
+            AcuseReciboScheduler acuseScheduler,
+            TaxParameterJpaRepository taxRepo,
+            BankReconciliationWorkbenchService bankWorkbench,
+            ReconciliationLearningService learningService) {
         this.siiAuditorService = siiAuditorService;
         this.anomalyDetectionService = anomalyDetectionService;
         this.f29CalculatorService = f29CalculatorService;
         this.taxAuditService = taxAuditService;
         this.greenMetricsRepository = greenMetricsRepository;
+        this.balanceSheetService = balanceSheetService;
+        this.acuseScheduler = acuseScheduler;
+        this.taxRepo = taxRepo;
+        this.bankWorkbench = bankWorkbench;
+        this.learningService = learningService;
     }
 
     @GetMapping("/dashboard")
@@ -88,11 +112,24 @@ public class ComplianceController {
                     companyId, selectedPeriod, f29Report);
 
             // 🆕 FERRARI ENGINE: Green Passport
-            GreenPassportDTO greenPassport = calculateGreenPassport(companyId);
+            GreenPassportDTO greenPassport = calculateGreenPassport(companyId, selectedPeriod);
 
             // 🆕 FERRARI ENGINE: Bank Reconciliation Stats (mockeado por ahora)
+            // Calcular estadísticas reales de conciliación bancaria
+            var reconDashboard = bankWorkbench.getDashboard(companyId);
+            int totalTxns = reconDashboard.unmatchedBankLines().size() + reconDashboard.suggestions().size();
+            int reconciledCount = reconDashboard.suggestions().size();
+            int pendingCount = reconDashboard.unmatchedBankLines().size();
+            double reconRate = totalTxns > 0 ? (double) reconciledCount / totalTxns : 0.0;
+            double avgConfidence = reconDashboard.suggestions().stream()
+                .mapToDouble(m -> switch(m.confidenceLevel()) { case "HIGH" -> 0.9; case "MEDIUM" -> 0.65; default -> 0.4; })
+                .average().orElse(0.0);
+            double learningPrecision = learningService.calculatePrecision(companyId);
             ReconciliationStatsDTO reconciliationStats = new ReconciliationStatsDTO(
-                    0, 0, 0, 0.0, 0.0); // TODO: Implementar cuando haya datos reales
+                    totalTxns, reconciledCount, pendingCount, reconRate, Math.max(avgConfidence, learningPrecision));
+
+            List<AnomalyWarning> acuseAlerts = acuseScheduler.getPendingAlerts(companyId);
+            TaxParameterEntity taxParams = taxRepo.findById("YEAR_2024").orElse(null);
 
             return ResponseEntity.ok(new ComplianceDashboardDTO(
                     siiReport,
@@ -101,7 +138,9 @@ public class ComplianceController {
                     anomalies,
                     greenPassport,
                     reconciliationStats,
-                    calculateHealthScore(siiReport, anomalies, greenPassport)));
+                    calculateHealthScore(siiReport, anomalies, greenPassport),
+                    acuseAlerts,
+                    taxParams));
         } catch (Exception e) {
             throw new RuntimeException("Error generando Dashboard de Compliance", e);
         }
@@ -110,7 +149,7 @@ public class ComplianceController {
     /**
      * 🆕 FERRARI ENGINE: Calcula el Green Passport.
      */
-    private GreenPassportDTO calculateGreenPassport(CompanyId companyId) {
+    private GreenPassportDTO calculateGreenPassport(CompanyId companyId, YearMonth period) {
         BigDecimal carbonFootprint = greenMetricsRepository.calculateTotalCarbonFootprint(companyId);
         BigDecimal greenScore = greenMetricsRepository.calculateTotalGreenScore(companyId);
         long greenSuppliers = greenMetricsRepository.countGreenSuppliers(companyId);
@@ -128,7 +167,17 @@ public class ComplianceController {
             environmentalHealth = new BigDecimal("100");
         }
 
-        BigDecimal financialHealth = new BigDecimal("75.0"); // TODO: Calcular real
+        BalanceSheetReport balanceSheet = balanceSheetService.generateBalanceSheet(companyId, period.atEndOfMonth());
+        
+        BigDecimal financialHealth = new BigDecimal("75.0");
+        if (balanceSheet.totalLiabilities().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal ratio = balanceSheet.totalAssets().divide(balanceSheet.totalLiabilities(), 2, RoundingMode.HALF_UP);
+            financialHealth = ratio.multiply(new BigDecimal("50")).min(new BigDecimal("100"));
+        } else if (balanceSheet.totalAssets().compareTo(BigDecimal.ZERO) > 0) {
+            financialHealth = new BigDecimal("100");
+        } else {
+            financialHealth = new BigDecimal("50");
+        }
 
         String riskLevel = calculateRiskLevel(financialHealth, environmentalHealth);
 
