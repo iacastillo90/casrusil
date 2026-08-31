@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.sso.infrastructure.web;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.sso.application.service.SsoUserManagementService;
 import com.casrusil.siierpai.modules.sso.domain.model.User;
 import com.casrusil.siierpai.modules.sso.domain.model.UserRole;
@@ -42,7 +44,7 @@ public class SsoUserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody CreateUserRequest request) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserRequest request) {
         CompanyId companyId = CompanyContext.getCompanyId();
         if (companyId == null) {
             return ResponseEntity.status(403).build();
@@ -53,13 +55,13 @@ public class SsoUserController {
     }
 
     @PutMapping("/{id}/role")
-    public ResponseEntity<User> updateRole(@PathVariable UUID id, @RequestBody UpdateRoleRequest request) {
+    public ResponseEntity<User> updateRole(@PathVariable UUID id, @Valid @RequestBody UpdateRoleRequest request) {
         User user = userService.updateUser(new UserId(id), null, request.role());
         return ResponseEntity.ok(user);
     }
 
     @PostMapping("/invite")
-    public ResponseEntity<Void> inviteUser(@RequestBody InviteUserRequest request) {
+    public ResponseEntity<Void> inviteUser(@Valid @RequestBody InviteUserRequest request) {
         CompanyId companyId = CompanyContext.getCompanyId();
         if (companyId == null) {
             return ResponseEntity.status(403).build();
@@ -77,7 +79,7 @@ public class SsoUserController {
     }
 
     @PostMapping("/register-invite")
-    public ResponseEntity<User> registerWithInvite(@RequestBody RegisterInviteRequest request) {
+    public ResponseEntity<User> registerWithInvite(@Valid @RequestBody RegisterInviteRequest request) {
         var invitationOpt = inviteUserUseCase.validateInvitation(request.token());
         if (invitationOpt.isEmpty()) {
             return ResponseEntity.badRequest().build();
