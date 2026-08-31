@@ -7,7 +7,7 @@ public record StockMovedEvent(
         String companyId,
         Long productId,
         String movementType, // IN, OUT
-        int quantity,
+        BigDecimal quantity,
         BigDecimal unitPrice,
         BigDecimal totalAmount,
         LocalDateTime movementDate
