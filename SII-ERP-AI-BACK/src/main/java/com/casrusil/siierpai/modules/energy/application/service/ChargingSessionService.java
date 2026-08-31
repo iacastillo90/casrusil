@@ -7,6 +7,7 @@ import com.casrusil.siierpai.modules.energy.domain.port.out.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio de Aplicación: Gestión de Sesiones de Carga.
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
  * Patrón: Application Service (Hexagonal Architecture)
  * Responsabilidad: Orquestar el dominio y emitir eventos.
  */
+@Transactional
 @Service
 public class ChargingSessionService implements
                 InitiateChargingSessionUseCase,
