@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatCLP } from "@/lib/formatters";
+import { usePeriodClose } from "@/features/period_close/hooks/usePeriodClose";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type StepStatus = "pending" | "running" | "done" | "warning" | "error";
@@ -128,10 +129,24 @@ export default function PeriodClosePage() {
     const completedSteps = steps.filter(s => s.status === "done" || s.status === "warning").length;
     const hasWarnings = steps.some(s => s.status === "warning");
 
+    const { auditPeriod, executeClose } = usePeriodClose();
+
     const runAnalysis = async () => {
         setIsRunning(true);
         setCurrentStep(0);
         setAiChat(prev => [...prev, { role: "system", text: "Iniciando auditoría de cierre del período Noviembre 2026..." }]);
+
+        // 1. Call Real Backend Endpoint
+        let aiRecommendation = "";
+        let backendIssues: string[] = [];
+        try {
+            const auditResult = await auditPeriod.mutateAsync({ year: 2026, month: 11 });
+            aiRecommendation = auditResult.aiRecommendation;
+            backendIssues = auditResult.issuesFound;
+        } catch (error) {
+            console.error("Error fetching audit", error);
+            aiRecommendation = "Error al conectar con la IA. Usando heurísticas locales.";
+        }
 
         for (let i = 0; i < INITIAL_STEPS.length; i++) {
             // Mark as running
@@ -161,22 +176,27 @@ export default function PeriodClosePage() {
         setIsRunning(false);
         setAiChat(prev => [...prev, {
             role: "ai",
-            text: hasWarnings
-                ? "⚠ Análisis completo. Se encontraron 2 observaciones menores. Puedes proceder al cierre o resolver las observaciones primero. El sistema las documentará automáticamente."
-                : "✅ Análisis completo. Todo en orden. Puedes proceder al cierre oficial del período."
+            text: aiRecommendation || (hasWarnings
+                ? "⚠ Análisis completo. Se encontraron algunas observaciones menores. Puedes proceder al cierre o resolver las observaciones primero."
+                : "✅ Análisis completo. Todo en orden. Puedes proceder al cierre oficial del período.")
         }]);
     };
 
-    const handleClose = () => {
-        setIsClosed(true);
-        toast.success("¡Período Noviembre 2026 cerrado exitosamente!", {
-            description: "El asiento de cierre fue registrado y el período quedó bloqueado.",
-            duration: 5000,
-        });
-        setAiChat(prev => [...prev, {
-            role: "ai",
-            text: "🔒 Período oficialmente cerrado. Utilidad del ejercicio: $4.220.000. Los estados financieros finales del período ya están disponibles en el módulo de Reportes."
-        }]);
+    const handleClose = async () => {
+        try {
+            await executeClose.mutateAsync({ year: 2026, month: 11 });
+            setIsClosed(true);
+            toast.success("¡Período Noviembre 2026 cerrado exitosamente!", {
+                description: "El asiento de cierre fue registrado y el período quedó bloqueado.",
+                duration: 5000,
+            });
+            setAiChat(prev => [...prev, {
+                role: "ai",
+                text: "🔒 Período oficialmente cerrado. Utilidad del ejercicio: $4.220.000. Los estados financieros finales del período ya están disponibles en el módulo de Reportes."
+            }]);
+        } catch (error) {
+            toast.error("Error al cerrar el período.");
+        }
     };
 
     const statusConfig: Record<StepStatus, { color: string; label: string; icon: React.ElementType }> = {
