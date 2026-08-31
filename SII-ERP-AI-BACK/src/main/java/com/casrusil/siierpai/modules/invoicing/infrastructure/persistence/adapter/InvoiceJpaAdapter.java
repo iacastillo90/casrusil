@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -141,4 +142,20 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
                 items,
                 "CLP");
     }
+
+    @Override
+    public java.util.List<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findByCompanyIdAndDateBetween(
+            com.casrusil.siierpai.shared.domain.valueobject.CompanyId companyId,
+            LocalDate start,
+            LocalDate end) {
+        return invoiceJpaRepository.findAll().stream()
+            .filter(e -> e.getCompanyId() != null
+                && e.getCompanyId().equals(companyId.value().toString())
+                && e.getDate() != null
+                && !e.getDate().isBefore(start)
+                && !e.getDate().isAfter(end))
+            .map(this::toDomain)
+            .toList();
+    }
+
 }
