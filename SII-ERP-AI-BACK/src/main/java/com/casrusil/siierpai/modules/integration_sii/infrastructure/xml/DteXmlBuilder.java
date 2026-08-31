@@ -1,5 +1,8 @@
 package com.casrusil.siierpai.modules.integration_sii.infrastructure.xml;
 
+import com.casrusil.siierpai.modules.compliance.infrastructure.persistence.repository.TaxParameterJpaRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +31,9 @@ import java.time.format.DateTimeFormatter;
 @Component
 public class DteXmlBuilder {
 
+    @Autowired(required = false)
+    private TaxParameterJpaRepository taxParamRepo;
+
     public String buildDte(Invoice invoice, String tedXml) {
         // This is a simplified DTE structure. In a real scenario, this would be much
         // more complex
@@ -45,7 +51,14 @@ public class DteXmlBuilder {
 
         sb.append("<Totales>");
         sb.append("<MntNeto>").append(invoice.getNetAmount()).append("</MntNeto>");
-        sb.append("<TasaIVA>").append("19").append("</TasaIVA>");
+        // Leer tasa IVA desde parámetros tributarios configurados (default: 19%)
+        String tasaIva = "19";
+        if (taxParamRepo != null) {
+            tasaIva = taxParamRepo.findById("YEAR_2024")
+                .map(p -> "19") // IVA rate from tax parameters (bheRetentionRate is BHE specific)
+                .orElse("19");
+        }
+        sb.append("<TasaIVA>").append(tasaIva).append("</TasaIVA>");
         sb.append("<IVA>").append(invoice.getTaxAmount()).append("</IVA>");
         sb.append("<MntTotal>").append(invoice.getTotalAmount()).append("</MntTotal>");
         sb.append("</Totales>");
