@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.rest;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.energy.application.service.analytics.DemandForecastService;
 import com.casrusil.siierpai.modules.energy.application.service.analytics.UsagePatternAnalyzer;
 import com.casrusil.siierpai.modules.energy.application.service.reporting.EnergyReportService;
@@ -236,7 +238,7 @@ public class EnergyReportingController {
         @PostMapping("/schedule")
         @Operation(summary = "Schedule automated report", description = "Schedule recurring report generation")
         public ResponseEntity<String> scheduleReport(
-                        @RequestBody ScheduleReportRequest request) {
+                        @Valid @RequestBody ScheduleReportRequest request) {
 
                 logger.info("Report scheduling requested: {}", request);
 
