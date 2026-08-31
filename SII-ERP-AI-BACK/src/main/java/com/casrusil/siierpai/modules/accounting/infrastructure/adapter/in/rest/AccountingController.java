@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.accounting.infrastructure.adapter.in.rest;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.accounting.domain.model.Account;
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountType;
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntry;
@@ -105,7 +107,7 @@ public class AccountingController {
 
     @PostMapping("/opening-balance")
     public ResponseEntity<Void> setOpeningBalance(
-            @RequestBody List<com.casrusil.siierpai.modules.accounting.application.service.OpeningBalanceService.OpeningBalanceItem> items) {
+            @Valid @RequestBody List<com.casrusil.siierpai.modules.accounting.application.service.OpeningBalanceService.OpeningBalanceItem> items) {
         CompanyId companyId = CompanyContext.requireCompanyId();
         openingBalanceService.setOpeningBalance(companyId, items);
         return ResponseEntity.ok().build();
@@ -129,7 +131,7 @@ public class AccountingController {
     }
 
     @PostMapping("/accounts")
-    public ResponseEntity<Account> createAccount(@RequestBody CreateAccountRequest request) {
+    public ResponseEntity<Account> createAccount(@Valid @RequestBody CreateAccountRequest request) {
         CompanyId companyId = CompanyContext.requireCompanyId();
         Account account = new Account(
                 companyId,
