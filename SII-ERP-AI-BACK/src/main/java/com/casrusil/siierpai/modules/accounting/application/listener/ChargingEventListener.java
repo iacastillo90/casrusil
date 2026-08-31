@@ -1,6 +1,7 @@
 package com.casrusil.siierpai.modules.accounting.application.listener;
 
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountConstants;
+import com.casrusil.siierpai.modules.accounting.domain.model.AccountConstants;
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntry;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.modules.accounting.domain.model.EntryType;
