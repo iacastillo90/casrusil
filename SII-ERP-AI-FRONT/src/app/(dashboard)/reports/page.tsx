@@ -12,16 +12,15 @@ const PDFDownloadButton = dynamic(
 );
 import { GenericReportPDF } from "@/features/reports/components/ReportTemplates";
 import { FileDown, FileSpreadsheet } from "lucide-react";
+import { useReports } from "@/features/reports/hooks/useReports";
 
 export default function ReportsPage() {
     const [reportType, setReportType] = useState("sales");
 
-    // Mock data for reports
-    const mockData = [
-        { date: '2024-03-01', description: 'Venta Factura #101', amount: 150000 },
-        { date: '2024-03-02', description: 'Venta Factura #102', amount: 250000 },
-        { date: '2024-03-03', description: 'Venta Factura #103', amount: 80000 },
-    ];
+    const { salesData, isLoading, handleDownloadExcel } = useReports();
+    
+    // For other types, fallback to empty or mock
+    const reportData = reportType === 'sales' && salesData ? salesData : [];
 
     const getReportTitle = () => {
         switch (reportType) {
@@ -59,21 +58,26 @@ export default function ReportsPage() {
 
                         <div className="flex gap-4 pt-4">
                             <PDFDownloadButton
-                                document={<GenericReportPDF title={getReportTitle()} data={mockData} />}
+                                document={<GenericReportPDF title={getReportTitle()} data={reportData} />}
                                 fileName={`${reportType}_report.pdf`}
                                 className="w-full"
                             >
                                 {({ loading }: { loading: boolean }) => (
-                                    <Button className="w-full" disabled={loading}>
+                                    <Button className="w-full" disabled={loading || isLoading}>
                                         <FileDown className="mr-2 h-4 w-4" />
-                                        {loading ? 'Generando...' : 'Descargar PDF'}
+                                        {loading || isLoading ? 'Generando...' : 'Descargar PDF'}
                                     </Button>
                                 )}
                             </PDFDownloadButton>
 
-                            <Button variant="outline" className="w-full">
+                            <Button 
+                                variant="outline" 
+                                className="w-full" 
+                                onClick={() => handleDownloadExcel(reportType)}
+                                disabled={reportType !== 'sales'}
+                            >
                                 <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                Exportar CSV
+                                Exportar Excel
                             </Button>
                         </div>
                     </CardContent>
