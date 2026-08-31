@@ -25,7 +25,7 @@ import java.util.UUID;
  * @since 1.0
  */
 @Entity
-@Table(name = "invoices", schema = "invoicing")
+@Table(name = "invoices", schema = "invoicing", indexes = { @Index(name = "idx_invoice_company", columnList = "company_id") })
 public class InvoiceEntity {
 
     @Id
