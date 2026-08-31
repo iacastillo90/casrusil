@@ -8,28 +8,27 @@ import { Badge } from "@/components/ui/badge";
 import { formatCLP } from "@/lib/formatters";
 import { toast } from "sonner";
 
-// Mock Data
-const MOCK_EMPLOYEES = [
-    { id: "EMP-01", name: "Juan Pérez", rut: "15.444.333-2", role: "Desarrollador Senior", base: 2500000, type: "Indefinido", afp: "Habitat", isapre: "Colmena", status: "Processed" },
-    { id: "EMP-02", name: "María González", rut: "17.222.111-K", role: "Diseñadora UX", base: 1800000, type: "Indefinido", afp: "Capital", isapre: "Consalud", status: "Processed" },
-    { id: "EMP-03", name: "Carlos Soto", rut: "19.888.777-5", role: "Soporte TI", base: 950000, type: "Plazo Fijo", afp: "Modelo", isapre: "Fonasa", status: "Pending" },
-    { id: "EMP-04", name: "Ana Rojas", rut: "12.333.444-1", role: "Gerente Finanzas", base: 3200000, type: "Indefinido", afp: "Cuprum", isapre: "Banmédica", status: "Processed" },
-];
+import { usePayroll } from "@/features/payroll/hooks/usePayroll";
 
 export default function PayrollPage() {
-    const [isProcessing, setIsProcessing] = useState(false);
+    const { employees, isLoading, processPrevired } = usePayroll();
 
-    const totalBase = MOCK_EMPLOYEES.reduce((acc, emp) => acc + emp.base, 0);
+    const totalBase = employees.reduce((acc, emp) => acc + emp.base, 0);
     const estimatedLeyesSociales = totalBase * 0.22; // Roughly 22% for demo
     const totalCompanyCost = totalBase + estimatedLeyesSociales;
 
-    const handleProcessPrevired = () => {
-        setIsProcessing(true);
-        setTimeout(() => {
-            setIsProcessing(false);
+    const handleProcessPrevired = async () => {
+        try {
+            await processPrevired.mutateAsync({ year: new Date().getFullYear(), month: new Date().getMonth() + 1 });
             toast.success("Nómina enviada a Previred exitosamente");
-        }, 2000);
+        } catch (error) {
+            toast.error("Error al enviar nómina a Previred");
+        }
     };
+
+    if (isLoading) {
+        return <div className="p-6 text-center text-slate-500">Cargando empleados...</div>;
+    }
 
     return (
         <div className="space-y-6 p-6 animate-in fade-in duration-500">
@@ -48,10 +47,10 @@ export default function PayrollPage() {
                     <Button 
                         className="gap-2 bg-emerald-600 hover:bg-emerald-700" 
                         onClick={handleProcessPrevired}
-                        disabled={isProcessing}
+                        disabled={processPrevired.isPending}
                     >
                         <UploadCloud className="w-4 h-4" /> 
-                        {isProcessing ? "Procesando..." : "Declarar Previred"}
+                        {processPrevired.isPending ? "Procesando..." : "Declarar Previred"}
                     </Button>
                 </div>
             </div>
@@ -63,7 +62,7 @@ export default function PayrollPage() {
                         <div className="flex justify-between items-start">
                             <div className="space-y-2">
                                 <p className="text-sm font-medium text-slate-500">Dotación Activa</p>
-                                <p className="text-3xl font-bold">{MOCK_EMPLOYEES.length}</p>
+                                <p className="text-3xl font-bold">{employees.length}</p>
                             </div>
                             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                                 <Building className="w-5 h-5" />
@@ -131,7 +130,7 @@ export default function PayrollPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
-                            {MOCK_EMPLOYEES.map((emp) => (
+                            {employees.map((emp) => (
                                 <tr key={emp.id} className="hover:bg-slate-50 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="font-medium text-slate-900">{emp.name}</div>
