@@ -37,7 +37,7 @@ public class OcppDiagnosticsEvent extends ApplicationEvent {
         return status;
     }
 
-    public Instant getTimestamp() {
+    public Instant getEventTimestamp() {
         return timestamp;
     }
 }
