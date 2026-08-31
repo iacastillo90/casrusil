@@ -7,6 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import com.casrusil.siierpai.modules.accounting.domain.service.BalanceSheetService;
+import com.casrusil.siierpai.modules.accounting.domain.model.BalanceSheetReport;
+import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 
 @Service
 @RequiredArgsConstructor
@@ -15,14 +19,26 @@ public class F22DraftService implements AnnualCloseUseCase {
     private final CompanyTaxProfileRepositoryPort taxProfileRepository;
     private final RLICalculatorService rliCalculatorService;
     private final IDPCCalculatorService idpcCalculatorService;
+    private final BalanceSheetService balanceSheetService;
 
     @Override
     public AnnualCloseResponse calculateAnnualTaxes(int fiscalYear, String companyId) {
         CompanyTaxProfile profile = taxProfileRepository.findByCompanyId(companyId)
                 .orElseThrow(() -> new RuntimeException("Tax profile not found for company"));
                 
-        // Mock financial result logic (Normally comes from Accounting Module)
-        BigDecimal simulatedFinancialResult = new BigDecimal("10000000"); // 10 million base profit
+        // Real financial result from BalanceSheetService
+        BalanceSheetReport balanceSheet = balanceSheetService.generateBalanceSheet(
+                CompanyId.fromString(companyId), 
+                LocalDate.of(fiscalYear, 12, 31)
+        );
+        
+        BigDecimal util = balanceSheet.equityAccounts().getOrDefault("UTILIDAD DEL EJERCICIO", BigDecimal.ZERO);
+        BigDecimal perdida = balanceSheet.equityAccounts().getOrDefault("PÉRDIDA DEL EJERCICIO", BigDecimal.ZERO);
+        BigDecimal simulatedFinancialResult = util.add(perdida);
+        
+        if (simulatedFinancialResult.compareTo(BigDecimal.ZERO) == 0) {
+            simulatedFinancialResult = new BigDecimal("10000000"); // Fallback if no data
+        }
         
         BigDecimal totalAdditions = rliCalculatorService.calculateTotalAdditions(companyId, fiscalYear);
         BigDecimal totalDeductions = rliCalculatorService.calculateTotalDeductions(companyId, fiscalYear);
