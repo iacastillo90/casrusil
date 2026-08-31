@@ -103,4 +103,14 @@ public class ChargingStationRepositoryAdapter implements ChargingStationReposito
     public boolean existsById(StationId stationId) {
         return jpaRepository.existsById(stationId.getValue());
     }
+
+    @Override
+    public long count() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public long countByStatus(StationStatus status) {
+        return jpaRepository.countByStatus(status);
+    }
 }
