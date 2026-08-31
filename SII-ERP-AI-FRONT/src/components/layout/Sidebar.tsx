@@ -16,7 +16,17 @@ import {
     Truck,
     Zap,
     Boxes,
-    Users
+    Users,
+    ShoppingCart,
+    Megaphone,
+    FileSignature,
+    FolderKanban,
+    Store,
+    UserCircle2,
+    Landmark,
+    Factory,
+    PackageSearch,
+    FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APP_ROUTES } from '@/lib/constants';
@@ -28,17 +38,32 @@ const navigation = [
     { name: 'Dashboard', href: APP_ROUTES.DASHBOARD, icon: LayoutDashboard },
     { name: 'Facturas', href: APP_ROUTES.INVOICES, icon: FileText },
     { name: 'Inventario', href: '/inventory', icon: Boxes },
+    { name: 'Adquisiciones', href: '/procurement', icon: ShoppingCart },
+    {
+        name: 'Ventas CRM',
+        href: '/crm',
+        icon: Megaphone,
+        children: [
+            { name: 'Pipeline (Leads)', href: '/crm/leads' },
+            { name: 'Cotizaciones', href: '/crm/quotes' },
+        ]
+    },
+    { name: 'Punto de Venta (POS)', href: '/pos', icon: Store },
     { name: 'Remuneraciones', href: '/payroll', icon: Users },
+    { name: 'Mi Portal (Empleado)', href: '/employee', icon: UserCircle2 },
     {
         name: 'Contabilidad',
+        href: '#',
         icon: Calculator,
         children: [
             { name: 'Libro Diario', href: APP_ROUTES.ACCOUNTING_LEDGER },
             { name: 'Form 29', href: APP_ROUTES.ACCOUNTING_F29 },
             { name: 'Balance', href: APP_ROUTES.ACCOUNTING_BALANCE },
+            { name: 'Activos Fijos', href: '/accounting/assets' },
             { name: 'Estado Resultados', href: APP_ROUTES.ACCOUNTING_INCOME },
+            { name: 'Centro de Costos', href: '/projects' },
             { name: '✨ Cierre de Período IA', href: '/accounting/close' },
-            { name: '🌟 Cierre Anual (F22)', href: '/accounting/annual-close' },
+            { name: '🌟 Cierre Anual (F22)', href: '/accounting/annual-close' }
         ]
     },
     {
@@ -58,6 +83,9 @@ const navigation = [
             { name: 'Cuentas Corrientes', href: '/accounting/partners' },
         ]
     },
+    { name: 'Producción (MRP)', href: '/mrp', icon: Factory },
+    { name: 'Logística (WMS)', href: '/wms', icon: PackageSearch },
+    { name: 'Gestor Documental (IA)', href: '/documents', icon: FileText },
     { name: 'Tesorería', href: APP_ROUTES.BANKING_RECONCILIATION, icon: Wallet },
     { name: 'Flotas', href: APP_ROUTES.FLEET, icon: Truck },
     { name: 'Energía', href: APP_ROUTES.ENERGY, icon: Zap },
