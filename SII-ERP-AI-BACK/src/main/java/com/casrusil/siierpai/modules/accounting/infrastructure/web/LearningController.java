@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.accounting.infrastructure.web;
 
+import jakarta.validation.Valid;
+
 import com.casrusil.siierpai.modules.accounting.domain.model.ClassificationRule;
 import com.casrusil.siierpai.modules.accounting.domain.port.out.ClassificationRuleRepository;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
@@ -59,7 +61,7 @@ public class LearningController {
      */
     @PutMapping("/rules/{id}")
     public ResponseEntity<Map<String, String>> updateRule(@PathVariable UUID id,
-            @RequestBody UpdateRuleRequest request) {
+            @Valid @RequestBody UpdateRuleRequest request) {
         return ruleRepository.findById(id)
                 .map(rule -> {
                     // Note: ClassificationRule is immutable, so we'd need to add update methods
@@ -86,7 +88,7 @@ public class LearningController {
      * POST /api/v1/learning/rules
      */
     @PostMapping("/rules")
-    public ResponseEntity<ClassificationRuleDto> createRule(@RequestBody CreateRuleRequest request) {
+    public ResponseEntity<ClassificationRuleDto> createRule(@Valid @RequestBody CreateRuleRequest request) {
         ClassificationRule rule = ClassificationRule.create(
                 CompanyContext.requireCompanyId(),
                 request.pattern(),
