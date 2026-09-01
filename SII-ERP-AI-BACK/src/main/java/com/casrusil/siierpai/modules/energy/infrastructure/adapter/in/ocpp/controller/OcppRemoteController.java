@@ -8,6 +8,7 @@ import com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.dto.s
 import com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.dto.firmware.*;
 import com.casrusil.siierpai.modules.energy.infrastructure.adapter.in.ocpp.dto.advanced.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
  */
 @RestController
 @RequestMapping("/api/v1/ocpp/remote")
+@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
 public class OcppRemoteController {
 
         private final OcppCommandService commandService;

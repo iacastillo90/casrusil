@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/pricing")
 @Tag(name = "Enhanced Pricing", description = "Advanced pricing with demand-based, seasonal, and promotional strategies")
+@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
 public class EnhancedPricingController {
 
     private static final Logger logger = LoggerFactory.getLogger(EnhancedPricingController.class);

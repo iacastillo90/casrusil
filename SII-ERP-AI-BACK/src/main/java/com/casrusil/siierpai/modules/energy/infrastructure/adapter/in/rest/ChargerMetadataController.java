@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Positive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -26,6 +27,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/metadata")
 @Tag(name = "Charger Metadata", description = "Manufacturer and charger model management")
+@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
 public class ChargerMetadataController {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargerMetadataController.class);

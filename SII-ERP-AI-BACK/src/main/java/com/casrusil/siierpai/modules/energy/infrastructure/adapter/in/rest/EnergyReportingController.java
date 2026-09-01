@@ -19,6 +19,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -32,6 +33,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/energy/reports")
 @Tag(name = "Energy Reports & Analytics", description = "Energy consumption, revenue, and usage analytics")
+@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS','AUDITOR')")
 public class EnergyReportingController {
 
         private static final Logger logger = LoggerFactory.getLogger(EnergyReportingController.class);
