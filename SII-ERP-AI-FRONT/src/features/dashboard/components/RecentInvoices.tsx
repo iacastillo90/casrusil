@@ -60,7 +60,7 @@ export function RecentInvoices() {
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <StatusBadge status={invoice.status} />
+                                    <StatusBadge status={invoice.status as 'DRAFT' | 'SIGNED' | 'SENT' | 'ACCEPTED' | 'REJECTED'} />
                                     <CurrencyDisplay
                                         amount={invoice.totalAmount}
                                         className="font-semibold"

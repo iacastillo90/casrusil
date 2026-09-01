@@ -15,13 +15,13 @@ const nextConfig = {
       },
     ];
   },
-  // NOTA (Fase 5): estos flags ocultan errores de tipos/lint en el build.
-  // Se pondrán en `false` al corregir los errores existentes.
+  // Fase 5 completada: los errores de tipos/lint fueron corregidos, por lo que
+  // el build vuelve a validar tipos y lint de forma estricta.
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 };
 

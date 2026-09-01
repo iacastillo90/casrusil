@@ -1,11 +1,37 @@
 import { api } from '@/lib/api';
 
+export interface MonthlyComparison {
+    month: string;
+    total: number;
+    sustainable: number;
+}
+
+export interface GreenProvider {
+    id: string;
+    name: string;
+    ecoScore: number;
+    totalPurchased: number;
+    category?: string;
+}
+
 export interface GreenPassport {
-    financialHealth: number;
-    environmentalHealth: number;
-    carbonFootprint: number;
-    greenSuppliers: number;
-    riskLevel: string;
+    // Métricas de salud (compatibilidad con consumidores previos)
+    financialHealth?: number;
+    environmentalHealth?: number;
+    carbonFootprint?: number;
+    greenSuppliers?: number;
+    riskLevel?: string;
+
+    // Métricas del dashboard de sostenibilidad
+    scoreLevel: string;
+    ecoScore: number;
+    certifications: string[];
+    lastUpdated: string;
+    totalPurchases: number;
+    sustainablePurchases: number;
+    sustainablePercentage: number;
+    monthlyComparison: MonthlyComparison[];
+    topGreenProviders: GreenProvider[];
 }
 
 export interface EsgReport {
@@ -23,17 +49,54 @@ export interface CorfoSimulation {
     nextLevelRequirement: string;
 }
 
+export interface InvoiceSustainability {
+    ecoScore: number;
+    carbonFootprint: number;
+    isGreenProvider: boolean;
+    recommendations: string[];
+}
+
+const emptyGreenPassport: GreenPassport = {
+    scoreLevel: 'Sin datos',
+    ecoScore: 0,
+    certifications: [],
+    lastUpdated: new Date().toISOString(),
+    totalPurchases: 0,
+    sustainablePurchases: 0,
+    sustainablePercentage: 0,
+    monthlyComparison: [],
+    topGreenProviders: [],
+};
+
 export const sustainabilityService = {
     getGreenPassport: async (): Promise<GreenPassport> => {
-        const response = await api.get('/sustainability/score');
-        return response.data;
+        try {
+            const response = await api.get<Partial<GreenPassport>>('/sustainability/score');
+            // Se combinan los valores del backend con los valores por defecto para
+            // garantizar que todos los campos requeridos estén presentes en la UI.
+            return { ...emptyGreenPassport, ...response.data };
+        } catch {
+            return emptyGreenPassport;
+        }
     },
     getEsgReport: async (): Promise<EsgReport> => {
-        const response = await api.get('/sustainability/esg-report');
+        const response = await api.get<EsgReport>('/sustainability/esg-report');
         return response.data;
     },
     getCorfoSimulation: async (): Promise<CorfoSimulation> => {
-        const response = await api.get('/sustainability/corfo-simulator');
+        const response = await api.get<CorfoSimulation>('/sustainability/corfo-simulator');
         return response.data;
-    }
+    },
+    /**
+     * Datos de sostenibilidad asociados a una factura concreta.
+     * NOTA: integración real con el backend pendiente.
+     */
+    getInvoiceSustainability: async (id: string): Promise<InvoiceSustainability | null> => {
+        try {
+            const response = await api.get<InvoiceSustainability>(`/sustainability/invoice/${id}`);
+            return response.data ?? null;
+        } catch {
+            return null;
+        }
+    },
 };

@@ -2,14 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/axios';
 
 export interface Product {
-    id: string; // The ID is used as string in frontend typically, wait, backend has Long, let's use number or string
+    id: string;
     sku: string;
     name: string;
     description?: string;
-    currentStock: number;
-    averageCost: number;
-    salePrice: number;
     category: string;
+    stock: number;
+    minStock: number;
+    price: number;
 }
 
 const fetchInventory = async (): Promise<Product[]> => {

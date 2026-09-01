@@ -1,21 +1,17 @@
-export const useInvoices = () => {
-    return { data: { invoices: [] }, isLoading: false };
+import { useQuery } from '@tanstack/react-query';
+import { invoiceService, InvoiceListParams } from '../services/invoice.service';
+
+export const useInvoices = (params?: InvoiceListParams) => {
+    return useQuery({
+        queryKey: ['invoices', params ?? {}],
+        queryFn: () => invoiceService.getInvoices(params),
+    });
 };
 
 export const useInvoice = (id: string) => {
-    return { 
-        data: { 
-            id, 
-            folio: 1, 
-            status: 'PENDING', 
-            issuerRut: '1-9', 
-            recipientName: 'Test', 
-            recipientRut: '2-7', 
-            lines: [], 
-            netAmount: 0, 
-            taxAmount: 0, 
-            totalAmount: 0 
-        }, 
-        isLoading: false 
-    };
+    return useQuery({
+        queryKey: ['invoices', id],
+        queryFn: () => invoiceService.getInvoice(id),
+        enabled: !!id,
+    });
 };

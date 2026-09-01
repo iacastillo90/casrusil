@@ -25,6 +25,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@vitest/expect": [
+        "./node_modules/@vitest/expect/dist/index.d.ts"
       ]
     }
   },
