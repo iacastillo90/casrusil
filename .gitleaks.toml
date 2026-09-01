@@ -1,0 +1,34 @@
+# Configuración de gitleaks para SII-ERP
+# Extiende el conjunto de reglas por defecto y añade reglas/allowlist propias.
+title = "SII-ERP gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "google-api-key"
+description = "Google API Key (Gemini/Maps/etc.)"
+regex = '''AIza[0-9A-Za-z\-_]{35}'''
+tags = ["google", "api-key"]
+
+[[rules]]
+id = "jwt-secret-assignment"
+description = "Posible secreto JWT hardcodeado"
+regex = '''(?i)(jwt[_-]?secret)\s*[:=]\s*['"][A-Za-z0-9\-_/+=]{16,}['"]'''
+tags = ["jwt", "secret"]
+
+[allowlist]
+description = "Rutas y valores permitidos (plantillas y placeholders sin secretos reales)"
+paths = [
+  '''.*\.env\.example$''',
+  '''pendiente\.md$''',
+  '''plan-produccion\.md$''',
+  '''SECURITY\.md$''',
+  '''\.gitleaks\.toml$''',
+]
+regexes = [
+  '''__CAMBIAR__''',
+  '''__GENERAR_CON_openssl_rand_hex_64__''',
+  '''__APP_PASSWORD_DE_CORREO__''',
+  '''REEMPLAZA-CON-TU-.*''',
+]
