@@ -43,10 +43,15 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityFilter.class);
 
-    private final JwtTokenProvider jwtTokenProvider;
+    /** Nombre de la cookie httpOnly que transporta el JWT (flujo basado en cookie). */
+    public static final String ACCESS_TOKEN_COOKIE = "access_token";
 
-    public SecurityFilter(JwtTokenProvider jwtTokenProvider) {
+    private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklistService tokenBlacklistService;
+
+    public SecurityFilter(JwtTokenProvider jwtTokenProvider, TokenBlacklistService tokenBlacklistService) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -68,7 +73,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         String token = getTokenFromRequest(request);
 
-        if (token != null && jwtTokenProvider.validateToken(token)) {
+        if (token != null && jwtTokenProvider.validateToken(token) && !tokenBlacklistService.isBlacklisted(token)) {
             try {
                 Claims claims = jwtTokenProvider.getClaims(token);
                 CompanyId companyId = jwtTokenProvider.getCompanyIdFromToken(token);
@@ -110,9 +115,18 @@ public class SecurityFilter extends OncePerRequestFilter {
      * Extrae el token JWT del header Authorization (formato: "Bearer {token}").
      */
     private String getTokenFromRequest(HttpServletRequest request) {
+        // 1. Preferir el header Authorization (clientes de API, integraciones).
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
+        }
+        // 2. Fallback a la cookie httpOnly (flujo del navegador/SPA).
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if (ACCESS_TOKEN_COOKIE.equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
         }
         return null;
     }
