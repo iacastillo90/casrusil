@@ -8,6 +8,7 @@ import com.casrusil.siierpai.modules.payroll.domain.model.Payslip;
 import com.casrusil.siierpai.modules.payroll.domain.port.EmployeeRepositoryPort;
 import com.casrusil.siierpai.modules.payroll.domain.port.PayrollPeriodRepositoryPort;
 import com.casrusil.siierpai.modules.payroll.domain.port.PayslipRepositoryPort;
+import com.casrusil.siierpai.modules.payroll.infrastructure.previred.PreviredFileGenerator;
 import com.casrusil.siierpai.shared.domain.event.PayrollCalculatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,6 +30,7 @@ public class PayrollServiceImpl implements PayrollUseCase {
     private final PayrollPeriodRepositoryPort periodRepository;
     private final PayslipRepositoryPort payslipRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final PreviredFileGenerator previredFileGenerator;
 
     private static final BigDecimal AFP_RATE = new BigDecimal("0.1144"); // Average AFP rate approx 11.44%
     private static final BigDecimal HEALTH_RATE = new BigDecimal("0.07"); // 7% Fonasa standard
@@ -74,9 +76,23 @@ public class PayrollServiceImpl implements PayrollUseCase {
 
     @Override
     public byte[] generatePreviredFile(PayrollProcessRequest request, String companyId) {
-        // Mock generation of 105-column flat text file for Previred integration
-        String mockTxtContent = "01;88888888-8;EMP NAME;105_FIELDS_MOCKED...\n";
-        return mockTxtContent.getBytes();
+        YearMonth ym = YearMonth.of(request.getYear(), request.getMonth());
+
+        PayrollPeriod period = periodRepository.findByPeriodAndCompanyId(ym, companyId)
+                .orElseThrow(() -> new RuntimeException("Payroll period not configured or not found"));
+
+        List<Employee> employees = employeeRepository.findAllByCompanyId(companyId);
+
+        // Se genera una línea de 105 campos por trabajador con su liquidación del período.
+        StringBuilder sb = new StringBuilder();
+        for (Employee employee : employees) {
+            Payslip payslip = calculatePayslip(employee, period);
+            sb.append(previredFileGenerator.generateLine(employee, payslip, period));
+            sb.append("\r\n"); // PreviRed usa fin de línea CRLF.
+        }
+
+        // PreviRed espera codificación ISO-8859-1 (Latin-1), no UTF-8.
+        return sb.toString().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
     }
 
     @Override
@@ -125,14 +141,53 @@ public class PayrollServiceImpl implements PayrollUseCase {
                 .build();
     }
     
+    /**
+     * Tramos del Impuesto Único de Segunda Categoría (IUSC), mensual, expresados en UTM.
+     * Cada tramo: [límite inferior UTM, límite superior UTM, factor, cantidad a rebajar en UTM].
+     * El último tramo usa {@code null} como límite superior (sin tope).
+     *
+     * <p>Fórmula: {@code impuesto = baseTributable * factor - (rebajaUTM * valorUTM)}.
+     * Los factores y rebajas son los definidos por el SII para el IUSC.
+     */
+    private static final BigDecimal[][] IUSC_BRACKETS_UTM = {
+            // desde,  hasta,   factor,   rebaja(UTM)
+            { new BigDecimal("0"),    new BigDecimal("13.5"), new BigDecimal("0.0"),   new BigDecimal("0.0") },
+            { new BigDecimal("13.5"), new BigDecimal("30"),   new BigDecimal("0.04"),  new BigDecimal("0.54") },
+            { new BigDecimal("30"),   new BigDecimal("50"),   new BigDecimal("0.08"),  new BigDecimal("1.74") },
+            { new BigDecimal("50"),   new BigDecimal("70"),   new BigDecimal("0.135"), new BigDecimal("4.49") },
+            { new BigDecimal("70"),   new BigDecimal("90"),   new BigDecimal("0.23"),  new BigDecimal("11.14") },
+            { new BigDecimal("90"),   new BigDecimal("120"),  new BigDecimal("0.304"), new BigDecimal("17.80") },
+            { new BigDecimal("120"),  new BigDecimal("310"),  new BigDecimal("0.35"),  new BigDecimal("23.32") },
+            { new BigDecimal("310"),  null,                   new BigDecimal("0.40"),  new BigDecimal("38.82") },
+    };
+
+    /**
+     * Calcula el Impuesto Único de Segunda Categoría aplicando la tabla oficial de
+     * tramos del SII (en UTM). Reemplaza el cálculo "dummy" anterior.
+     *
+     * @param baseTributable base tributable mensual (renta imponible menos cotizaciones), en pesos
+     * @param utmValue       valor de la UTM del período, en pesos
+     * @return impuesto a retener, en pesos (nunca negativo)
+     */
     private BigDecimal calculateSecondCategoryTax(BigDecimal baseTributable, BigDecimal utmValue) {
-        // Mocked tranches calculation based on UTM
-        // In a real implementation this would iterate over the SII tax brackets
-        if (baseTributable.compareTo(utmValue.multiply(new BigDecimal("13.5"))) <= 0) {
-            return BigDecimal.ZERO; // Exempt
+        if (baseTributable == null || utmValue == null || baseTributable.signum() <= 0) {
+            return BigDecimal.ZERO;
         }
-        // Dummy 4% calculation for tests
-        return baseTributable.multiply(new BigDecimal("0.04")).setScale(0, RoundingMode.HALF_UP);
+
+        for (BigDecimal[] bracket : IUSC_BRACKETS_UTM) {
+            BigDecimal lowerPesos = bracket[0].multiply(utmValue);
+            BigDecimal upperPesos = (bracket[1] != null) ? bracket[1].multiply(utmValue) : null;
+
+            boolean inBracket = baseTributable.compareTo(lowerPesos) > 0
+                    && (upperPesos == null || baseTributable.compareTo(upperPesos) <= 0);
+            if (inBracket) {
+                BigDecimal factor = bracket[2];
+                BigDecimal rebajaPesos = bracket[3].multiply(utmValue);
+                BigDecimal tax = baseTributable.multiply(factor).subtract(rebajaPesos);
+                return tax.max(BigDecimal.ZERO).setScale(0, RoundingMode.HALF_UP);
+            }
+        }
+        return BigDecimal.ZERO;
     }
 
     private PayslipResponse mapToResponse(Payslip payslip) {
