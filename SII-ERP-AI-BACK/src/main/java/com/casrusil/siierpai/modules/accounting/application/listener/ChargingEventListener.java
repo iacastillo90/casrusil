@@ -44,6 +44,7 @@ public class ChargingEventListener {
 
         private final AccountingEntryService accountingEntryService;
         private final com.casrusil.siierpai.modules.energy.application.service.pricing.DynamicPricingService dynamicPricingService;
+        private final com.casrusil.siierpai.modules.accounting.infrastructure.persistence.repository.FailedChargingEventJpaRepository failedChargingEventRepository;
 
         // Configuración desde application.properties
         @Value("${ocpp.integration.accounting.revenue-account:4.1.02.001}")
@@ -69,9 +70,11 @@ public class ChargingEventListener {
 
         public ChargingEventListener(
                         AccountingEntryService accountingEntryService,
-                        com.casrusil.siierpai.modules.energy.application.service.pricing.DynamicPricingService dynamicPricingService) {
+                        com.casrusil.siierpai.modules.energy.application.service.pricing.DynamicPricingService dynamicPricingService,
+                        com.casrusil.siierpai.modules.accounting.infrastructure.persistence.repository.FailedChargingEventJpaRepository failedChargingEventRepository) {
                 this.accountingEntryService = accountingEntryService;
                 this.dynamicPricingService = dynamicPricingService;
+                this.failedChargingEventRepository = failedChargingEventRepository;
         }
 
         /**
@@ -120,7 +123,28 @@ public class ChargingEventListener {
                 } catch (Exception e) {
                         logger.error("🔴 Error crítico al procesar contabilidad de carga {}: {}",
                                         event.getSessionId(), e.getMessage(), e);
-                        // TODO: Enviar a Dead Letter Queue o tabla de reintentos para no perder dinero
+                        // Dead Letter Queue: se persiste el evento fallido para reprocesarlo
+                        // y no perder el ingreso a facturar.
+                        persistFailedEvent(event, e.getMessage());
+                }
+        }
+
+        /**
+         * Persiste un evento de carga fallido en la Dead Letter Queue para su posterior
+         * reproceso, evitando la perdida del ingreso asociado.
+         */
+        private void persistFailedEvent(ChargingSessionCompletedEvent event, String errorMessage) {
+                try {
+                        var failed = new com.casrusil.siierpai.modules.accounting.infrastructure.persistence.entity.FailedChargingEventEntity(
+                                        event.getSessionId().getValue().toString(),
+                                        event.getTotalEnergyKwh() != null ? event.getTotalEnergyKwh().toPlainString() : null,
+                                        event.getUserId() != null ? event.getUserId().toString() : null,
+                                        errorMessage);
+                        failedChargingEventRepository.save(failed);
+                        logger.warn("📥 Evento de carga {} enviado a la Dead Letter Queue para reproceso",
+                                        event.getSessionId());
+                } catch (Exception dlqError) {
+                        logger.error("🔴 No se pudo persistir el evento fallido en la DLQ: {}", dlqError.getMessage(), dlqError);
                 }
         }
 
