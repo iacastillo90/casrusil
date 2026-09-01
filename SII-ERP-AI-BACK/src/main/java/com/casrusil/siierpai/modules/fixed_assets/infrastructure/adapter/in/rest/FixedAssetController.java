@@ -7,6 +7,7 @@ import com.casrusil.siierpai.modules.fixed_assets.domain.model.FixedAsset;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/fixed-assets")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
 public class FixedAssetController {
 
     private final FixedAssetServiceImpl service;

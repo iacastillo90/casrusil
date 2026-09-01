@@ -3,6 +3,7 @@ package com.casrusil.siierpai.modules.fees.infrastructure.adapter.in.rest;
 import com.casrusil.siierpai.modules.fees.application.service.FeeReceiptService;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/fees")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
 public class FeeImportController {
 
     private final FeeReceiptService feeReceiptService;
