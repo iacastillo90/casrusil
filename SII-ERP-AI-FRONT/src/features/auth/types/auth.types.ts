@@ -1,8 +1,18 @@
+export type UserRole =
+    | 'ADMIN'
+    | 'ACCOUNTANT'
+    | 'TREASURER'
+    | 'HR'
+    | 'SALES'
+    | 'OPERATIONS'
+    | 'AUDITOR'
+    | 'USER';
+
 export interface User {
     id: string;
     email: string;
     name: string;
-    role: 'ADMIN' | 'ACCOUNTANT' | 'USER';
+    role: UserRole;
 }
 
 export interface Company {
@@ -29,4 +39,5 @@ export interface AuthResponse {
     userName: string;
     companyId: string;
     companyName: string;
+    role: UserRole;
 }
