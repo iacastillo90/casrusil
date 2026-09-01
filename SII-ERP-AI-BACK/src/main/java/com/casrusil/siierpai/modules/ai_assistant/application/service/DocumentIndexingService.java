@@ -3,7 +3,10 @@ package com.casrusil.siierpai.modules.ai_assistant.application.service;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import dev.langchain4j.data.document.Document;
+import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.Metadata;
+import dev.langchain4j.data.document.parser.apache.tika.ApacheTikaDocumentParser;
+import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -12,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +83,47 @@ public class DocumentIndexingService {
             logger.error("Failed to index invoice #{}: {}",
                     invoice.getFolio(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * Indexa un documento de conocimiento (leyes tributarias/comerciales, politicas de
+     * la empresa, etc.) en la base vectorial para enriquecer las respuestas de la IA (RAG).
+     *
+     * <p>Extrae el texto con Apache Tika (soporta PDF, Word, TXT), lo divide en segmentos
+     * y almacena los embeddings con metadatos de empresa, categoria y origen para permitir
+     * la recuperacion contextual y el aislamiento multi-tenant.
+     *
+     * @param companyId  empresa propietaria (aislamiento multi-tenant)
+     * @param category   categoria del conocimiento (ej. LEY_TRIBUTARIA, LEY_COMERCIAL, POLITICA_EMPRESA)
+     * @param sourceName nombre del archivo de origen (para trazabilidad y citas)
+     * @param content    contenido binario del documento
+     * @return numero de segmentos indexados
+     */
+    public int indexKnowledgeDocument(CompanyId companyId, String category, String sourceName, byte[] content) {
+        Document parsed = new ApacheTikaDocumentParser().parse(new ByteArrayInputStream(content));
+
+        // Metadatos comunes a todos los segmentos del documento.
+        Metadata metadata = parsed.metadata();
+        metadata.put("companyId", companyId.value().toString());
+        metadata.put("category", category != null ? category : "GENERAL");
+        metadata.put("source", sourceName != null ? sourceName : "desconocido");
+        metadata.put("type", "knowledge");
+
+        // Division en segmentos (~800 tokens con solape de 100) para un RAG efectivo.
+        DocumentSplitter splitter = DocumentSplitters.recursive(800, 100);
+        List<TextSegment> segments = splitter.split(parsed);
+
+        if (segments.isEmpty()) {
+            logger.warn("El documento de conocimiento '{}' no produjo segmentos indexables", sourceName);
+            return 0;
+        }
+
+        List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
+        embeddingStore.addAll(embeddings, segments);
+
+        logger.info("Indexados {} segmentos del documento de conocimiento '{}' (categoria {}) para la empresa {}",
+                segments.size(), sourceName, category, companyId.value());
+        return segments.size();
     }
 
     /**
