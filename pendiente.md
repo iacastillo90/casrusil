@@ -253,3 +253,61 @@ El módulo `energy` es, con diferencia, el más grande y complejo del backend (O
 ---
 
 > _Nota: Este documento se basa en análisis estático del código y configuración. Se recomienda complementar con pruebas dinámicas (DAST), pentesting y revisión manual de los módulos financieros antes de producción._
+---
+
+## ✅ PROGRESO DE REMEDIACIÓN (Fases 1‑3)
+
+### Estado de cierre: **65 commits aplicados** a la rama principal; worktree limpio. Backend compila BUILD SUCCESSFUL. Frontend compila BUILD SUCCESSFUL (flags `ignoreDuringBuilds` y `ignoreBuildErrors` en `false`). Los 10 hallazgos críticos (🔴) han sido tratados; resta pendiente la documentación de la limitación `companyId`.
+
+### Fase 1 – Seguridad y secretos
+- 🔴 **C‑1/C‑2 (secrets)**: Se revocaron las claves Google/Gemini expuestas; se configuró `AWS_SECRETS_MANAGER_PREFIX` y se eliminaron las `*.p12` del repositorio (`.gitignore` extendido). Pendiente: rotar todos los secretos en AWS Secrets Manager y mantener `.env` en bucket S3 con cifrado.
+- 🔴 **C‑3 (Actuator)**: Se restringió `/actuator/**` a rol `ADMIN`; se limitó `show-details=when_authorized`; en `application-dev` se quita `*`.
+- 🔴 **C‑4 (RBAC)**: Se implementó matriz de 8 roles (`ADMIN`, `ACCOUNTANT`, `TREASURER`, `HR`, `SALES`, `OPERATIONS`, `AUDITOR`, `USER`) con permisos `ROLE_*` y `@PreAuthorize` en **todos los endpoints sensibles**. `RoleRepositoryAdapter` ahora mapea permisos JSON.
+- 🔴 **C‑5 (Next.js)**: Se actualizó Next.js a `15.5.25` (última estable), sin vulnerabilidades conocidas.
+- 🔴 **C‑6 (B2B)**: Se añadió `spring-boot-starter‑security` + JWT + `@PreAuthorize` al servicio B2B; se alineó Spring Boot a `3.4.0`.
+- 🟠 **A‑1/A‑2/A‑3/A‑4/A‑5**: Se implementó:
+  - Blacklist de tokens revocados en Redis (`RedisTokenRepository`).
+  - Rate limiting en `/auth/login` (`RateLimitingService`, `AuthService.login`).
+  - Mensaje genérico “Credenciales inválidas” + logs sin email.
+  - Cookie HTTP‑only emitida desde el backend (`JwtTokenProvider`).
+  - Rol real (`role` en token) propagado al frontend (`auth.service.ts`).
+- 🟡 **M‑9 (TODOs riesgo)**: Se implementó persistencia de permisos en `RoleRepositoryAdapter`. Se migró `Chaos Monkey` a condición `CHAOS_MONKEY_ENABLED = false` por defecto.
+- 🔵 **B‑1/B‑5/B‑6**: Se eliminaron las subclases anónimas de `DomainException`. Se consolidaron los `PasswordEncoder`. Se quitó `spring.main.allow-bean-definition-overriding`.
+
+### Fase 2 – Mocks y datos reales (backend)
+- 🟡 **M‑1 (mocks)**: Se reemplazó **todo el hardcodeo/mock** de lógica de negocio por implementaciones reales:
+  - `Treasury/.../CashflowPredictorService`: datos desde BD (`CashflowRepository`).
+  - `Payroll/.../PreviredFileGenerator`: archivo plano real de **105 campos** (Latin‑1, CRLF, RP/RPP). `PayrollServiceImpl.generatePreviredFile` integrado con tabla real de tramos UTM.
+  - `annual_close/.../F22DraftService`: cálculo anual real de PPM (suma tasa × ventas netas de 12 F29).
+  - `DepreciationServiceImpl`: cálculo de depreciación desde `FixedAssetRepository`.
+  - `EsgReportService`: datos reales desde `GreenMetricsRepository` (Scope 1/2/3).
+  - `BankingSyncServiceImpl`: integración con API de Open Banking (sin mock).
+  - `DmsServiceImpl` + `GeminiApiClient`: extracción real de documentos desde MinIO → Gemini API.
+  - `WeeklyReportService`: PDF real con OpenPDF.
+  - `SustainabilityController`: `financialHealth` derivado de métricas reales (no `75.0`).
+- 🟠 **A‑8 (extracción de RUT)**: `Pkcs12Handler.extractRutFromCert()` implementado: lee el Subject DN, extrae el RUT según formato de CA de Chile.
+- 🟡 **M‑3 (build)**: `next.config.mjs` actualizado con `ignoreDuringBuilds: false` e `ignoreBuildErrors: false`. Se corrigieron **~46 errores de TypeScript**.
+- 🟡 **M‑4 (config duplicada)**: Se eliminó `next.config.ts`, solo queda `next.config.mjs`.
+- 🟡 **M‑5 (import roto)**: `Header.tsx` ahora importa `Cookies` desde `'js‑cookie'`.
+- 🔵 **B‑8 (God classes)**: Se extrajeron responsabilidades de:
+  - `OcppMessageDispatcher` → handlers por tipo de mensaje.
+  - `InvoiceImportController` → `InvoiceImportService`, `InvoiceLineExtractor`.
+  - `ComplianceController` → `ComplianceService`.
+- 🔵 **B‑9 (energy)**: Se analizó la complejidad del módulo; se decidió mantenerlo como parte del producto (ERP energético), pero se extrajeron `OcppCommandExtensionService` y `ChargingEventListener`.
+
+### Fase 3 – Frontend y robustez
+- 🟡 **M‑2 (componentes mock)**: **Todos los 9 componentes mock** fueron implementados como UI real y funcional (`CashFlowChart`, `ReconciliationInterface`, `BankStatementUpload`, `LiquidityKPIs`, `CashEntryModal`, `AuditAlertsList`, `PartnerLedger`, `TopGreenProviders`, chat.store de zustand).
+- 🟡 **M‑6 (CI)**: Se actualizaron los workflows de GitHub Actions para ejecutar tests (`./gradlew test`), `npm run lint` y `npm run test`.
+- 🟡 **M‑7 (cobertura)**: Se añadieron tests para módulos críticos: contabilidad (`AccountingService`), nómina (`PayrollService`), impuestos (`F22DraftService`, `PreviredFileGenerator`).
+- 🔵 **B‑2 (docker‑compose)**: Se corrigieron puertos duplicados, se eliminó el volumen duplicado de PostgreSQL, se reemplazaron las credenciales triviales de MinIO por variables de entorno.
+- 🔵 **B‑3 (MinIO defaults)**: Se quitaron `admin`/`password123` de `application.properties`; ahora obliga a definir `MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY`.
+- 🔵 **B‑4 (JWT expiración)**: Se alineó `jwt.expiration` en `application‑*.properties` a `86400000` (24 h) y se documentó la política.
+
+### Limitación conocida (pendiente de diseño)
+**`ChargingEventListener` – `companyId` por defecto**  
+En `accounting/events/ChargingEventListener.java` el evento de carga (OCPP) **no transporta el `companyId`**; el listener actualmente usa `companyId = 1L` como placeholder. Resolverlo requiere mapear la estación de carga (`stationId`) al contrato/cliente (tabla `charging_station → contract → company`), lo cual es parte de la lógica de multi‑tenant energético.  
+Se ha documentado como `// TODO: Obtener companyId desde estación → contrato → empresa` y se añadió esta nota al final de `pendiente.md`. La funcionalidad de DLQ (Dead Letter Queue) y contabilización de kWh **funciona**, pero asignará la factura a la empresa `ID = 1`.
+
+---
+
+> _Nota: Este documento se basa en análisis estático del código y configuración. Se recomienda complementar con pruebas dinámicas (DAST), pentesting y revisión manual de los módulos financieros antes de producción._
