@@ -15,11 +15,13 @@ import java.util.UUID;
  * @param userName    Nombre del usuario (o email si no tiene nombre)
  * @param companyId   ID de la empresa (contexto actual)
  * @param companyName Nombre de la empresa
+ * @param role        Rol del usuario (para el gating de UI en el frontend)
  */
 public record AuthResponse(
         String token,
         UUID userId,
         String userName,
         UUID companyId,
-        String companyName) {
+        String companyName,
+        String role) {
 }
