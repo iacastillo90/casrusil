@@ -7,11 +7,13 @@ import com.casrusil.siierpai.modules.period_close.domain.dto.PeriodAuditResponse
 import com.casrusil.siierpai.modules.period_close.domain.dto.PeriodCloseRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/period-close")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
 public class PeriodCloseController {
 
     private final PeriodCloseUseCase periodCloseUseCase;
