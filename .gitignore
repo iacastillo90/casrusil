@@ -3,7 +3,23 @@
 # ========================================
 .env
 .env.*
+# Permitir plantillas de ejemplo (sin secretos) en cualquier subcarpeta
+!.env.example
+!**/.env.example
 Doc/
+
+# ========================================
+# CERTIFICADOS Y KEYSTORES (nunca versionar secretos reales)
+# ========================================
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.key
+*.b64
+# Excepción: certificados dummy/de prueba usados por los tests
+!**/dummy.p12
+!**/test/**/*.p12
 
 # ========================================
 # BACKEND (Spring Boot / Java)
