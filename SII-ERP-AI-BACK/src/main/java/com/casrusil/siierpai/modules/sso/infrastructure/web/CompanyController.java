@@ -7,6 +7,7 @@ import com.casrusil.siierpai.modules.sso.domain.model.Company;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/company")
+@PreAuthorize("hasRole('ADMIN')")
 public class CompanyController {
 
     private final CompanyManagementService companyService;

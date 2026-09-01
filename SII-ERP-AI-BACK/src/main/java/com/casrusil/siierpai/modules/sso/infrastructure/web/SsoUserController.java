@@ -10,6 +10,7 @@ import com.casrusil.siierpai.shared.domain.valueobject.UserId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -32,6 +33,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/sso/users")
 @Tag(name = "SSO Users", description = "SSO user management operations")
+@PreAuthorize("hasRole('ADMIN')")
 public class SsoUserController {
 
     private final SsoUserManagementService userService;
