@@ -7,6 +7,7 @@ import com.casrusil.siierpai.modules.banking.application.service.BankReconciliat
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/banking/reconciliation")
+@PreAuthorize("hasAnyRole('ADMIN','TREASURER','ACCOUNTANT')")
 public class BankReconciliationController {
 
     private final BankReconciliationWorkbenchService workbenchService;

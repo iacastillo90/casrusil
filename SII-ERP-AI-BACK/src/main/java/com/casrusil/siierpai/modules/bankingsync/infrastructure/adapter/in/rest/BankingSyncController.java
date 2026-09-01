@@ -8,6 +8,7 @@ import com.casrusil.siierpai.modules.bankingsync.domain.port.in.BankingSyncUseCa
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/banking")
+@PreAuthorize("hasAnyRole('ADMIN','TREASURER')")
 public class BankingSyncController {
 
     private final BankingSyncUseCase useCase;

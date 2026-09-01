@@ -9,6 +9,7 @@ import com.casrusil.siierpai.modules.banking.domain.model.ReconciliationMatch;
 import com.casrusil.siierpai.modules.banking.domain.port.out.BankTransactionRepository;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +24,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/bank")
+@PreAuthorize("hasAnyRole('ADMIN','TREASURER','ACCOUNTANT')")
 public class BankStatementController {
 
     private final BankStatementParser parser;
