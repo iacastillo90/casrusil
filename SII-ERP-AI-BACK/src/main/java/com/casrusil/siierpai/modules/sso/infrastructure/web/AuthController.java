@@ -2,29 +2,44 @@ package com.casrusil.siierpai.modules.sso.infrastructure.web;
 
 import com.casrusil.siierpai.modules.sso.application.dto.AuthResult;
 import com.casrusil.siierpai.modules.sso.application.service.AuthService;
+import com.casrusil.siierpai.modules.sso.infrastructure.security.JwtTokenProvider;
+import com.casrusil.siierpai.modules.sso.infrastructure.security.LoginRateLimiter;
+import com.casrusil.siierpai.modules.sso.infrastructure.security.SecurityFilter;
+import com.casrusil.siierpai.modules.sso.infrastructure.security.TokenBlacklistService;
 import com.casrusil.siierpai.modules.sso.infrastructure.web.dto.AuthResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Duration;
 
 /**
  * Controlador REST para autenticación pública.
- * 
+ *
  * <p>
- * Maneja el registro de nuevas empresas y el inicio de sesión de usuarios.
- * Estos endpoints son públicos (no requieren token JWT).
- * 
+ * Maneja registro, login y logout. El token JWT se entrega como cookie
+ * {@code HttpOnly} (no accesible por JavaScript, mitiga XSS) además de en el
+ * cuerpo de la respuesta para clientes de API. Aplica rate limiting anti
+ * fuerza-bruta por IP.
+ *
  * <h2>Endpoints:</h2>
  * <ul>
  * <li>{@code POST /api/v1/auth/register}: Registrar nueva empresa.</li>
- * <li>{@code POST /api/v1/auth/login}: Iniciar sesión y obtener token.</li>
+ * <li>{@code POST /api/v1/auth/login}: Iniciar sesión.</li>
+ * <li>{@code POST /api/v1/auth/logout}: Cerrar sesión (revoca el token).</li>
  * </ul>
- * 
+ *
  * @see AuthService
  * @since 1.0
  */
@@ -33,37 +48,130 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthController.class);
-    private final AuthService authService;
 
-    public AuthController(AuthService authService) {
-        log.info("🚀 CARGANDO AUTH CONTROLLER");
+    private final AuthService authService;
+    private final LoginRateLimiter loginRateLimiter;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    /** true en producción para exigir HTTPS en la cookie (Secure). */
+    @Value("${security.cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${security.cookie.same-site:Strict}")
+    private String cookieSameSite;
+
+    public AuthController(AuthService authService,
+            LoginRateLimiter loginRateLimiter,
+            TokenBlacklistService tokenBlacklistService,
+            JwtTokenProvider jwtTokenProvider) {
         this.authService = authService;
+        this.loginRateLimiter = loginRateLimiter;
+        this.tokenBlacklistService = tokenBlacklistService;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(
-            @Valid @RequestBody RegisterRequest request) {
-        AuthResult result = authService.registerCompany(
-                request.rut(),
-                request.razonSocial(),
-                request.adminEmail(),
-                request.adminPassword());
-        return ResponseEntity.ok(mapToResponse(result));
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest) {
+        String clientId = clientIdentifier(httpRequest);
+        enforceRateLimit(clientId);
+        try {
+            AuthResult result = authService.registerCompany(
+                    request.rut(), request.razonSocial(), request.adminEmail(), request.adminPassword());
+            loginRateLimiter.reset(clientId);
+            return okWithCookie(result);
+        } catch (RuntimeException e) {
+            loginRateLimiter.recordFailedAttempt(clientId);
+            throw e;
+        }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        AuthResult result = authService.login(request.email(), request.password());
-        return ResponseEntity.ok(mapToResponse(result));
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        String clientId = clientIdentifier(httpRequest);
+        enforceRateLimit(clientId);
+        try {
+            AuthResult result = authService.login(request.email(), request.password());
+            loginRateLimiter.reset(clientId);
+            return okWithCookie(result);
+        } catch (RuntimeException e) {
+            loginRateLimiter.recordFailedAttempt(clientId);
+            throw e;
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest httpRequest) {
+        String token = extractToken(httpRequest);
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            tokenBlacklistService.blacklist(token, jwtTokenProvider.getExpiration(token));
+        }
+        // Cookie vacía y expirada para borrarla en el navegador.
+        ResponseCookie cleared = baseCookie("", Duration.ZERO).build();
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, cleared.toString())
+                .build();
+    }
+
+    // ----------------------------------------------------------------------
+
+    private void enforceRateLimit(String clientId) {
+        if (loginRateLimiter.isBlocked(clientId)) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Demasiados intentos. Intenta nuevamente más tarde.");
+        }
+    }
+
+    private ResponseEntity<AuthResponse> okWithCookie(AuthResult result) {
+        ResponseCookie cookie = baseCookie(result.token(),
+                Duration.ofMillis(jwtTokenProvider.getExpirationMillis())).build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(mapToResponse(result));
+    }
+
+    private ResponseCookie.ResponseCookieBuilder baseCookie(String value, Duration maxAge) {
+        return ResponseCookie.from(SecurityFilter.ACCESS_TOKEN_COOKIE, value)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(maxAge);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        String bearer = request.getHeader("Authorization");
+        if (bearer != null && bearer.startsWith("Bearer ")) {
+            return bearer.substring(7);
+        }
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie c : request.getCookies()) {
+                if (SecurityFilter.ACCESS_TOKEN_COOKIE.equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Identificador para rate limiting: IP del cliente (respeta X-Forwarded-For). */
+    private String clientIdentifier(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     private AuthResponse mapToResponse(AuthResult result) {
         return new AuthResponse(
                 result.token(),
                 result.user().getId().getValue(),
-                result.user().getEmail(), // Usemos email como nombre por ahora si nombre no está disponible
+                result.user().getEmail(),
                 result.company().getId().getValue(),
-                result.company().getRazonSocial());
+                result.company().getRazonSocial(),
+                result.user().getRole().name());
     }
 
     public record RegisterRequest(
