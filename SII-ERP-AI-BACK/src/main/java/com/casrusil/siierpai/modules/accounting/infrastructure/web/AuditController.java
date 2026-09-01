@@ -5,6 +5,7 @@ import com.casrusil.siierpai.modules.accounting.application.service.SuspiciousAm
 import com.casrusil.siierpai.modules.accounting.domain.model.AuditAlert;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/v1/audit")
+@PreAuthorize("hasAnyRole('ADMIN','AUDITOR')")
 public class AuditController {
 
         private final DuplicateInvoiceDetector duplicateDetector;

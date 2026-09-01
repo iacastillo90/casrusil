@@ -13,6 +13,7 @@ import com.casrusil.siierpai.shared.infrastructure.reporting.ExcelExportService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -44,6 +45,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping({ "/api/v1/reports", "/api/v1/reporting" })
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','AUDITOR')")
 public class ReportingController {
 
     private final SearchInvoicesUseCase searchInvoicesUseCase;

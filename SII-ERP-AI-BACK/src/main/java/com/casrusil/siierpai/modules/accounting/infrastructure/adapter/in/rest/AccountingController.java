@@ -18,6 +18,7 @@ import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.domain.valueobject.UserId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.YearMonth;
@@ -43,6 +44,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/accounting")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
 public class AccountingController {
 
     private final AccountingEntryRepository accountingEntryRepository;

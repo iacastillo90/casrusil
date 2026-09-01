@@ -5,12 +5,14 @@ import com.casrusil.siierpai.modules.accounting.domain.model.TaxAuditReport;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/v1/sii/audit")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','AUDITOR')")
 public class TaxAuditController {
 
     private final TaxAuditService taxAuditService;

@@ -6,6 +6,7 @@ import com.casrusil.siierpai.modules.accounting.domain.model.ClassificationRule;
 import com.casrusil.siierpai.modules.accounting.domain.port.out.ClassificationRuleRepository;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/learning")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
 public class LearningController {
 
     private final ClassificationRuleRepository ruleRepository;
