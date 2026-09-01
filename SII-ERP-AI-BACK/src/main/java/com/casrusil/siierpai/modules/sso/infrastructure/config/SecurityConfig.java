@@ -56,10 +56,15 @@ public class SecurityConfig {
 
                 // 4. Reglas de Autorización
                 .authorizeHttpRequests(auth -> auth
-                        // Permitir acceso público a endpoints de autenticación y Swagger si lo usas
-                        .requestMatchers("/api/v1/auth/**", "/error", "/actuator/**").permitAll()
                         // Permitir OPTIONS (pre-flight requests de CORS)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        // Endpoints públicos de autenticación
+                        .requestMatchers("/api/v1/auth/**", "/error").permitAll()
+                        // Actuator: solo health/info son públicos (probes de LB/k8s).
+                        // El resto (metrics, prometheus, env, loggers...) requiere autenticación.
+                        // SEGURIDAD: idealmente restringir a rol ADMIN cuando el RBAC esté cableado.
+                        .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/**").authenticated()
                         // Todo lo demás requiere autenticación
                         .anyRequest().authenticated())
 
