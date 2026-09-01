@@ -11,6 +11,7 @@ import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/v1/invoices")
+@PreAuthorize("hasAnyRole('ADMIN','SALES','ACCOUNTANT')")
 public class InvoiceController {
 
         private final CreateInvoiceUseCase createInvoiceUseCase;

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,7 @@ import com.casrusil.siierpai.modules.partners.domain.port.out.PartnerRepository;
 
 @RestController
 @RequestMapping("/api/v1/invoices/import")
+@PreAuthorize("hasAnyRole('ADMIN','SALES','ACCOUNTANT')")
 public class InvoiceImportController {
 
     private static final Logger logger = LoggerFactory.getLogger(InvoiceImportController.class);
