@@ -69,4 +69,18 @@ public class JwtTokenProvider {
         Claims claims = getClaims(token);
         return new CompanyId(UUID.fromString(claims.get("companyId", String.class)));
     }
+
+    /**
+     * @return la fecha de expiración del token (para calcular el TTL de la blacklist).
+     */
+    public Date getExpiration(String token) {
+        return getClaims(token).getExpiration();
+    }
+
+    /**
+     * @return la vida configurada del token en milisegundos (para la cookie de sesión).
+     */
+    public long getExpirationMillis() {
+        return expirationMillis;
+    }
 }
