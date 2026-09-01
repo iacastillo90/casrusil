@@ -38,6 +38,7 @@ import java.util.concurrent.StructuredTaskScope;
 @RestController
 @RequestMapping("/api/v1/compliance")
 @Tag(name = "Compliance Center", description = "Centro de Inteligencia Financiera y Tributaria")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','AUDITOR')")
 public class ComplianceController {
 
     private final SiiAuditorService siiAuditorService;
@@ -50,6 +51,7 @@ public class ComplianceController {
     private final TaxParameterJpaRepository taxRepo;
     private final BankReconciliationWorkbenchService bankWorkbench;
     private final ReconciliationLearningService learningService;
+    private final com.casrusil.siierpai.modules.accounting.domain.service.FinancialHealthService financialHealthService;
 
     public ComplianceController(
             SiiAuditorService siiAuditorService,
@@ -61,7 +63,8 @@ public class ComplianceController {
             AcuseReciboScheduler acuseScheduler,
             TaxParameterJpaRepository taxRepo,
             BankReconciliationWorkbenchService bankWorkbench,
-            ReconciliationLearningService learningService) {
+            ReconciliationLearningService learningService,
+            com.casrusil.siierpai.modules.accounting.domain.service.FinancialHealthService financialHealthService) {
         this.siiAuditorService = siiAuditorService;
         this.anomalyDetectionService = anomalyDetectionService;
         this.f29CalculatorService = f29CalculatorService;
@@ -72,6 +75,7 @@ public class ComplianceController {
         this.taxRepo = taxRepo;
         this.bankWorkbench = bankWorkbench;
         this.learningService = learningService;
+        this.financialHealthService = financialHealthService;
     }
 
     @GetMapping("/dashboard")
@@ -168,16 +172,9 @@ public class ComplianceController {
         }
 
         BalanceSheetReport balanceSheet = balanceSheetService.generateBalanceSheet(companyId, period.atEndOfMonth());
-        
-        BigDecimal financialHealth = new BigDecimal("75.0");
-        if (balanceSheet.totalLiabilities().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal ratio = balanceSheet.totalAssets().divide(balanceSheet.totalLiabilities(), 2, RoundingMode.HALF_UP);
-            financialHealth = ratio.multiply(new BigDecimal("50")).min(new BigDecimal("100"));
-        } else if (balanceSheet.totalAssets().compareTo(BigDecimal.ZERO) > 0) {
-            financialHealth = new BigDecimal("100");
-        } else {
-            financialHealth = new BigDecimal("50");
-        }
+
+        // Salud financiera real y centralizada (misma fórmula que Sustainability).
+        BigDecimal financialHealth = financialHealthService.calculateFromBalance(balanceSheet);
 
         String riskLevel = calculateRiskLevel(financialHealth, environmentalHealth);
 
