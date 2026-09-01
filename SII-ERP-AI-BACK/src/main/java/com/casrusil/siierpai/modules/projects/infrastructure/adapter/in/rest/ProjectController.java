@@ -7,6 +7,7 @@ import com.casrusil.siierpai.modules.projects.domain.port.in.ProjectUseCase;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/projects")
+@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
 public class ProjectController {
 
     private final ProjectUseCase projectUseCase;

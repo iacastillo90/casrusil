@@ -8,6 +8,7 @@ import com.casrusil.siierpai.modules.mrp.domain.model.WorkOrder;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/mrp")
+@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
 public class MrpController {
 
     private final MrpServiceImpl mrpService;
