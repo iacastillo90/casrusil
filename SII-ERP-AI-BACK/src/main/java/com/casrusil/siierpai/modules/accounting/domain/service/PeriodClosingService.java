@@ -60,11 +60,12 @@ public class PeriodClosingService {
             throw new IllegalStateException("Period " + period + " is already closed for company " + companyId.value());
         }
 
-        // Calculate profit/loss
-        BigDecimal profitLoss = calculateProfitLoss(companyId, period);
+        // Calcular totales del periodo (desglosados por cuenta) y resultado.
+        PeriodTotals totals = computePeriodTotals(companyId, period);
+        BigDecimal profitLoss = totals.profitLoss();
 
-        // Create closing entry
-        createClosingEntry(companyId, period, profitLoss);
+        // Crear asiento de cierre saldando cada cuenta de resultado individual.
+        createClosingEntry(companyId, period, totals);
 
         // Save closed period
         ClosedPeriod closedPeriod = new ClosedPeriod(companyId, period, userId, profitLoss);
@@ -96,82 +97,113 @@ public class PeriodClosingService {
     }
 
     /**
-     * Calculate profit/loss for a period.
-     * Profit/Loss = Total Revenue - Total Expenses
+     * Totales del periodo, desglosados por cuenta, para construir el asiento de cierre.
+     *
+     * @param revenueByAccount saldo acreedor por cada cuenta de resultado-ganancia (prefijo 4)
+     * @param expenseByAccount saldo deudor por cada cuenta de resultado-pérdida (prefijo 5)
      */
-    private BigDecimal calculateProfitLoss(CompanyId companyId, YearMonth period) {
+    private record PeriodTotals(
+            java.util.Map<String, BigDecimal> revenueByAccount,
+            java.util.Map<String, BigDecimal> expenseByAccount) {
+
+        BigDecimal totalRevenue() {
+            return revenueByAccount.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        BigDecimal totalExpenses() {
+            return expenseByAccount.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        BigDecimal profitLoss() {
+            return totalRevenue().subtract(totalExpenses());
+        }
+    }
+
+    /**
+     * Recorre los asientos del periodo y acumula, por cuenta, el saldo de las
+     * cuentas de resultado (ingresos = créditos de cuentas "4", gastos = débitos
+     * de cuentas "5"). Se usa tanto para el resultado del ejercicio como para
+     * construir un asiento de cierre que salda cada cuenta individual.
+     */
+    private PeriodTotals computePeriodTotals(CompanyId companyId, YearMonth period) {
         List<AccountingEntry> entries = accountingEntryRepository.findByCompanyId(companyId);
 
         LocalDate start = period.atDay(1);
         LocalDate end = period.atEndOfMonth();
 
-        BigDecimal totalRevenue = BigDecimal.ZERO;
-        BigDecimal totalExpenses = BigDecimal.ZERO;
+        java.util.Map<String, BigDecimal> revenueByAccount = new java.util.TreeMap<>();
+        java.util.Map<String, BigDecimal> expenseByAccount = new java.util.TreeMap<>();
 
         for (AccountingEntry entry : entries) {
             LocalDate entryDate = entry.getEntryDate();
-
-            // Filter by period
             if (entryDate.isBefore(start) || entryDate.isAfter(end)) {
                 continue;
             }
-
-            // Sum revenue and expenses
             for (AccountingEntryLine line : entry.getLines()) {
                 String accountCode = line.accountCode();
-
                 if (accountCode.startsWith(REVENUE_PREFIX)) {
-                    // Revenue accounts have credit balance
-                    totalRevenue = totalRevenue.add(line.credit());
+                    revenueByAccount.merge(accountCode, line.credit(), BigDecimal::add);
                 } else if (accountCode.startsWith(EXPENSE_PREFIX)) {
-                    // Expense accounts have debit balance
-                    totalExpenses = totalExpenses.add(line.debit());
+                    expenseByAccount.merge(accountCode, line.debit(), BigDecimal::add);
                 }
             }
         }
-
-        // Profit/Loss = Revenue - Expenses
-        return totalRevenue.subtract(totalExpenses);
+        return new PeriodTotals(revenueByAccount, expenseByAccount);
     }
 
     /**
-     * Create closing entry that zeros out revenue and expense accounts
-     * and transfers the net to equity (Utilidad del Ejercicio).
+     * Crea el asiento de cierre que salda TODAS las cuentas de resultado individuales
+     * y transfiere el neto al patrimonio (Utilidad del Ejercicio):
+     * <ul>
+     *   <li>Debita cada cuenta de ingresos por su saldo acreedor (la deja en cero).</li>
+     *   <li>Acredita cada cuenta de gastos por su saldo deudor (la deja en cero).</li>
+     *   <li>La diferencia (resultado) se lleva a {@code UTILIDAD_EJERCICIO}
+     *       (crédito si hay utilidad, débito si hay pérdida).</li>
+     * </ul>
+     * El asiento queda balanceado (débitos = créditos) por construcción.
      */
-    private void createClosingEntry(CompanyId companyId, YearMonth period, BigDecimal profitLoss) {
+    private void createClosingEntry(CompanyId companyId, YearMonth period, PeriodTotals totals) {
         List<AccountingEntryLine> lines = new ArrayList<>();
 
-        if (profitLoss.compareTo(BigDecimal.ZERO) > 0) {
-            // Profit: Debit Revenue, Credit Equity
-            // In a full implementation, we would debit each individual revenue account
-            // For simplicity, we create a single closing entry
-            lines.add(AccountingEntryLine.debit("4101", "Revenue Summary", profitLoss)); // Placeholder: should be all
-                                                                                         // revenue accounts
-            lines.add(AccountingEntryLine.credit(UTILIDAD_EJERCICIO, "Retained Earnings", profitLoss));
-        } else if (profitLoss.compareTo(BigDecimal.ZERO) < 0) {
-            // Loss: Debit Equity, Credit Expenses
-            BigDecimal loss = profitLoss.abs();
-            lines.add(AccountingEntryLine.debit(UTILIDAD_EJERCICIO, "Retained Earnings", loss));
-            lines.add(AccountingEntryLine.credit("5101", "Expense Summary", loss)); // Placeholder: should be all
-                                                                                    // expense accounts
-        }
-        // If profit/loss is zero, no closing entry needed
+        // Saldar cada cuenta de ingresos (débito por su saldo acreedor).
+        totals.revenueByAccount().forEach((account, balance) -> {
+            if (balance.signum() != 0) {
+                lines.add(AccountingEntryLine.debit(account, "Cierre de ingresos " + period, balance));
+            }
+        });
 
-        if (!lines.isEmpty()) {
-            AccountingEntry closingEntry = new AccountingEntry(
-                    companyId,
-                    "Closing Entry - " + period,
-                    period.toString(),
-                    "PERIOD_CLOSING",
-                    null,
-                    null,
-                    null,
-                    null,
-                    "POSTED",
-                    lines,
-                    com.casrusil.siierpai.modules.accounting.domain.model.EntryType.CLOSING);
+        // Saldar cada cuenta de gastos (crédito por su saldo deudor).
+        totals.expenseByAccount().forEach((account, balance) -> {
+            if (balance.signum() != 0) {
+                lines.add(AccountingEntryLine.credit(account, "Cierre de gastos " + period, balance));
+            }
+        });
 
-            accountingEntryService.recordEntry(closingEntry);
+        if (lines.isEmpty()) {
+            return; // Sin movimientos de resultado: no hay nada que cerrar.
         }
+
+        // Línea de balance hacia el patrimonio (Utilidad del Ejercicio).
+        BigDecimal profitLoss = totals.profitLoss();
+        if (profitLoss.signum() > 0) {
+            lines.add(AccountingEntryLine.credit(UTILIDAD_EJERCICIO, "Utilidad del Ejercicio " + period, profitLoss));
+        } else if (profitLoss.signum() < 0) {
+            lines.add(AccountingEntryLine.debit(UTILIDAD_EJERCICIO, "Pérdida del Ejercicio " + period, profitLoss.abs()));
+        }
+
+        AccountingEntry closingEntry = new AccountingEntry(
+                companyId,
+                "Closing Entry - " + period,
+                period.toString(),
+                "PERIOD_CLOSING",
+                null,
+                null,
+                null,
+                null,
+                "POSTED",
+                lines,
+                com.casrusil.siierpai.modules.accounting.domain.model.EntryType.CLOSING);
+
+        accountingEntryService.recordEntry(closingEntry);
     }
 }
