@@ -4,6 +4,7 @@ import com.casrusil.siierpai.modules.dms.application.service.AutomatedAccounting
 import com.casrusil.siierpai.modules.dms.application.service.InvoiceAiReaderService;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,6 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/dms/ai-invoicing")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
 public class AiInvoicingController {
 
     private final InvoiceAiReaderService aiReaderService;
