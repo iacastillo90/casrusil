@@ -5,13 +5,28 @@ spring:
   application:
     name: b2b-service
   datasource:
-    url: jdbc:postgresql://db:5432/siierpai
-    username: postgres
-    password: password
+    url: jdbc:postgresql://${POSTGRES_HOST:db}:${POSTGRES_PORT:5432}/${POSTGRES_DB:siierpai}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      # SEGURIDAD: en producción usar 'validate' + migraciones (ver plan-produccion.md).
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: false
 
 erp:
-  core-url: http://backend:8080
+  core-url: ${ERP_CORE_URL:http://backend:8080}
+
+# Secreto compartido con el backend principal para validar los JWT (HS256).
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
