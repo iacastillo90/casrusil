@@ -1,6 +1,4 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-// CORRECCIÓN: importar desde el paquete real, no desde node_modules/@types
-import Cookies from 'js-cookie';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
 
 // Asegúrate de que apunte al BACKEND (puerto 8080), no al frontend
@@ -19,16 +17,11 @@ const api = axios.create({
 // Alias for backward compatibility if needed, but 'api' is the main export now.
 export const apiClient = api;
 
-// Request interceptor: Add token + companyId
+// Request interceptor: companyId opcional (el token viaja en la cookie httpOnly,
+// enviada automáticamente por el navegador gracias a withCredentials + proxy same-origin).
 api.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        // Prioritize cookie for token to match middleware logic
-        const token = Cookies.get('token');
         const { companyId } = useAuthStore.getState();
-
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
 
         if (companyId) {
             config.headers['X-Company-Id'] = companyId;
