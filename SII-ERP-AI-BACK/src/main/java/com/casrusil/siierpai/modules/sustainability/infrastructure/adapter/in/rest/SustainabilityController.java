@@ -5,6 +5,7 @@ import com.casrusil.siierpai.modules.sustainability.infrastructure.adapter.in.re
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,21 +24,27 @@ import java.math.RoundingMode;
  */
 import com.casrusil.siierpai.modules.sustainability.application.service.CorfoBenefitSimulator;
 import com.casrusil.siierpai.modules.sustainability.application.service.EsgReportService;
+import com.casrusil.siierpai.modules.accounting.domain.service.FinancialHealthService;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/sustainability")
+@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS','AUDITOR')")
 public class SustainabilityController {
 
     private final GreenMetricsRepository greenMetricsRepository;
     private final EsgReportService esgReportService;
     private final CorfoBenefitSimulator corfoBenefitSimulator;
+    private final FinancialHealthService financialHealthService;
 
     public SustainabilityController(GreenMetricsRepository greenMetricsRepository, 
                                     EsgReportService esgReportService, 
-                                    CorfoBenefitSimulator corfoBenefitSimulator) {
+                                    CorfoBenefitSimulator corfoBenefitSimulator,
+                                    FinancialHealthService financialHealthService) {
         this.greenMetricsRepository = greenMetricsRepository;
         this.esgReportService = esgReportService;
         this.corfoBenefitSimulator = corfoBenefitSimulator;
+        this.financialHealthService = financialHealthService;
     }
 
     /**
@@ -72,8 +79,8 @@ public class SustainabilityController {
         // Calcular salud ambiental (0-100)
         BigDecimal environmentalHealth = calculateEnvironmentalHealth(greenScore, carbonFootprint);
 
-        // TODO: Calcular salud financiera (integrar con BalanceSheetService)
-        BigDecimal financialHealth = new BigDecimal("75.0"); // Placeholder
+        // Salud financiera real, derivada del Balance General a la fecha.
+        BigDecimal financialHealth = financialHealthService.calculate(companyId, LocalDate.now());
 
         // Determinar nivel de riesgo
         String riskLevel = calculateRiskLevel(financialHealth, environmentalHealth);
@@ -102,7 +109,7 @@ public class SustainabilityController {
         long greenSuppliers = greenMetricsRepository.countGreenSuppliers(companyId);
         
         BigDecimal environmentalHealth = calculateEnvironmentalHealth(greenScore, carbonFootprint);
-        BigDecimal financialHealth = new BigDecimal("75.0"); // Placeholder
+        BigDecimal financialHealth = financialHealthService.calculate(companyId, LocalDate.now());
         String riskLevel = calculateRiskLevel(financialHealth, environmentalHealth);
         
         GreenPassportDTO passport = new GreenPassportDTO(
