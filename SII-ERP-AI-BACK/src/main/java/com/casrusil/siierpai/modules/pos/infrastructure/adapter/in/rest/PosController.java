@@ -8,6 +8,7 @@ import com.casrusil.siierpai.modules.pos.domain.port.in.PosUseCase;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/pos")
+@PreAuthorize("hasAnyRole('ADMIN','SALES')")
 public class PosController {
 
     private final PosUseCase posUseCase;

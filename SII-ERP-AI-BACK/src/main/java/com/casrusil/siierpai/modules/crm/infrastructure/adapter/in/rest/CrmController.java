@@ -10,6 +10,7 @@ import com.casrusil.siierpai.modules.crm.domain.port.in.CrmUseCase;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/crm")
+@PreAuthorize("hasAnyRole('ADMIN','SALES')")
 public class CrmController {
 
     private final CrmUseCase crmUseCase;
