@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { useUiStore } from "@/stores/ui.store";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import Cookies from "../../../node_modules/@types/js-cookie";
 import { EconomicIndicatorsWidget } from "./EconomicIndicatorsWidget";
 
 import { NotificationsMenu } from "./NotificationsMenu";
