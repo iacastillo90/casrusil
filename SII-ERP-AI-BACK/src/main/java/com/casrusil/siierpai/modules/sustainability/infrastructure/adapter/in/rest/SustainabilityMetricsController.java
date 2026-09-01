@@ -5,6 +5,7 @@ import com.casrusil.siierpai.modules.sustainability.infrastructure.adapter.in.re
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory; // Added import for LoggerFactory
 @RestController
 @RequestMapping("/api/v1/sustainability/metrics")
 @Tag(name = "Sustainability Metrics", description = "Carbon footprint tracking and environmental impact")
+@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS','AUDITOR')")
 public class SustainabilityMetricsController {
 
     private static final Logger logger = LoggerFactory.getLogger(SustainabilityMetricsController.class);

@@ -2,6 +2,7 @@ package com.casrusil.siierpai.modules.sustainability.infrastructure.web;
 
 import com.casrusil.siierpai.modules.sustainability.infrastructure.persistence.repository.SustainabilityRecordRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/sustainability")
+@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS','AUDITOR')")
 public class SustainabilityController {
 
     private final SustainabilityRecordRepository repository;
