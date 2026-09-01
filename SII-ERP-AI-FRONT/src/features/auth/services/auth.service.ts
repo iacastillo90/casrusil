@@ -2,8 +2,6 @@ import api from "@/lib/axios";
 import { useAuthStore } from '../stores/auth.store';
 import { LoginCredentials, RegisterData, AuthResponse } from '../types/auth.types';
 import { UpdateCompanyRequest, CreateUserRequest } from '../types/auth-requests.types';
-// CORRECCIÓN: importar desde el paquete real, no desde @types/
-import Cookies from 'js-cookie';
 
 export const authService = {
     login: async (credentials: LoginCredentials) => {
@@ -19,39 +17,32 @@ export const authService = {
     },
 
     handleAuthSuccess: (data: AuthResponse, email: string) => {
-        if (data.token) {
-            // SEGURIDAD: Cookie con flags seguros.
-            // - secure: solo se envía por HTTPS (en prod)
-            // - sameSite: 'strict' protege contra CSRF
-            // - httpOnly: no puede ser accedida desde JS (protege contra XSS)
-            // Nota: httpOnly solo puede setearse desde el servidor via Set-Cookie header.
-            // Desde el cliente, usamos 'strict' + 'secure' como capa adicional.
-            Cookies.set('token', data.token, {
-                expires: 1,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict'
-            });
+        // SEGURIDAD: el token viaja en una cookie httpOnly emitida por el backend
+        // (Set-Cookie), NO accesible desde JavaScript. El frontend solo guarda el
+        // estado no sensible (usuario, empresa) en memoria (Zustand, sin persistir token).
+        const user = {
+            id: data.userId,
+            email: email,
+            name: data.userName,
+            // SEGURIDAD: usar el rol REAL devuelto por el backend, no un valor fijo.
+            role: data.role,
+        };
 
-            const user = {
-                id: data.userId,
-                email: email,
-                name: data.userName,
-                role: 'ADMIN' as const
-            };
-
-            useAuthStore.getState().setAuth(
-                user,
-                data.token,
-                data.companyId,
-                [] // companies array
-            );
-            // SEGURIDAD: No guardar datos de usuario en localStorage (vulnerable a XSS).
-            // El estado se maneja en Zustand (sin incluir el token en el persist).
-        }
+        useAuthStore.getState().setAuth(
+            user,
+            data.token, // se mantiene solo en memoria (excluido del persist)
+            data.companyId,
+            [] // companies array
+        );
     },
 
-    logout: () => {
-        Cookies.remove('token');
+    logout: async () => {
+        try {
+            // Revoca el token en el backend (blacklist) y borra la cookie httpOnly.
+            await api.post('/auth/logout');
+        } catch {
+            // Aunque falle la llamada, limpiamos el estado local igualmente.
+        }
         useAuthStore.getState().logout();
         if (typeof window !== 'undefined') {
             window.location.href = '/login';
