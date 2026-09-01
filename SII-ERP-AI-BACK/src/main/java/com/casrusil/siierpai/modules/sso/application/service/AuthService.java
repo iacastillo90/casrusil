@@ -54,7 +54,7 @@ public class AuthService {
 
     @Transactional
     public AuthResult registerCompany(String rut, String razonSocial, String adminEmail, String adminPassword) {
-        logger.info("Intentando registrar empresa RUT: {} con Admin: {}", rut, adminEmail);
+        logger.info("Intentando registrar empresa RUT: {}", rut);
 
         if (userRepository.findByEmail(adminEmail).isPresent()) {
             throw new DomainException("El usuario con email " + adminEmail + " ya existe") {
@@ -75,20 +75,28 @@ public class AuthService {
         return new AuthResult(token, adminUser, company);
     }
 
-    public AuthResult login(String email, String password) {
-        logger.info("Intento de login para: {}", email);
+    /**
+     * Excepción de credenciales inválidas. Mensaje genérico e idéntico tanto si el
+     * usuario no existe como si la contraseña es incorrecta, para evitar la
+     * enumeración de cuentas (OWASP A07).
+     */
+    public static class InvalidCredentialsException extends DomainException {
+        public InvalidCredentialsException() {
+            super("Credenciales inválidas");
+        }
+    }
 
+    public AuthResult login(String email, String password) {
+        logger.debug("Intento de login recibido");
+
+        // SEGURIDAD: mismo resultado ("Credenciales inválidas") si el usuario no
+        // existe o si la contraseña no coincide. No se registran emails ni motivos
+        // en los logs para no facilitar la enumeración de usuarios.
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    logger.error("Login fallido: Usuario no encontrado en DB -> {}", email);
-                    return new DomainException("Usuario no encontrado: " + email) {
-                    };
-                });
+                .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            logger.error("Login fallido: Contraseña incorrecta para -> {}", email);
-            throw new DomainException("Contraseña incorrecta") {
-            };
+            throw new InvalidCredentialsException();
         }
 
         if (!user.isActive()) {
@@ -105,7 +113,7 @@ public class AuthService {
             };
         }
 
-        logger.info("Login exitoso para: {}", email);
+        logger.info("Login exitoso para el usuario ID: {}", user.getId().getValue());
 
         String token = jwtTokenProvider.generateToken(user.getId(), company.getId(), user.getRole());
         return new AuthResult(token, user, company);
