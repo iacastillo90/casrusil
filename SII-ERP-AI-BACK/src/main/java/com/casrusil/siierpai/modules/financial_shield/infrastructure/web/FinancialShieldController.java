@@ -4,12 +4,14 @@ import com.casrusil.siierpai.modules.financial_shield.application.service.Financ
 import com.casrusil.siierpai.modules.financial_shield.domain.model.CashFlowHealth;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/financial-shield")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','TREASURER')")
 public class FinancialShieldController {
 
     private final FinancialShieldService service;
