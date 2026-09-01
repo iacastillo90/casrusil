@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/users")
 @Tag(name = "Users", description = "User management and lifecycle")
+@PreAuthorize("hasRole('ADMIN')")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);

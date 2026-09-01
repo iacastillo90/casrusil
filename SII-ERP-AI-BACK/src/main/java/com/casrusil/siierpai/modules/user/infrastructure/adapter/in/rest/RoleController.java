@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/roles")
 @Tag(name = "Roles", description = "RBAC role and permission management")
+@PreAuthorize("hasRole('ADMIN')")
 public class RoleController {
 
     private static final Logger logger = LoggerFactory.getLogger(RoleController.class);
