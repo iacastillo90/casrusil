@@ -10,6 +10,7 @@ import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/sii/ops")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
 public class SiiIntegrationController {
 
     private final AuthenticateSiiUseCase authenticateSiiUseCase;

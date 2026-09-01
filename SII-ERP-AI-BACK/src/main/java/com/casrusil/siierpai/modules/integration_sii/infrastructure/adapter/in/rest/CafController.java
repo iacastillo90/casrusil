@@ -5,6 +5,7 @@ import com.casrusil.siierpai.modules.integration_sii.domain.port.out.CafReposito
 import com.casrusil.siierpai.modules.integration_sii.infrastructure.parser.CafParser;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,6 +33,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/sii/caf")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
 public class CafController {
 
     private final CafParser cafParser;
