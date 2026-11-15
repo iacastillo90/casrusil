@@ -44,6 +44,10 @@ public class ProductEntity {
     
     private String category;
     
+    @Column(nullable = false, precision = 19, scale = 4)
+    @Builder.Default
+    private BigDecimal minStock = BigDecimal.valueOf(5);
+    
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;

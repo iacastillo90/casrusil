@@ -13,8 +13,6 @@ import {
     ChevronLeft,
     ChevronRight,
     ShieldCheck,
-    Truck,
-    Zap,
     Boxes,
     Users,
     ShoppingCart,
@@ -25,7 +23,8 @@ import {
     UserCircle2,
     Landmark,
     Factory,
-    PackageSearch
+    PackageSearch,
+    ShoppingBag
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APP_ROUTES } from '@/lib/constants';
@@ -33,7 +32,27 @@ import { useUiStore } from '@/stores/ui.store';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const navigation = [
+interface SidebarItemWithChildren {
+    name: string;
+    href?: string;
+    icon?: React.ElementType;
+    children: Array<{ name: string; href: string; icon?: React.ElementType }>;
+}
+
+interface SidebarItemWithoutChildren {
+    name: string;
+    href: string;
+    icon: React.ElementType;
+    children?: never;
+}
+
+type SidebarItem = SidebarItemWithChildren | SidebarItemWithoutChildren;
+
+interface SidebarProps {
+    className?: string;
+}
+
+const navigation: SidebarItem[] = [
     { name: 'Dashboard', href: APP_ROUTES.DASHBOARD, icon: LayoutDashboard },
     { name: 'Facturas', href: APP_ROUTES.INVOICES, icon: FileText },
     { name: 'Inventario', href: '/inventory', icon: Boxes },
@@ -47,7 +66,16 @@ const navigation = [
             { name: 'Cotizaciones', href: '/crm/quotes' },
         ]
     },
-    { name: 'Punto de Venta (POS)', href: '/pos', icon: Store },
+    // Ventas section
+    {
+        name: 'Ventas',
+        href: '#',
+        icon: ShoppingCart,
+        children: [
+            { name: 'Punto de Venta (POS)', href: '/pos', icon: Store },
+            { name: 'Portal B2B', href: '/portal', icon: ShoppingBag },
+        ]
+    },
     { name: 'Remuneraciones', href: '/payroll', icon: Users },
     { name: 'Mi Portal (Empleado)', href: '/employee', icon: UserCircle2 },
     {
@@ -77,24 +105,18 @@ const navigation = [
         name: 'Conciliación y Control',
         icon: ShieldCheck,
         children: [
-            { name: 'Compliance Center', href: '/compliance' }, // Updated
-            { name: 'Conciliación Bancaria', href: '/banking/reconciliation' },
+            { name: 'Auditoría Tributaria', href: APP_ROUTES.ACCOUNTING_AUDIT },
+            { name: 'Conciliación Bancaria', href: APP_ROUTES.BANKING_RECONCILIATION },
             { name: 'Cuentas Corrientes', href: '/accounting/partners' },
         ]
     },
     { name: 'Producción (MRP)', href: '/mrp', icon: Factory },
     { name: 'Logística (WMS)', href: '/wms', icon: PackageSearch },
     { name: 'Gestor Documental (IA)', href: '/documents', icon: FileText },
-    { name: 'Tesorería', href: APP_ROUTES.BANKING_RECONCILIATION, icon: Wallet },
-    { name: 'Flotas', href: APP_ROUTES.FLEET, icon: Truck },
-    { name: 'Energía', href: APP_ROUTES.ENERGY, icon: Zap },
+    { name: 'Tesorería', href: APP_ROUTES.TREASURY, icon: Wallet },
     { name: 'Reportes', href: '/reports', icon: FileBarChart },
     { name: 'Configuración', href: APP_ROUTES.SETTINGS_COMPANY, icon: Settings },
 ];
-
-interface SidebarProps {
-    className?: string;
-}
 
 export function Sidebar({ className }: SidebarProps) {
     const pathname = usePathname();
@@ -120,72 +142,83 @@ export function Sidebar({ className }: SidebarProps) {
                 {/* Navigation */}
                 <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
                     <TooltipProvider delayDuration={0}>
-                        {navigation.map((item) => (
-                            <div key={item.name}>
-                                {item.children ? (
-                                    <div className="space-y-1">
-                                        {!isSidebarCollapsed && (
-                                            <div className="flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground">
-                                                <item.icon className="h-5 w-5" />
-                                                <span>{item.name}</span>
+                        {navigation.map((item) => {
+                            const hasChildren = !!item.children;
+                            
+                            return (
+                                <div key={item.name}>
+                                    {hasChildren && (
+                                        <div className="space-y-1">
+                                            {'icon' in item && !isSidebarCollapsed && item.icon && (
+                                                <div className="flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground">
+                                                    <item.icon className="h-5 w-5" />
+                                                    <span>{item.name}</span>
+                                                </div>
+                                            )}
+                                            <div className={cn("space-y-1", !isSidebarCollapsed && "ml-8")}>
+                                                {item.children!.map((child) => (
+                                                    <Tooltip key={child.href}>
+                                                        <TooltipTrigger asChild>
+                                                            <Link
+                                                                href={child.href}
+                                                                className={cn(
+                                                                    'block rounded-md px-3 py-2 text-sm transition-colors',
+                                                                    pathname === child.href
+                                                                        ? 'bg-primary text-primary-foreground'
+                                                                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                                                                    isSidebarCollapsed && 'flex justify-center'
+                                                                )}
+                                                            >
+                                                                {isSidebarCollapsed ? (
+                                                                    <span className="text-xs font-bold">{child.name.substring(0, 2)}</span>
+                                                                ) : child.icon ? (
+                                                                    <span className="flex items-center space-x-2">
+                                                                        <child.icon className="h-4 w-4" />
+                                                                        <span>{child.name}</span>
+                                                                    </span>
+                                                                ) : (
+                                                                    child.name
+                                                                )
+                                                                }
+                                                            </Link>
+                                                        </TooltipTrigger>
+                                                        {isSidebarCollapsed && (
+                                                            <TooltipContent side="right">
+                                                                {child.name}
+                                                            </TooltipContent>
+                                                        )}
+                                                    </Tooltip>
+                                                ))}
                                             </div>
-                                        )}
-                                        <div className={cn("space-y-1", !isSidebarCollapsed && "ml-8")}>
-                                            {item.children.map((child) => (
-                                                <Tooltip key={child.href}>
-                                                    <TooltipTrigger asChild>
-                                                        <Link
-                                                            href={child.href}
-                                                            className={cn(
-                                                                'block rounded-md px-3 py-2 text-sm transition-colors',
-                                                                pathname === child.href
-                                                                    ? 'bg-primary text-primary-foreground'
-                                                                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                                                                isSidebarCollapsed && 'flex justify-center'
-                                                            )}
-                                                        >
-                                                            {isSidebarCollapsed ? (
-                                                                <span className="text-xs font-bold">{child.name.substring(0, 2)}</span>
-                                                            ) : (
-                                                                child.name
-                                                            )}
-                                                        </Link>
-                                                    </TooltipTrigger>
-                                                    {isSidebarCollapsed && (
-                                                        <TooltipContent side="right">
-                                                            {child.name}
-                                                        </TooltipContent>
-                                                    )}
-                                                </Tooltip>
-                                            ))}
                                         </div>
-                                    </div>
-                                ) : (
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Link
-                                                href={item.href}
-                                                className={cn(
-                                                    'flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                                                    pathname === item.href
-                                                        ? 'bg-primary text-primary-foreground'
-                                                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                                                    isSidebarCollapsed && 'justify-center'
-                                                )}
-                                            >
-                                                <item.icon className="h-5 w-5 shrink-0" />
-                                                {!isSidebarCollapsed && <span>{item.name}</span>}
-                                            </Link>
-                                        </TooltipTrigger>
-                                        {isSidebarCollapsed && (
-                                            <TooltipContent side="right">
-                                                {item.name}
-                                            </TooltipContent>
-                                        )}
-                                    </Tooltip>
-                                )}
-                            </div>
-                        ))}
+                                    )}
+                                    {!hasChildren && (
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Link
+                                                    href={item.href}
+                                                    className={cn(
+                                                        'flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                                                        pathname === item.href
+                                                            ? 'bg-primary text-primary-foreground'
+                                                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                                                        isSidebarCollapsed && 'justify-center'
+                                                    )}
+                                                >
+                                                    <item.icon className="h-5 w-5 shrink-0" />
+                                                    {!isSidebarCollapsed && <span>{item.name}</span>}
+                                                </Link>
+                                            </TooltipTrigger>
+                                            {isSidebarCollapsed && (
+                                                <TooltipContent side="right">
+                                                    {item.name}
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </TooltipProvider>
                 </nav>
 

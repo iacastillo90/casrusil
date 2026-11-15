@@ -71,7 +71,7 @@ export function InvoiceTable({ invoices, isLoading = false, onView, onSend }: In
                                         </Button>
                                     )}
                                     {onSend && (
-                                        <Button variant="ghost" size="icon" onClick={() => onSend(invoice.id)} title="Enviar al SII">
+                                        <Button variant="ghost" size="icon" onClick={() => onSend(invoice.id)} title="Enviar por email">
                                             <Send className="h-4 w-4" />
                                         </Button>
                                     )}

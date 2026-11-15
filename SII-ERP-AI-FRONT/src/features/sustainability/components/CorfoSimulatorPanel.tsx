@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 export const CorfoSimulatorPanel = () => {
     const { data: corfo, isLoading } = useCorfoSimulation();
 
-    if (isLoading) return <div className="text-sm text-gray-500">Simulando beneficios CORFO...</div>;
+    if (isLoading) return <div className="text-sm text-gray-500">Calculando beneficios CORFO...</div>;
     if (!corfo) return null;
 
     const getStatusBadge = () => {
@@ -24,7 +24,7 @@ export const CorfoSimulatorPanel = () => {
                 <CardTitle className="flex items-center text-blue-800 justify-between">
                     <div className="flex items-center">
                         <Award className="mr-2 h-5 w-5" />
-                        Simulador Subsidios CORFO (Pasaporte Verde)
+                        Evaluación Subsidios CORFO (Pasaporte Verde)
                     </div>
                     {getStatusBadge()}
                 </CardTitle>

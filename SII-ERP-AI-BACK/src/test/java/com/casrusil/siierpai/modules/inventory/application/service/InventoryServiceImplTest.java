@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.inventory.application.service;
 
+import com.casrusil.siierpai.modules.inventory.domain.dto.StockMovementRequest;
 import com.casrusil.siierpai.modules.inventory.domain.model.MovementType;
 import com.casrusil.siierpai.modules.inventory.domain.model.Product;
 import com.casrusil.siierpai.modules.inventory.domain.model.StockMovement;
@@ -51,9 +52,8 @@ class InventoryServiceImplTest {
                 .companyId("comp-1")
                 .sku("SKU-100")
                 .name("Producto Prueba")
-                .quantity(10)
-                .unitCost(new BigDecimal("1000.00")) // Costo inicial 1000
-                .totalValue(new BigDecimal("10000.00"))
+                .currentStock(new BigDecimal("10"))
+                .averageCost(new BigDecimal("1000.00")) // Costo inicial 1000
                 .build();
     }
 
@@ -61,13 +61,11 @@ class InventoryServiceImplTest {
     void testRegisterMovement_In_ShouldRecalculatePMP() {
         // Arrange
         // Simulamos una nueva compra de 5 unidades a 1500 cada una
-        StockMovement movement = StockMovement.builder()
+        StockMovementRequest request = StockMovementRequest.builder()
                 .productId(1L)
-                .companyId("comp-1")
                 .type(MovementType.IN)
-                .quantity(5)
+                .quantity(new BigDecimal("5"))
                 .unitCost(new BigDecimal("1500.00"))
-                .totalCost(new BigDecimal("7500.00"))
                 .movementDate(LocalDateTime.now())
                 .build();
 
@@ -76,15 +74,13 @@ class InventoryServiceImplTest {
         when(stockMovementRepository.save(any(StockMovement.class))).thenAnswer(i -> i.getArguments()[0]);
 
         // Act
-        // Llamamos al método bajo prueba
-        Object response = inventoryService.registerMovement(movement);
-        // Cast or reflection if the return type is a Response DTO
+        inventoryService.registerMovement(1L, request, "comp-1");
 
         // Assert
         // El nuevo PMP debería ser: ((10 * 1000) + (5 * 1500)) / 15 = 17500 / 15 = 1166.6667
-        assertEquals(15, testProduct.getQuantity(), "La cantidad total debe ser 15");
-        assertEquals(new BigDecimal("1166.6667"), testProduct.getUnitCost(), "El PMP recalculado debe ser 1166.6667");
-        
+        assertEquals(new BigDecimal("15"), testProduct.getCurrentStock(), "La cantidad total debe ser 15");
+        assertEquals(new BigDecimal("1166.6667"), testProduct.getAverageCost(), "El PMP recalculado debe ser 1166.6667");
+
         // Verificar que el evento StockMovedEvent se haya disparado para la contabilidad
         verify(eventPublisher, times(1)).publishEvent(any(StockMovedEvent.class));
     }

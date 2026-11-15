@@ -12,7 +12,7 @@ export default function FeesPage() {
 
     const { data: fees = [], isLoading } = useQuery({
         queryKey: ['fees', companyId],
-        queryFn: () => feeService.getFees({ companyId: companyId! }),
+        queryFn: () => feeService.getFees({}),
         enabled: !!companyId,
     });
 

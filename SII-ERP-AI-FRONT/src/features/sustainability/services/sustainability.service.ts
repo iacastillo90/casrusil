@@ -87,16 +87,4 @@ export const sustainabilityService = {
         const response = await api.get<CorfoSimulation>('/sustainability/corfo-simulator');
         return response.data;
     },
-    /**
-     * Datos de sostenibilidad asociados a una factura concreta.
-     * NOTA: integración real con el backend pendiente.
-     */
-    getInvoiceSustainability: async (id: string): Promise<InvoiceSustainability | null> => {
-        try {
-            const response = await api.get<InvoiceSustainability>(`/sustainability/invoice/${id}`);
-            return response.data ?? null;
-        } catch {
-            return null;
-        }
-    },
 };

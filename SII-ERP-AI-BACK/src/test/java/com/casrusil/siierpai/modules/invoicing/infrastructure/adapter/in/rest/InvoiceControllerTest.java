@@ -1,10 +1,10 @@
 package com.casrusil.siierpai.modules.invoicing.infrastructure.adapter.in.rest;
 
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
-import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceLine;
 import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceType;
 import com.casrusil.siierpai.modules.invoicing.domain.port.in.CreateInvoiceUseCase;
 import com.casrusil.siierpai.modules.invoicing.domain.port.in.SearchInvoicesUseCase;
+import com.casrusil.siierpai.modules.invoicing.domain.service.InvoiceDispatchService;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,6 +59,7 @@ class InvoiceControllerTest {
                 33,
                 123L,
                 "76123456-7",
+                "76987654-3",
                 "Emisor SpA",
                 LocalDate.now(),
                 new BigDecimal("1190"),

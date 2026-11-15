@@ -125,7 +125,6 @@ export default function PayrollPage() {
                                 <th className="px-6 py-4 font-semibold">RUT</th>
                                 <th className="px-6 py-4 font-semibold">Instituciones</th>
                                 <th className="px-6 py-4 font-semibold text-right">Sueldo Base</th>
-                                <th className="px-6 py-4 font-semibold text-center">Estado Cálculo</th>
                                 <th className="px-6 py-4 font-semibold text-right">Acción</th>
                             </tr>
                         </thead>
@@ -134,7 +133,6 @@ export default function PayrollPage() {
                                 <tr key={emp.id} className="hover:bg-slate-50 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="font-medium text-slate-900">{emp.name}</div>
-                                        <div className="text-xs text-slate-500 mt-0.5">{emp.role}</div>
                                     </td>
                                     <td className="px-6 py-4 font-mono text-xs text-slate-600">{emp.rut}</td>
                                     <td className="px-6 py-4">
@@ -145,17 +143,6 @@ export default function PayrollPage() {
                                     </td>
                                     <td className="px-6 py-4 text-right font-semibold text-slate-700">
                                         {formatCLP(emp.base)}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        {emp.status === "Processed" ? (
-                                            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-0">
-                                                <CheckCircle2 className="w-3 h-3 mr-1" /> Listo
-                                            </Badge>
-                                        ) : (
-                                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-0">
-                                                <Clock className="w-3 h-3 mr-1" /> Pendiente
-                                            </Badge>
-                                        )}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">

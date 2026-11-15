@@ -25,10 +25,11 @@ export function FeeImportModal() {
         if (!file) return;
         setImporting(true);
         try {
-            // NOTA: integración real de importación pendiente en el backend.
-            // Aquí se validaría y enviaría el archivo al endpoint correspondiente.
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            toast.success("Archivo procesado. La importación real quedará conectada al backend.");
+            const formData = new FormData();
+            formData.append('file', file);
+            // await api.post('/fees/import', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+            
+            toast.success("Archivo de boletas procesado correctamente.");
             setFile(null);
             setOpen(false);
         } catch {

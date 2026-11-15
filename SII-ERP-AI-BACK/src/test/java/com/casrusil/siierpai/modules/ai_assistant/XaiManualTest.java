@@ -46,17 +46,23 @@ public class XaiManualTest {
     private static void testCalculateF29Tool() {
         log.info("Testing CalculateF29Tool...");
 
-        // Mock Repository
+// Mock Repository
         AccountingEntryRepository repo = new AccountingEntryRepository() {
             @Override
-            public List<AccountingEntry> findByCompanyId(CompanyId companyId) {
-                AccountingEntryLine line = new AccountingEntryLine("210401", BigDecimal.ZERO,
+            public List<AccountingEntry> findByCompanyId(CompanyId companies) {
+                AccountingEntryLine line = new AccountingEntryLine("210401", "IVA", BigDecimal.ZERO,
                         new BigDecimal("1900"));
                 AccountingEntry entry = new AccountingEntry(
-                        companyId,
+                        companies,
+                        java.time.LocalDate.now(),
                         "Sale of goods",
                         "INV-001",
                         "INVOICE",
+                        "76123456-7",
+                        "Test Company",
+                        "33",
+                        "1",
+                        "DRAFT",
                         List.of(line),
                         EntryType.NORMAL);
                 return List.of(entry);
@@ -65,10 +71,69 @@ public class XaiManualTest {
             @Override
             public void save(AccountingEntry entry) {
             }
+
+            @Override
+            public List<AccountingEntry> findByCompanyIdAndEntryDateBetween(CompanyId companies,
+                    java.time.LocalDate from, java.time.LocalDate to) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public java.util.List<com.casrusil.siierpai.modules.accounting.domain.model.AccountMovement> findMovementsByAccount(
+                    CompanyId companies, String accountCode, java.time.LocalDate from, java.time.LocalDate to) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public java.util.List<AccountingEntry> findInPeriodForClasses(CompanyId companies,
+                    java.time.LocalDate from, java.time.LocalDate to, List<Integer> classes) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public void deleteByReferenceTypeAndPeriod(CompanyId companies, String referenceType,
+                    java.time.LocalDate from, java.time.LocalDate to) {
+            }
         };
 
         // Mock Anomaly Service
-        AnomalyDetectionService anomalyService = new AnomalyDetectionService() {
+        com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository invoiceRepo = new com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository() {
+            @Override
+            public com.casrusil.siierpai.modules.invoicing.domain.model.Invoice save(com.casrusil.siierpai.modules.invoicing.domain.model.Invoice invoice) {
+                return null;
+            }
+
+            @Override
+            public java.util.Optional<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findById(java.util.UUID id) {
+                return java.util.Optional.empty();
+            }
+
+            @Override
+            public java.util.List<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findByCompanyId(CompanyId companies) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public boolean existsByCompanyIdAndTypeCodeAndFolioAndIssuerRut(CompanyId companies, Integer typeCode, Long folio, String issuerRut) {
+                return false;
+            }
+
+            @Override
+            public Long findMaxFolioByCompanyIdAndTypeCode(CompanyId companies, int typeCode) {
+                return null;
+            }
+
+            @Override
+            public void deleteInPeriod(CompanyId companies, java.time.LocalDate start, java.time.LocalDate end) {
+            }
+
+            @Override
+            public java.util.List<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findByCompanyIdAndDateBetween(CompanyId companies, java.time.LocalDate start, java.time.LocalDate end) {
+                return Collections.emptyList();
+            }
+        };
+
+        AnomalyDetectionService anomalyService = new AnomalyDetectionService(invoiceRepo, repo) {
             @Override
             public List<AnomalyWarning> detectAnomalies(F29Report report) {
                 return Collections.emptyList();
@@ -86,25 +151,25 @@ public class XaiManualTest {
             }
 
             @Override
-            public List<FeeReceipt> findByCompanyIdAndIssueDateBetween(CompanyId companyId,
+            public List<FeeReceipt> findByCompanyIdAndIssueDateBetween(CompanyId companies,
                     java.time.LocalDate startDate,
                     java.time.LocalDate endDate) {
                 return Collections.emptyList();
             }
 
             @Override
-            public List<FeeReceipt> findByCompanyIdAndYear(CompanyId companyId, int year) {
+            public List<FeeReceipt> findByCompanyIdAndYear(CompanyId companies, int year) {
                 return Collections.emptyList();
             }
 
             @Override
-            public java.util.Optional<FeeReceipt> findByCompanyIdAndFolioAndIssuerRut(CompanyId companyId, Long folio,
+            public java.util.Optional<FeeReceipt> findByCompanyIdAndFolioAndIssuerRut(CompanyId companies, Long folio,
                     String issuerRut) {
                 return java.util.Optional.empty();
             }
         };
 
-        F29CalculatorService service = new F29CalculatorService(repo, feeRepo, anomalyService);
+        F29CalculatorService service = new F29CalculatorService(repo, feeRepo, anomalyService, null);
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
 

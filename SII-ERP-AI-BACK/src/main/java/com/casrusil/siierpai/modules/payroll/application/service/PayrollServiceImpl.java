@@ -18,8 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.YearMonth;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -126,7 +127,7 @@ public class PayrollServiceImpl implements PayrollUseCase {
 
         return Payslip.builder()
                 .companyId(employee.getCompanyId())
-                .employeeId(employee.getId())
+                .employeeId(convertToUUID(employee.getId()))
                 .periodId(period.getId())
                 .baseSalary(baseSalary)
                 .gratification(gratification)
@@ -188,6 +189,14 @@ public class PayrollServiceImpl implements PayrollUseCase {
             }
         }
         return BigDecimal.ZERO;
+    }
+
+    /**
+     * Converts a Long employee ID to a UUID for consistency with the payslip model.
+     * Uses name-based UUID generation from the employee ID string representation.
+     */
+    private UUID convertToUUID(Long employeeId) {
+        return UUID.nameUUIDFromBytes(employeeId.toString().getBytes());
     }
 
     private PayslipResponse mapToResponse(Payslip payslip) {

@@ -1,10 +1,10 @@
 package com.casrusil.siierpai.modules.accounting.domain.service;
 
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntry;
-import com.casrusil.siierpai.modules.accounting.domain.model.F29Report;
-import com.casrusil.siierpai.modules.accounting.domain.port.out.AccountingEntryRepository;
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntryLine;
 import com.casrusil.siierpai.modules.accounting.domain.model.EntryType;
+import com.casrusil.siierpai.modules.accounting.domain.model.F29Report;
+import com.casrusil.siierpai.modules.accounting.domain.port.out.AccountingEntryRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,8 +13,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -53,36 +55,29 @@ class F29CalculatorServiceTest {
         // Accounting Entry: Net 1000, VAT 190 (19%), Total 1190
         AccountingEntryLine line = new AccountingEntryLine(
                 "210401", // VAT account (example)
+                "IVA",
                 BigDecimal.ZERO,
                 new BigDecimal("190") // Tax Amount
         );
         AccountingEntry entry = new AccountingEntry(
                 companyId,
+                LocalDate.now(),
                 "Inv 1",
                 "F-1",
                 "SALE",
-                java.util.List.of(line),
+                "76123456-7",
+                "Test Company",
+                "33",
+                "1",
+                "DRAFT",
+                List.of(line),
                 EntryType.NORMAL // Using NORMAL as it's a sale
         );
 
-        when(accountingEntryRepository.findByCompanyId(companyId)).thenReturn(java.util.List.of(entry));
-
-        // Mock anomaly service (default behavior already mocked or lenient)
-        // Since we are not verifying it, assume it returns empty or we don't care about
-        // it for pure calculation logic if it doesn't affect the result.
-        // Wait, the Service constructor uses anomalyService.
-        // But main logic is iterating entries.
+        when(accountingEntryRepository.findByCompanyId(companyId)).thenReturn(List.of(entry));
 
         F29Report report = f29CalculatorService.calculateF29(companyId, period);
 
         assertNotNull(report);
-        // Assuming the logic sums up the lines.
-        // Depending on implementation, we might need to check how it identifies tax
-        // ines.
-        // Only checking if it runs and returns non-zero if logic depends on account
-        // codes or types.
-        // If F29CalculatorService relies on hardcoded accounts, this test might need
-        // adjustment.
-        // For now, removing the TODO effectively.
     }
 }

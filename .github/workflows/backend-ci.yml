@@ -21,6 +21,12 @@ jobs:
         distribution: 'temurin'
         cache: gradle
     
+    - name: Run Tests (SII-ERP-AI-BACK)
+      working-directory: ./SII-ERP-AI-BACK
+      run: |
+        chmod +x gradlew
+        ./gradlew test
+
     - name: Build with Gradle (SII-ERP-AI-BACK)
       working-directory: ./SII-ERP-AI-BACK
       run: |
@@ -42,6 +48,12 @@ jobs:
         distribution: 'temurin'
         cache: gradle
     
+    - name: Run Tests (SII-ERP-B2B-SERVICE)
+      working-directory: ./SII-ERP-B2B-SERVICE
+      run: |
+        chmod +x gradlew
+        ./gradlew test
+
     - name: Build with Gradle (B2B Microservice)
       working-directory: ./SII-ERP-B2B-SERVICE
       run: |

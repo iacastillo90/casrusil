@@ -71,49 +71,7 @@ const INITIAL_STEPS: CloseStep[] = [
     },
 ];
 
-// Simulated AI analysis per step
-const STEP_RESULTS: Record<string, Partial<CloseStep>> = {
-    documents: {
-        status: "warning",
-        messages: [
-            { type: "success", text: "✓ 142 facturas de ventas centralizadas correctamente." },
-            { type: "success", text: "✓ 87 facturas de compras conciliadas con el RCV del SII." },
-            { type: "warning", text: "⚠ 2 boletas de honorarios (Nº 334 y Nº 335) pendientes de registrar. Se propone asiento automático." },
-        ],
-    },
-    bank: {
-        status: "warning",
-        messages: [
-            { type: "success", text: "✓ Saldo banco BCI: $12.450.320 — Cuadra con libro mayor." },
-            { type: "warning", text: "⚠ Partida pendiente detectada: Cheque #00234 por $320.000 emitido el 28/11, aún no cobrado." },
-            { type: "info", text: "ℹ Se sugiere registrar como 'Cheque en Tránsito' para la conciliación del período." },
-        ],
-    },
-    depreciation: {
-        status: "done",
-        messages: [
-            { type: "info", text: "ℹ Activos fijos detectados: 8 bienes depreciables." },
-            { type: "success", text: "✓ Depreciación mensual calculada: $184.600 (Método Lineal, SII Tabla Vigente)." },
-            { type: "success", text: "✓ Provisión de IVA Débito Fiscal: $2.134.500 propuesta." },
-            { type: "success", text: "✓ Provisión PPM (Pago Provisional Mensual): $340.000 calculada." },
-        ],
-        proposedEntries: [
-            { label: "Gasto Depreciación Acumulada", debit: 184600, credit: 0 },
-            { label: "Depreciación Acumulada Activos", debit: 0, credit: 184600 },
-            { label: "Provisión IVA", debit: 0, credit: 2134500 },
-            { label: "Gasto Tributario (PPM)", debit: 340000, credit: 0 },
-        ],
-    },
-    closing: {
-        status: "done",
-        messages: [
-            { type: "success", text: "✓ Ingresos del período: $18.450.000 — Cuentas saldadas." },
-            { type: "success", text: "✓ Gastos del período: $14.230.000 — Cuentas saldadas." },
-            { type: "success", text: "✓ Utilidad del ejercicio determinada: $4.220.000." },
-            { type: "success", text: "✓ Período Noviembre 2026 bloqueado. No se permiten modificaciones retroactivas." },
-        ],
-    },
-};
+// Removing Mock AI Analysis Results
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function PeriodClosePage() {
@@ -141,44 +99,47 @@ export default function PeriodClosePage() {
         let backendIssues: string[] = [];
         try {
             const auditResult = await auditPeriod.mutateAsync({ year: 2026, month: 11 });
-            aiRecommendation = auditResult.aiRecommendation;
-            backendIssues = auditResult.issuesFound;
-        } catch (error) {
-            console.error("Error fetching audit", error);
-            aiRecommendation = "Error al conectar con la IA. Usando heurísticas locales.";
-        }
-
-        for (let i = 0; i < INITIAL_STEPS.length; i++) {
-            // Mark as running
-            setCurrentStep(i);
-            setSteps(prev => prev.map((s, idx) => idx === i ? { ...s, status: "running" } : s));
-            setProgress(((i) / INITIAL_STEPS.length) * 100);
-
-            // Simulate API/AI processing time
-            await new Promise(r => setTimeout(r, 2200));
-
-            // Apply results
-            const result = STEP_RESULTS[INITIAL_STEPS[i].id];
-            setSteps(prev => prev.map((s, idx) => idx === i ? { ...s, ...result } as CloseStep : s));
-
-            // Add AI message based on result
-            if (result.status === "warning") {
-                setAiChat(prev => [...prev, { role: "ai", text: `Paso ${i + 1} completado con observaciones. Revisa los detalles antes de continuar.` }]);
-            } else if (result.status === "done") {
-                setAiChat(prev => [...prev, { role: "ai", text: `Paso ${i + 1} validado sin irregularidades. ✓` }]);
+            aiRecommendation = auditResult.aiRecommendation || "Auditoría finalizada.";
+            backendIssues = auditResult.issuesFound || [];
+            
+            // Mapeamos los issues reales al primer paso para mostrar todo centralizado, en un futuro se puede categorizar.
+            setSteps(INITIAL_STEPS.map((s, i) => {
+                if (i === 0 && backendIssues.length > 0) {
+                    return {
+                        ...s,
+                        status: "warning",
+                        messages: backendIssues.map(issue => ({ type: "warning", text: `⚠ ${issue}` }))
+                    };
+                }
+                return {
+                    ...s,
+                    status: "done",
+                    messages: [{ type: "success", text: "✓ Validado correctamente." }]
+                };
+            }));
+            
+            setProgress(100);
+            
+            if (backendIssues.length > 0) {
+                setAiChat(prev => [...prev, { role: "ai", text: "He encontrado observaciones en la auditoría. Revisa los pasos." }]);
             }
 
-            setProgress(((i + 1) / INITIAL_STEPS.length) * 100);
-            await new Promise(r => setTimeout(r, 300));
+        } catch (error) {
+            console.error("Error fetching audit", error);
+            aiRecommendation = "Error al conectar con la IA o Backend.";
+            
+            setSteps(INITIAL_STEPS.map(s => ({
+                ...s,
+                status: "error",
+                messages: [{ type: "error", text: "Error de conexión." }]
+            })));
         }
 
         setCurrentStep(-1);
         setIsRunning(false);
         setAiChat(prev => [...prev, {
             role: "ai",
-            text: aiRecommendation || (hasWarnings
-                ? "⚠ Análisis completo. Se encontraron algunas observaciones menores. Puedes proceder al cierre o resolver las observaciones primero."
-                : "✅ Análisis completo. Todo en orden. Puedes proceder al cierre oficial del período.")
+            text: aiRecommendation
         }]);
     };
 

@@ -2,19 +2,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, CreditCard, Clock } from "lucide-react";
+import { CreditCard, Clock } from "lucide-react";
 import { useCustomerOrders, usePayOrder } from "@/features/b2b/hooks/useB2b";
+import { NewOrderModal } from "@/features/b2b/components/NewOrderModal";
+import type { B2bOrder } from "@/features/b2b/services/b2b.service";
 import { formatCLP } from "@/lib/formatters";
 import { toast } from "sonner";
 
 export default function PortalDashboard() {
-    const customerId = "CUST-774"; // Mocked customer ID
-    const { data: orders, isLoading } = useCustomerOrders(customerId);
-    const { mutate: payOrder } = usePayOrder(customerId);
+    const { data: orders, isLoading, isError } = useCustomerOrders();
+    const { mutate: payOrder } = usePayOrder();
 
     const handlePay = (id: string) => {
         payOrder(id, {
-            onSuccess: () => toast.success("Pago procesado correctamente.")
+            onSuccess: () => toast.success("Pago procesado correctamente."),
+            onError: () => toast.error("No se pudo procesar el pago. Intentá nuevamente.")
         });
     };
 
@@ -22,11 +24,17 @@ export default function PortalDashboard() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900">Mis Pedidos</h1>
-                <Button><ShoppingCart className="mr-2 h-4 w-4" /> Nuevo Pedido</Button>
+                <NewOrderModal />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {isLoading ? <p>Cargando tus pedidos...</p> : orders?.length === 0 ? <p>No has realizado pedidos aún.</p> : orders?.map((order: any) => (
+                {isLoading ? (
+                    <p>Cargando tus pedidos...</p>
+                ) : isError ? (
+                    <p className="text-destructive">No se pudieron cargar tus pedidos.</p>
+                ) : !orders || orders.length === 0 ? (
+                    <p>No has realizado pedidos aún.</p>
+                ) : orders.map((order: B2bOrder) => (
                     <Card key={order.id} className="shadow-sm">
                         <CardHeader className="pb-2 bg-slate-50 border-b flex flex-row items-center justify-between">
                             <CardTitle className="text-sm">Pedido #{order.id.split('-')[0]}</CardTitle>

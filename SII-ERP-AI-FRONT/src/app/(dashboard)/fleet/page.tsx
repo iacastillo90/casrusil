@@ -63,9 +63,9 @@ export default function FleetPage() {
 
             <Card className="col-span-4 min-h-[400px]">
                 <CardHeader>
-                    <CardTitle>Mapa de Telemetría (Demo)</CardTitle>
+                    <CardTitle>Mapa de Telemetría</CardTitle>
                     <CardDescription>
-                        Vista simulada del rastreo GPS y consumo en tiempo real.
+                        Rastreo GPS y estado de batería en tiempo real.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-center justify-center h-[300px] border border-dashed rounded-lg bg-muted/20">

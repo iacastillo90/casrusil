@@ -59,8 +59,10 @@ class CalculateF29ToolTest {
                 new BigDecimal("1900"), // VAT Debit
                 new BigDecimal("950"), // VAT Credit
                 new BigDecimal("950"), // VAT Payable
+                BigDecimal.ZERO, // VAT Recoverable
                 BigDecimal.ZERO, // Fee Withholding
                 new BigDecimal("950"), // Total Payable
+                java.util.Collections.emptyList(), // Details
                 java.util.Collections.emptyList() // Evidence IDs
         );
 

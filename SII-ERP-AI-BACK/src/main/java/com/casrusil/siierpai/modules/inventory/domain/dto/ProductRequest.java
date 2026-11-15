@@ -29,4 +29,8 @@ public class ProductRequest {
 
     @Size(max = 100, message = "La categoría no puede superar 100 caracteres")
     private String category;
+
+    @DecimalMin(value = "0.0", inclusive = true, message = "El stock mínimo no puede ser negativo")
+    @Builder.Default
+    private BigDecimal minStock = BigDecimal.valueOf(5);
 }

@@ -54,6 +54,7 @@ public class ProductRepositoryAdapter implements ProductRepositoryPort {
         entity.setName(domain.getName());
         entity.setDescription(domain.getDescription());
         entity.setCurrentStock(domain.getCurrentStock());
+        entity.setMinStock(domain.getMinStock());
         entity.setAverageCost(domain.getAverageCost());
         entity.setSalePrice(domain.getSalePrice());
         entity.setCategory(domain.getCategory());
@@ -68,6 +69,7 @@ public class ProductRepositoryAdapter implements ProductRepositoryPort {
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .currentStock(entity.getCurrentStock())
+                .minStock(entity.getMinStock())
                 .averageCost(entity.getAverageCost())
                 .salePrice(entity.getSalePrice())
                 .category(entity.getCategory())

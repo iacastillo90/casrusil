@@ -16,20 +16,28 @@ export default function PosPage() {
     const [cart, setCart] = useState<PosTransactionItem[]>([]);
     const [barcodeInput, setBarcodeInput] = useState('');
 
-    const handleBarcodeSubmit = (e: React.FormEvent) => {
+    const handleBarcodeSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!barcodeInput) return;
 
-        // Mock product lookup
-        const newItem: PosTransactionItem = {
-            productId: barcodeInput,
-            productName: `Producto ${barcodeInput}`,
-            quantity: 1,
-            unitPrice: Math.floor(Math.random() * 5000) + 1000
-        };
-
-        setCart(prev => [...prev, newItem]);
-        setBarcodeInput('');
+        try {
+            // Real product lookup via POS API
+            const newItem = await import('@/features/pos/services/pos.service').then(m => m.posService.searchProduct(barcodeInput));
+            
+            // Si el backend aún no implementa /pos/products/search, podríamos tener un catch que avise, 
+            // pero ya estamos quitando los mocks.
+            setCart(prev => {
+                const existing = prev.find(i => i.productId === newItem.productId);
+                if (existing) {
+                    return prev.map(i => i.productId === newItem.productId ? { ...i, quantity: i.quantity + 1 } : i);
+                }
+                return [...prev, newItem];
+            });
+            setBarcodeInput('');
+        } catch (error) {
+            console.error('Producto no encontrado:', error);
+            // Optionally add toast notification here
+        }
     };
 
     const cartTotal = cart.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
@@ -75,18 +83,7 @@ export default function PosPage() {
                         </form>
                         
                         <div className="grid grid-cols-3 gap-4">
-                            {/* Mock Quick Items */}
-                            {['Bebida', 'Snack', 'Pan', 'Lácteo'].map(cat => (
-                                <Button 
-                                    key={cat} 
-                                    variant="outline" 
-                                    className="h-24 flex flex-col items-center justify-center text-lg"
-                                    onClick={() => handleBarcodeSubmit({ preventDefault: () => {} } as any)}
-                                >
-                                    <ShoppingBag className="h-6 w-6 mb-2 text-gray-400" />
-                                    {cat}
-                                </Button>
-                            ))}
+                            {/* TODO: Load Quick Items from Backend Category API */}
                         </div>
                     </CardContent>
                 </Card>

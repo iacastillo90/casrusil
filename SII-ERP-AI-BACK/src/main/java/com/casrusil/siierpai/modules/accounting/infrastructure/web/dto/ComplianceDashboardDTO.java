@@ -6,7 +6,8 @@ import com.casrusil.siierpai.modules.accounting.domain.model.F29Report;
 import com.casrusil.siierpai.modules.accounting.domain.model.TaxAuditReport;
 import com.casrusil.siierpai.modules.compliance.infrastructure.persistence.entity.TaxParameterEntity;
 import com.casrusil.siierpai.modules.sustainability.infrastructure.adapter.in.rest.dto.GreenPassportDTO;
-import com.casrusil.siierpai.modules.banking.infrastructure.web.dto.ReconciliationStatsDTO;
+// ReconciliationStatsDTO moved from banking module to avoid entity conflicts
+import com.casrusil.siierpai.modules.accounting.infrastructure.web.dto.ReconciliationStatsDTO;
 
 import java.util.List;
 

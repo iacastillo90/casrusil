@@ -93,3 +93,8 @@ export function formatPercent(value: number): string {
         maximumFractionDigits: 1
     }).format(value / 100);
 }
+
+/**
+ * Alias para formatCLP - mantenido por compatibilidad
+ */
+export const formatCurrency = formatCLP;

@@ -1,7 +1,7 @@
 import api from "@/lib/axios";
 import { useAuthStore } from '../stores/auth.store';
 import { LoginCredentials, RegisterData, AuthResponse } from '../types/auth.types';
-import { UpdateCompanyRequest, CreateUserRequest } from '../types/auth-requests.types';
+import { UpdateCompanyRequest } from '../types/auth-requests.types';
 
 export const authService = {
     login: async (credentials: LoginCredentials) => {
@@ -51,18 +51,13 @@ export const authService = {
 
     // Company Management
     updateCompany: async (data: UpdateCompanyRequest) => {
-        const { data: response } = await api.put('/companies/me', data);
+        const { data: response } = await api.put('/company/profile', {
+            razonSocial: data.name,
+            email: data.email,
+            commercialAddress: data.address,
+            phoneNumber: data.phone,
+            logoUrl: data.logo,
+        });
         return response;
-    },
-
-    // User Management
-    createUser: async (user: CreateUserRequest) => {
-        const { data } = await api.post('/users', user);
-        return data;
-    },
-
-    updateUserRole: async (id: string, role: string) => {
-        const { data } = await api.put(`/users/${id}/role`, { role });
-        return data;
     }
 };

@@ -1,0 +1,644 @@
+===== PAGES (lineas | menciones mock/todo/placeholder | archivo)
+7 | 0 | SII-ERP-AI-FRONT/src/app/(auth)/login/page.tsx
+166 | 3 | SII-ERP-AI-FRONT/src/app/(auth)/onboarding/page.tsx
+7 | 0 | SII-ERP-AI-FRONT/src/app/(auth)/register/page.tsx
+397 | 2 | SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/annual-close/page.tsx
+78 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/assets/page.tsx
+14 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/audit/page.tsx
+76 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/balance/page.tsx
+416 | 4 | SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/close/page.tsx
+32 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/f29/page.tsx
+98 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/income/page.tsx
+36 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/ledger/page.tsx
+28 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/partners/page.tsx
+19 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/banking/page.tsx
+162 | 2 | SII-ERP-AI-FRONT/src/app/(dashboard)/banking/reconciliation/page.tsx
+126 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/compliance/page.tsx
+103 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/crm/leads/page.tsx
+111 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/crm/quotes/page.tsx
+66 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/dashboard/page.tsx
+71 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/documents/page.tsx
+63 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/employee/page.tsx
+116 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/energy/page.tsx
+43 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/fees/page.tsx
+81 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/fleet/page.tsx
+168 | 1 | SII-ERP-AI-FRONT/src/app/(dashboard)/inventory/page.tsx
+214 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/invoices/[id]/page.tsx
+15 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/invoices/new/page.tsx
+103 | 1 | SII-ERP-AI-FRONT/src/app/(dashboard)/invoices/page.tsx
+92 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/mrp/page.tsx
+160 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/payroll/page.tsx
+145 | 3 | SII-ERP-AI-FRONT/src/app/(dashboard)/pos/page.tsx
+113 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/procurement/page.tsx
+96 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/projects/page.tsx
+88 | 1 | SII-ERP-AI-FRONT/src/app/(dashboard)/reports/page.tsx
+12 | 1 | SII-ERP-AI-FRONT/src/app/(dashboard)/settings/company/page.tsx
+34 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/settings/page.tsx
+24 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/sii/audit/page.tsx
+105 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/sii/caf/page.tsx
+28 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/sii/page.tsx
+149 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/sustainability/page.tsx
+51 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/treasury/page.tsx
+92 | 0 | SII-ERP-AI-FRONT/src/app/(dashboard)/wms/page.tsx
+5 | 0 | SII-ERP-AI-FRONT/src/app/page.tsx
+65 | 0 | SII-ERP-AI-FRONT/src/app/portal/page.tsx
+===== CONSTANTS
+export const API_ROUTES = {
+    // Auth
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    LOGOUT: '/auth/logout',
+    REFRESH: '/auth/refresh',
+
+    // Users
+    USERS: '/users',
+    USER_BY_ID: (id: string) => `/users/${id}`,
+
+    // Invoices
+    INVOICES: '/invoices',
+    INVOICE_BY_ID: (id: string) => `/invoices/${id}`,
+    INVOICE_SEND: (id: string) => `/invoices/${id}/send`,
+
+    // SII
+    SII_FETCH_RCV: '/sii/ops/fetch-rcv',
+    SII_UPLOAD_CAF: '/sii/caf',
+    SII_SEND_DTE: '/sii/dte/send',
+
+    // Accounting
+    ACCOUNTING_ENTRIES: '/accounting/entries',
+    ACCOUNTING_ACCOUNTS: '/accounting/accounts',
+    ACCOUNTING_F29: '/accounting/f29',
+    ACCOUNTING_BALANCE: '/accounting/balance-sheet',
+    ACCOUNTING_AUDIT: '/accounting/audit',
+    ACCOUNTING_CLOSE_PERIOD: '/accounting/periods/close',
+    ACCOUNTING_CORRECT_ENTRY: '/accounting/entries/correct',
+
+    // Banking
+    BANK_UPLOAD: '/bank/upload',
+    BANK_RECONCILIATION: '/bank/reconciliation',
+    BANK_RECONCILE: '/bank/reconcile',
+
+    // AI
+    AI_CHAT: '/ai/chat',
+} as const;
+
+export const APP_ROUTES = {
+    HOME: '/',
+    LOGIN: '/login',
+    REGISTER: '/register',
+    DASHBOARD: '/dashboard',
+
+    // Invoices
+    INVOICES: '/invoices',
+    INVOICES_NEW: '/invoices/new',
+    INVOICE_DETAIL: (id: string) => `/invoices/${id}`,
+
+    // Accounting
+    ACCOUNTING_LEDGER: '/accounting/ledger',
+    ACCOUNTING_F29: '/accounting/f29',
+    ACCOUNTING_BALANCE: '/accounting/balance',
+    ACCOUNTING_INCOME: '/accounting/income',
+    ACCOUNTING_AUDIT: '/accounting/audit',
+
+    // SII
+    SII_SYNC: '/sii', // Mapped to main SII page
+    SII_CAF: '/sii/caf',  // Mapped to CAF page
+
+    // Banking
+    BANKING_RECONCILIATION: '/banking/reconciliation',
+    TREASURY: '/treasury',
+
+    // Settings
+    SETTINGS_COMPANY: '/settings',
+    SETTINGS_USERS: '/settings',
+
+    // Fleet & Energy
+    FLEET: '/fleet',
+    ENERGY: '/energy',
+} as const;
+
+export const QUERY_KEYS = {
+    // Auth
+    CURRENT_USER: ['auth', 'current-user'],
+    COMPANIES: ['auth', 'companies'],
+
+    // Invoices
+    INVOICES: ['invoices'],
+    INVOICES_FILTERED: (filters: any) => ['invoices', 'filtered', filters],
+    INVOICE_DETAIL: (id: string) => ['invoices', id],
+
+    // Accounting
+    ACCOUNTING_ENTRIES: ['accounting', 'entries'],
+    ACCOUNTING_ACCOUNTS: ['accounting', 'accounts'],
+    ACCOUNTING_F29: (period: string) => ['accounting', 'f29', period],
+    ACCOUNTING_BALANCE: (date: string) => ['accounting', 'balance', date],
+    ACCOUNTING_AUDIT: ['accounting', 'audit'],
+
+    // Banking
+    BANK_RECONCILIATION: (period: string) => ['bank', 'reconciliation', period],
+
+    // SII
+    SII_STATUS: ['sii', 'status'],
+
+    // AI
+    AI_CONVERSATION: (id: string) => ['ai', 'conversation', id],
+} as const;
+
+export const ROLES = {
+    ADMIN: 'ADMIN',
+    ACCOUNTANT: 'ACCOUNTANT',
+    USER: 'USER',
+} as const;
+
+export const INVOICE_TYPES = {
+    FACTURA_ELECTRONICA: 33,
+    FACTURA_EXENTA: 34,
+    BOLETA_ELECTRONICA: 39,
+    NOTA_CREDITO: 61,
+    NOTA_DEBITO: 56,
+} as const;
+
+export const DTE_STATUS = {
+    DRAFT: 'DRAFT',
+    SIGNED: 'SIGNED',
+    SENT: 'SENT',
+    ACCEPTED: 'ACCEPTED',
+    REJECTED: 'REJECTED',
+} as const;
+
+export const IVA_RATE = 0.19; // 19%
+===== HEADER
+===== LINKS ENTRE PANTALLAS
+SII-ERP-AI-FRONT/src/features/auth/components/RegisterForm.tsx:56:            router.push("/login");
+SII-ERP-AI-FRONT/src/features/auth/components/RegisterForm.tsx:115:                        <Link href="/login" className="underline text-primary">
+SII-ERP-AI-FRONT/src/features/auth/components/LoginForm.tsx:61:            router.push('/dashboard');
+SII-ERP-AI-FRONT/src/features/auth/components/LoginForm.tsx:142:                    <Link href="/register" className="underline text-primary">
+SII-ERP-AI-FRONT/src/features/dashboard/components/RecentInvoices.tsx:34:                <Link href={APP_ROUTES.INVOICES}>
+SII-ERP-AI-FRONT/src/app/(dashboard)/invoices/page.tsx:26:        router.push(`/invoices/${id}`);
+SII-ERP-AI-FRONT/src/app/(dashboard)/invoices/page.tsx:57:                    <Link href="/invoices/new">
+SII-ERP-AI-FRONT/src/app/(auth)/onboarding/page.tsx:27:            router.push("/dashboard");
+SII-ERP-AI-FRONT/src/components/layout/Sidebar.tsx:112:                    <Link href={APP_ROUTES.DASHBOARD} className="flex items-center space-x-2 overflow-hidden">
+SII-ERP-AI-FRONT/src/components/layout/Sidebar.tsx:136:                                                            href={child.href}
+SII-ERP-AI-FRONT/src/components/layout/Sidebar.tsx:165:                                                href={item.href}
+===== LLAMADAS API FRONT
+SII-ERP-AI-FRONT/src/features/auth/services/auth.service.ts:8:        const { data } = await api.post<AuthResponse>('/auth/login', credentials);
+SII-ERP-AI-FRONT/src/features/auth/services/auth.service.ts:14:        const { data } = await api.post<AuthResponse>('/auth/register', registerData);
+SII-ERP-AI-FRONT/src/features/auth/services/auth.service.ts:42:            await api.post('/auth/logout');
+SII-ERP-AI-FRONT/src/features/auth/services/auth.service.ts:54:        const { data: response } = await api.put('/company/profile', {
+SII-ERP-AI-FRONT/src/features/integration/services/indicators.service.ts:17:        const { data } = await api.get<EconomicIndicators>('/integration/indicators/today');
+SII-ERP-AI-FRONT/src/features/integration/services/indicators.service.ts:25:        const { data } = await api.get<EconomicIndicators>('/integration/indicators/today');
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:56:            razonSocial: String(data.get('name') ?? ''),
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:57:            email: String(data.get('email') ?? ''),
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:58:            commercialAddress: String(data.get('address') ?? ''),
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:59:            website: String(data.get('website') ?? ''),
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:60:            phoneNumber: String(data.get('phone') ?? ''),
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:61:            logoUrl: data.get('logoUrl') ? String(data.get('logoUrl')) : undefined,
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:64:        const { data: response } = await api.put<CompanyApiDto>('/company/profile', payload);
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:69:        const { data } = await api.get<CompanyApiDto>('/company/profile');
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:75:        const { data } = await api.get<UserApiDto[]>('/company/users');
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:81:        await api.post('/sso/users/invite', { email, role: backendRole });
+SII-ERP-AI-FRONT/src/features/settings/services/settings.service.ts:93:        await api.delete(`/sso/users/${userId}`);
+SII-ERP-AI-FRONT/src/features/banking/services/banking.service.ts:31:        const response = await api.get('/banking/connections');
+SII-ERP-AI-FRONT/src/features/banking/services/banking.service.ts:36:        const response = await api.post('/banking/connections', data);
+SII-ERP-AI-FRONT/src/features/banking/services/banking.service.ts:41:        await api.post('/banking/sync');
+SII-ERP-AI-FRONT/src/features/banking/services/banking.service.ts:45:        const response = await api.get('/banking/transactions');
+SII-ERP-AI-FRONT/src/features/banking/services/banking.service.ts:50:        await api.post(`/banking/transactions/${id}/reconcile`);
+SII-ERP-AI-FRONT/src/features/banking/services/banking.service.ts:54:        await api.post(`/banking/transactions/${id}/ignore`);
+SII-ERP-AI-FRONT/src/features/accounting/services/accounting.service.ts:131:        const { data } = await api.get<AccountingEntryApiDto[]>(`/accounting/entries/by-invoice/${id}`);
+SII-ERP-AI-FRONT/src/features/accounting/services/accounting.service.ts:140:        const { data } = await api.get<AuditTrailEntry[]>(`/invoices/${id}/audit-trail`);
+SII-ERP-AI-FRONT/src/features/accounting/services/accounting.service.ts:145:        const { data } = await api.get<BalanceSheet>('/accounting/balance-sheet', {
+SII-ERP-AI-FRONT/src/features/accounting/components/partner-ledger.tsx:26:        const { data } = await api.get<PartnerSummary[]>("/accounting/ledger/partners");
+SII-ERP-AI-FRONT/src/features/treasury/services/treasury.service.ts:13:        const response = await api.get(`/treasury/ai-forecast?days=${days}`);
+SII-ERP-AI-FRONT/src/features/treasury/services/treasury.service.ts:18:            const response = await api.get(`/treasury/exchange-rates`);
+SII-ERP-AI-FRONT/src/features/treasury/components/BankStatementUpload.tsx:23:            // await api.post('/treasury/statements/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+SII-ERP-AI-FRONT/src/features/treasury/components/CashEntryModal.tsx:44:            // await api.post('/treasury/cash-entries', { type, amount, description, date });
+SII-ERP-AI-FRONT/src/features/crm/services/crm.service.ts:55:        const response = await api.get('/crm/leads');
+SII-ERP-AI-FRONT/src/features/crm/services/crm.service.ts:60:        const response = await api.post('/crm/leads', data);
+SII-ERP-AI-FRONT/src/features/crm/services/crm.service.ts:65:        const response = await api.put(`/crm/leads/${id}/status`, { status });
+SII-ERP-AI-FRONT/src/features/crm/services/crm.service.ts:71:        const response = await api.get('/crm/quotes');
+SII-ERP-AI-FRONT/src/features/crm/services/crm.service.ts:76:        const response = await api.post('/crm/quotes', data);
+SII-ERP-AI-FRONT/src/features/crm/services/crm.service.ts:81:        const response = await api.post(`/crm/quotes/${id}/accept`);
+SII-ERP-AI-FRONT/src/features/crm/services/crm.service.ts:86:        const response = await api.post(`/crm/quotes/${id}/reject`);
+SII-ERP-AI-FRONT/src/features/compliance/services/compliance.service.ts:50:        const { data } = await api.get<ComplianceDashboard>('/compliance/dashboard', {
+SII-ERP-AI-FRONT/src/features/b2b/services/b2b.service.ts:32:        const { data } = await api.get<B2bOrder[]>('/b2b/orders/my-orders');
+SII-ERP-AI-FRONT/src/features/b2b/services/b2b.service.ts:36:        const { data } = await api.post<B2bOrder>('/b2b/orders', payload);
+SII-ERP-AI-FRONT/src/features/b2b/services/b2b.service.ts:40:        const { data } = await api.post<B2bOrder>(`/b2b/orders/${id}/pay`);
+SII-ERP-AI-FRONT/src/features/sii/services/sii.service.ts:19:        const { data } = await api.post<CafUploadResult>('/sii/caf', formData, {
+SII-ERP-AI-FRONT/src/features/mrp/services/mrp.service.ts:5:        const response = await api.get('/mrp/bom');
+SII-ERP-AI-FRONT/src/features/mrp/services/mrp.service.ts:9:        const response = await api.get('/mrp/work-order');
+SII-ERP-AI-FRONT/src/features/mrp/services/mrp.service.ts:13:        const response = await api.post(`/mrp/work-order/${id}/complete`);
+SII-ERP-AI-FRONT/src/features/fleet/hooks/useFleet.ts:16:            const { data } = await api.get('/fleet/metrics');
+SII-ERP-AI-FRONT/src/features/fixed_assets/services/fixedAssets.service.ts:5:        const response = await api.get('/fixed-assets');
+SII-ERP-AI-FRONT/src/features/fixed_assets/services/fixedAssets.service.ts:9:        const response = await api.post('/fixed-assets/run-depreciation');
+SII-ERP-AI-FRONT/src/features/reports/hooks/useReports.ts:14:            const { data } = await api.get('/invoices');
+SII-ERP-AI-FRONT/src/features/reports/hooks/useReports.ts:35:                const response = await api.get('/reports/sales/excel', {
+SII-ERP-AI-FRONT/src/features/period_close/hooks/usePeriodClose.ts:19:            const { data } = await api.post<PeriodAuditResponse>('/period-close/audit', request);
+SII-ERP-AI-FRONT/src/features/period_close/hooks/usePeriodClose.ts:26:            await api.post('/period-close/execute', request);
+SII-ERP-AI-FRONT/src/features/payroll/hooks/usePayroll.ts:19:            const { data } = await api.get('/payroll/employees');
+SII-ERP-AI-FRONT/src/features/payroll/hooks/usePayroll.ts:26:            const { data } = await api.post('/payroll/previred/export', payload, { responseType: 'blob' });
+SII-ERP-AI-FRONT/src/features/payroll/components/PayrollDashboard.tsx:25:      const response = await api.post('/payroll/calculate', { periodId: 1 });
+SII-ERP-AI-FRONT/src/features/payroll/components/PayrollDashboard.tsx:36:      const response = await api.get(`/payroll/payslip/${payslipId}/pdf`, { responseType: 'blob' });
+SII-ERP-AI-FRONT/src/features/sustainability/services/sustainability.service.ts:83:        const response = await api.get<EsgReport>('/sustainability/esg-report');
+SII-ERP-AI-FRONT/src/features/sustainability/services/sustainability.service.ts:87:        const response = await api.get<CorfoSimulation>('/sustainability/corfo-simulator');
+SII-ERP-AI-FRONT/src/features/employee/services/employee.service.ts:13:        const response = await api.get('/payroll/employee/payslips');
+SII-ERP-AI-FRONT/src/features/financial-shield/services/financial-shield.service.ts:31:        const { data } = await api.get<CashFlowHealth>('/financial-shield/health');
+SII-ERP-AI-FRONT/src/features/fees/services/fee.service.ts:27:        const { data } = await api.get<Fee[]>('/fees', { params });
+SII-ERP-AI-FRONT/src/features/fees/components/FeeImportModal.tsx:30:            // await api.post('/fees/import', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+SII-ERP-AI-FRONT/src/features/wms/services/wms.service.ts:5:        const response = await api.get('/wms/locations');
+SII-ERP-AI-FRONT/src/features/wms/services/wms.service.ts:9:        const response = await api.get('/wms/picking');
+SII-ERP-AI-FRONT/src/features/wms/services/wms.service.ts:13:        const response = await api.post(`/wms/picking/${id}/complete`);
+SII-ERP-AI-FRONT/src/features/projects/services/projects.service.ts:22:        const response = await api.get('/projects');
+SII-ERP-AI-FRONT/src/features/projects/services/projects.service.ts:27:        const response = await api.get(`/projects/${id}`);
+SII-ERP-AI-FRONT/src/features/projects/services/projects.service.ts:32:        const response = await api.post('/projects', data);
+SII-ERP-AI-FRONT/src/features/projects/services/projects.service.ts:37:        const response = await api.put(`/projects/${id}/status`, { status });
+SII-ERP-AI-FRONT/src/features/dms/services/dms.service.ts:5:        const response = await api.get('/dms');
+SII-ERP-AI-FRONT/src/features/dms/services/dms.service.ts:9:        const response = await api.post(`/dms/${id}/analyze`);
+SII-ERP-AI-FRONT/src/features/inventory/hooks/useInventory.ts:16:    const { data } = await api.get('/inventory/products');
+SII-ERP-AI-FRONT/src/features/inventory/components/InventoryDashboard.tsx:31:      const response = await api.get('/inventory/products');
+SII-ERP-AI-FRONT/src/features/inventory/components/InventoryDashboard.tsx:42:      const response = await api.get('/inventory/export/excel', { responseType: 'blob' });
+SII-ERP-AI-FRONT/src/features/invoicing/services/invoice.service.ts:54:        const { data } = await api.get<InvoiceApiDto[]>('/invoices', { params });
+SII-ERP-AI-FRONT/src/features/invoicing/services/invoice.service.ts:69:        const { data } = await api.get<InvoiceApiDto | null>(`/invoices/${id}`);
+SII-ERP-AI-FRONT/src/features/invoicing/services/invoice.service.ts:77:        await api.post(`/invoices/${id}/send`, null, { params: { email } });
+SII-ERP-AI-FRONT/src/features/invoicing/components/CsvImportModal.tsx:39:            // await api.post('/invoices/import', formData, {
+SII-ERP-AI-FRONT/src/features/ai-assistant/components/AiChat.tsx:50:        const conversationRes = await api.post('/ai/conversations');
+SII-ERP-AI-FRONT/src/features/procurement/services/procurement.service.ts:38:        const response = await api.get('/procurement/orders');
+SII-ERP-AI-FRONT/src/features/procurement/services/procurement.service.ts:43:        const response = await api.get(`/procurement/orders/${id}`);
+SII-ERP-AI-FRONT/src/features/procurement/services/procurement.service.ts:48:        const response = await api.post('/procurement/orders', data);
+SII-ERP-AI-FRONT/src/features/procurement/services/procurement.service.ts:53:        const response = await api.post(`/procurement/orders/${id}/sent`);
+SII-ERP-AI-FRONT/src/features/procurement/services/procurement.service.ts:58:        const response = await api.post(`/procurement/orders/${id}/received`);
+SII-ERP-AI-FRONT/src/features/pos/services/pos.service.ts:33:        const response = await api.get('/pos/transactions');
+SII-ERP-AI-FRONT/src/features/pos/services/pos.service.ts:38:        const response = await api.post('/pos/transactions', data);
+SII-ERP-AI-FRONT/src/features/pos/services/pos.service.ts:43:        await api.post('/pos/sync');
+SII-ERP-AI-FRONT/src/features/pos/services/pos.service.ts:47:        const response = await api.get(`/pos/products/search`, { params: { query: barcodeOrSku } });
+SII-ERP-AI-FRONT/src/app/actions.tsx:36:    const sessionId = cookieStore.get('JSESSIONID')?.value || cookieStore.get('token')?.value || '';
+SII-ERP-AI-FRONT/src/app/actions.tsx:45:        const convResponse = await fetch(`${baseUrl}/ai/conversations`, {
+SII-ERP-AI-FRONT/src/app/actions.tsx:56:            const msgResponse = await fetch(`${baseUrl}/ai/conversations/${conversation.id}/messages`, {
+SII-ERP-AI-FRONT/src/middleware.ts:5:    const token = request.cookies.get('JSESSIONID')?.value || request.cookies.get('token')?.value || request.cookies.get('access_token')?.value
+===== ARCHIVOS CON MOCK
+SII-ERP-AI-FRONT/src/features/inventory/hooks/useInventory.ts
+SII-ERP-AI-FRONT/src/lib/formatters.test.ts
+SII-ERP-AI-FRONT/src/lib/formatters.ts
+SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/close/page.tsx
+SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/annual-close/page.tsx
+SII-ERP-AI-FRONT/src/app/(dashboard)/reports/page.tsx
+SII-ERP-AI-FRONT/src/app/(dashboard)/pos/page.tsx
+===== ENDPOINTS BACK
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/integration_sii/infrastructure/adapter/in/rest/CafController.java:35:@RequestMapping("/api/v1/sii/caf")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/integration_sii/infrastructure/adapter/in/rest/CafController.java:47:    @PostMapping(consumes = "multipart/form-data")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/integration_sii/infrastructure/adapter/in/rest/SiiIntegrationController.java:35:@RequestMapping("/api/v1/sii/ops")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/integration_sii/infrastructure/adapter/in/rest/SiiIntegrationController.java:60:    @PostMapping("/fetch-rcv")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:46:@RequestMapping("/api/v1/accounting")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:80:    @GetMapping("/reports/income-statement")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:94:    @PostMapping("/opening-balance/upload")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:110:    @PostMapping("/opening-balance")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:118:    @GetMapping("/entries")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:124:    @GetMapping("/ledger/{accountCode}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:135:    @PostMapping("/accounts")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:148:    @GetMapping("/accounts")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:154:    @GetMapping("/balance-sheet")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:164:    @GetMapping("/f29")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:174:    @PostMapping("/periods/close")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:185:    @GetMapping("/periods/closed")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:192:    @GetMapping("/periods/{period}/status")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/TaxAuditController.java:14:@RequestMapping("/api/v1/sii/audit")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/TaxAuditController.java:24:    @GetMapping("/report")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/PartnerLedgerController.java:16:@RequestMapping("/api/v1/accounting/ledger/partners")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/PartnerLedgerController.java:26:    @GetMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/PartnerLedgerController.java:33:    @GetMapping("/{rut}/movements")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/SiiAuditController.java:12:@RequestMapping("/api/v1/accounting/audit")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/SiiAuditController.java:22:    @GetMapping("/sii-mirror")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/SiiAuditController.java:30:    @PostMapping("/sii-sync")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ReportingController.java:47:@RequestMapping({ "/api/v1/reports", "/api/v1/reporting" })
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ReportingController.java:75:    @PostMapping("/weekly/generate")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ReportingController.java:89:    @GetMapping("/income-statement")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ReportingController.java:114:    @GetMapping("/sales/excel")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ReportingController.java:148:    @GetMapping("/balance-sheet")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ReportingController.java:167:    @PostMapping("/f29/submit")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/LearningController.java:20:@RequestMapping("/api/v1/learning")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/LearningController.java:35:    @GetMapping("/rules")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/LearningController.java:51:    @GetMapping("/rules/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/LearningController.java:64:    @PutMapping("/rules/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/LearningController.java:81:    @DeleteMapping("/rules/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/LearningController.java:92:    @PostMapping("/rules")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/DataCleanupController.java:11:@RequestMapping("/api/v1/accounting/cleanup")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/DataCleanupController.java:21:    @PostMapping("/november-rcv")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ComplianceController.java:43:@RequestMapping("/api/v1/compliance")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ComplianceController.java:79:    @GetMapping("/dashboard")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/AuditController.java:20:@RequestMapping("/api/v1/audit")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/AuditController.java:38:        @GetMapping("/alerts")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/AuditController.java:74:        @GetMapping("/duplicates")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/AuditController.java:85:        @GetMapping("/suspicious")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/AuditController.java:96:        @GetMapping("/reconciliation")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/AuditController.java:133:        @GetMapping("/report")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/treasury/infrastructure/adapter/in/rest/TreasuryController.java:20:@RequestMapping("/api/v1/treasury")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/treasury/infrastructure/adapter/in/rest/TreasuryController.java:40:    @GetMapping("/cash-flow-daily")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/treasury/infrastructure/adapter/in/rest/TreasuryController.java:52:    @GetMapping("/financial-ratios")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/treasury/infrastructure/adapter/in/rest/TreasuryController.java:63:    @GetMapping("/ai-forecast")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/treasury/infrastructure/adapter/in/rest/TreasuryController.java:70:    @PostMapping("/cash-entry")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/RoleController.java:26:@RequestMapping("/api/v1/roles")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/RoleController.java:39:    @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/RoleController.java:57:    @GetMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/RoleController.java:66:    @GetMapping("/system")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/RoleController.java:75:    @GetMapping("/organization/{organizationId}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/RoleController.java:84:    @GetMapping("/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/RoleController.java:95:    @PutMapping("/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/RoleController.java:112:    @PutMapping("/{id}/permissions")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:27:@RequestMapping("/api/v1/users")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:40:    @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:55:    @PostMapping("/invite")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:69:    @GetMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:78:    @GetMapping("/organization/{organizationId}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:88:    @GetMapping("/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:99:    @PutMapping("/{id}/profile")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:117:    @PutMapping("/{id}/verify-email")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:128:    @PutMapping("/{id}/activate")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:144:    @PutMapping("/{id}/suspend")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:155:    @PostMapping("/{userId}/roles/{roleId}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:171:    @DeleteMapping("/{userId}/roles/{roleId}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:25:@RequestMapping("/api/v1/organizations")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:38:    @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:52:    @PostMapping("/{parentId}/children")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:68:    @GetMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:77:    @GetMapping("/active")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:86:    @GetMapping("/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:97:    @GetMapping("/{id}/hierarchy")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:111:    @PutMapping("/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:128:    @PutMapping("/{id}/suspend")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:139:    @PutMapping("/{id}/activate")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/crm/infrastructure/adapter/in/rest/CrmController.java:23:@RequestMapping("/api/v1/crm")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/crm/infrastructure/adapter/in/rest/CrmController.java:35:    @GetMapping("/leads")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/crm/infrastructure/adapter/in/rest/CrmController.java:41:    @PostMapping("/leads")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/crm/infrastructure/adapter/in/rest/CrmController.java:48:    @PutMapping("/leads/{id}/status")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/crm/infrastructure/adapter/in/rest/CrmController.java:56:    @GetMapping("/quotes")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/crm/infrastructure/adapter/in/rest/CrmController.java:62:    @PostMapping("/quotes")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/crm/infrastructure/adapter/in/rest/CrmController.java:82:    @PostMapping("/quotes/{id}/accept")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/crm/infrastructure/adapter/in/rest/CrmController.java:87:    @PostMapping("/quotes/{id}/reject")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/b2b/infrastructure/web/CustomerOrderController.java:27:@RequestMapping("/api/v1/b2b/orders")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/b2b/infrastructure/web/CustomerOrderController.java:33:    @GetMapping("/my-orders")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/b2b/infrastructure/web/CustomerOrderController.java:45:    @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/b2b/infrastructure/web/CustomerOrderController.java:60:    @PostMapping("/{id}/pay")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/AuthController.java:47:@RequestMapping({ "/api/v1/auth", "/auth" })
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/AuthController.java:74:    @PostMapping("/register")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/AuthController.java:90:    @PostMapping("/login")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/AuthController.java:104:    @PostMapping("/logout")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/SsoUserController.java:34:@RequestMapping("/api/v1/sso/users")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/SsoUserController.java:48:    @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/SsoUserController.java:59:    @PutMapping("/{id}/role")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/SsoUserController.java:65:    @PostMapping("/invite")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/SsoUserController.java:75:    @GetMapping("/invite/validate/{token}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/SsoUserController.java:83:    @PostMapping("/register-invite")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/CompanyController.java:29:@RequestMapping("/api/v1/company")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/CompanyController.java:42:    @PutMapping("/profile")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/CompanyController.java:59:    @GetMapping("/profile")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/CompanyController.java:69:    @GetMapping("/users")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/mrp/infrastructure/adapter/in/rest/MrpController.java:19:@RequestMapping("/api/v1/mrp")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/mrp/infrastructure/adapter/in/rest/MrpController.java:29:    @PostMapping("/bom")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/mrp/infrastructure/adapter/in/rest/MrpController.java:34:    @GetMapping("/bom")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/mrp/infrastructure/adapter/in/rest/MrpController.java:39:    @PostMapping("/work-order")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/mrp/infrastructure/adapter/in/rest/MrpController.java:44:    @GetMapping("/work-order")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/mrp/infrastructure/adapter/in/rest/MrpController.java:49:    @PostMapping("/work-order/{id}/complete")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/financial_shield/infrastructure/web/FinancialShieldController.java:13:@RequestMapping("/api/v1/financial-shield")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/financial_shield/infrastructure/web/FinancialShieldController.java:23:    @GetMapping("/health")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fleet/infrastructure/web/FleetController.java:22:@RequestMapping("/api/v1/fleet")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fleet/infrastructure/web/FleetController.java:29:    @GetMapping("/metrics")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fixed_assets/infrastructure/adapter/in/rest/FixedAssetController.java:18:@RequestMapping("/api/v1/fixed-assets")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fixed_assets/infrastructure/adapter/in/rest/FixedAssetController.java:28:    @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fixed_assets/infrastructure/adapter/in/rest/FixedAssetController.java:33:    @GetMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fixed_assets/infrastructure/adapter/in/rest/FixedAssetController.java:38:    @PostMapping("/run-depreciation")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/period_close/infrastructure/web/PeriodCloseController.java:14:@RequestMapping("/api/v1/period-close")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/period_close/infrastructure/web/PeriodCloseController.java:22:    @PostMapping("/audit")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/period_close/infrastructure/web/PeriodCloseController.java:29:    @PostMapping("/execute")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/payroll/infrastructure/web/PayrollController.java:18:@RequestMapping("/api/v1/payroll")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/payroll/infrastructure/web/PayrollController.java:27:    @PostMapping("/calculate")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/payroll/infrastructure/web/PayrollController.java:34:    @PostMapping("/previred/export")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/payroll/infrastructure/web/PayrollController.java:49:    @GetMapping("/employee/payslips")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/ai_assistant/infrastructure/adapter/in/rest/AiAssistantController.java:37:@RequestMapping("/api/v1/ai")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/ai_assistant/infrastructure/adapter/in/rest/AiAssistantController.java:46:    @PostMapping("/conversations")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/ai_assistant/infrastructure/adapter/in/rest/AiAssistantController.java:55:    @PostMapping("/conversations/{conversationId}/messages")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/ai_assistant/infrastructure/adapter/in/rest/KnowledgeBaseController.java:33:@RequestMapping("/api/v1/ai/knowledge")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/ai_assistant/infrastructure/adapter/in/rest/KnowledgeBaseController.java:52:    @PostMapping(consumes = "multipart/form-data")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/ai_assistant/infrastructure/adapter/in/rest/KnowledgeBaseController.java:89:    @GetMapping("/search")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sustainability/infrastructure/adapter/in/rest/SustainabilityMetricsController.java:33:@RequestMapping("/api/v1/sustainability/metrics")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sustainability/infrastructure/adapter/in/rest/SustainabilityMetricsController.java:66:    @GetMapping("/score")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sustainability/infrastructure/adapter/in/rest/SustainabilityController.java:31:@RequestMapping("/api/v1/sustainability")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sustainability/infrastructure/adapter/in/rest/SustainabilityController.java:70:    @GetMapping("/score")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sustainability/infrastructure/adapter/in/rest/SustainabilityController.java:96:    @GetMapping("/esg-report")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sustainability/infrastructure/adapter/in/rest/SustainabilityController.java:102:    @GetMapping("/corfo-simulator")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/bankingsync/infrastructure/adapter/in/rest/BankingSyncController.java:18:@RequestMapping("/api/v1/banking")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/bankingsync/infrastructure/adapter/in/rest/BankingSyncController.java:28:    @GetMapping("/connections")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/bankingsync/infrastructure/adapter/in/rest/BankingSyncController.java:34:    @PostMapping("/connections")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/bankingsync/infrastructure/adapter/in/rest/BankingSyncController.java:40:    @PostMapping("/sync")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/bankingsync/infrastructure/adapter/in/rest/BankingSyncController.java:47:    @GetMapping("/transactions")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/bankingsync/infrastructure/adapter/in/rest/BankingSyncController.java:53:    @PostMapping("/transactions/{id}/reconcile")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/bankingsync/infrastructure/adapter/in/rest/BankingSyncController.java:59:    @PostMapping("/transactions/{id}/ignore")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fees/infrastructure/adapter/in/rest/FeeImportController.java:14:@RequestMapping("/api/v1/fees")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fees/infrastructure/adapter/in/rest/FeeImportController.java:24:    @PostMapping("/import")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:28:@RequestMapping("/api/v1/maintenance")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:48:    @PostMapping("/tasks")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:68:    @PutMapping("/tasks/{id}/start")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:94:    @PutMapping("/tasks/{id}/complete")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:121:    @PutMapping("/tasks/{id}/cancel")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:139:    @PutMapping("/tasks/{id}/fail")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:164:    @GetMapping("/tasks")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:190:    @GetMapping("/tasks/upcoming")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:206:    @GetMapping("/tasks/overdue")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:221:    @GetMapping("/summary/{stationId}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:26:@RequestMapping("/api/v1/pricing")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:41:    @PostMapping("/preview")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:65:    @GetMapping("/current/{stationId}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:85:    @PostMapping("/demand-rules")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:110:    @GetMapping("/demand-rules")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:121:    @PostMapping("/seasonal-rates")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:140:    @GetMapping("/seasonal-rates")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:151:    @PostMapping("/campaigns")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:183:    @GetMapping("/campaigns")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:192:    @GetMapping("/campaigns/{code}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:201:    @PutMapping("/campaigns/{id}/activate")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:214:    @PutMapping("/campaigns/{id}/deactivate")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:34:@RequestMapping("/api/v1/energy/reports")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:59:        @GetMapping("/energy")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:72:        @GetMapping("/energy/daily")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:84:        @GetMapping("/energy/monthly")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:97:        @GetMapping("/energy/export/csv")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:116:        @GetMapping("/revenue")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:132:        @GetMapping("/revenue/by-station")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:147:        @GetMapping("/revenue/profit-analysis")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:163:        @GetMapping("/usage-patterns")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:183:        @GetMapping("/forecast")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:201:        @GetMapping("/forecast/capacity-plan")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:219:        @GetMapping("/forecast/load-balancing")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:240:        @PostMapping("/schedule")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:27:@RequestMapping("/api/v1/dashboard")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:44:    @GetMapping("/metrics")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:54:    @GetMapping("/metrics/{metricType}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:71:    @GetMapping("/alerts")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:83:    @GetMapping("/alerts/unacknowledged")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:95:    @GetMapping("/alerts/severity/{severity}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:107:    @GetMapping("/alerts/station/{stationId}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:119:    @PostMapping("/alerts")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:143:    @PutMapping("/alerts/{id}/acknowledge")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:159:    @PutMapping("/alerts/{id}/resolve")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:172:    @GetMapping("/alerts/statistics")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:28:@RequestMapping("/api/v1/metadata")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:43:    @PostMapping("/manufacturers")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:59:    @GetMapping("/manufacturers")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:71:    @GetMapping("/manufacturers/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:84:    @PutMapping("/manufacturers/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:106:    @PutMapping("/manufacturers/{id}/deactivate")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:121:    @PostMapping("/models")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:139:    @GetMapping("/models")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:151:    @GetMapping("/models/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:164:    @GetMapping("/models/manufacturer/{manufacturerId}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:177:    @GetMapping("/models/ocpp/{version}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:189:    @PutMapping("/models/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:211:    @PutMapping("/models/{id}/firmware")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:24:@RequestMapping("/api/v1/ocpp/remote")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:38:        @PostMapping("/start")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:52:        @PostMapping("/stop")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:65:        @PostMapping("/unlock")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:78:        @PostMapping("/reset")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:91:        @PostMapping("/config/change")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:105:        @GetMapping("/config/get")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:118:        @PostMapping("/availability/change")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:132:        @PostMapping("/charging-profile/set")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:146:        @PostMapping("/charging-profile/clear")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:162:        @GetMapping("/charging-profile/schedule")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:177:        @PostMapping("/diagnostics/get")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:192:        @PostMapping("/firmware/update")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:206:        @PostMapping("/reservation/reserve")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:222:        @PostMapping("/reservation/cancel")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:235:        @PostMapping("/trigger-message")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:249:        @PostMapping("/clear-cache")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/wms/infrastructure/adapter/in/rest/WmsController.java:18:@RequestMapping("/api/v1/wms")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/wms/infrastructure/adapter/in/rest/WmsController.java:28:    @PostMapping("/locations")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/wms/infrastructure/adapter/in/rest/WmsController.java:33:    @GetMapping("/locations")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/wms/infrastructure/adapter/in/rest/WmsController.java:38:    @PostMapping("/picking")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/wms/infrastructure/adapter/in/rest/WmsController.java:43:    @GetMapping("/picking")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/wms/infrastructure/adapter/in/rest/WmsController.java:48:    @PostMapping("/picking/{id}/complete")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/annual_close/infrastructure/web/AnnualCloseController.java:11:@RequestMapping("/api/v1/annual-close")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/annual_close/infrastructure/web/AnnualCloseController.java:19:    @PostMapping("/f22/calculate/{fiscalYear}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/projects/infrastructure/adapter/in/rest/ProjectController.java:18:@RequestMapping("/api/v1/projects")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/projects/infrastructure/adapter/in/rest/ProjectController.java:28:    @GetMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/projects/infrastructure/adapter/in/rest/ProjectController.java:34:    @GetMapping("/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/projects/infrastructure/adapter/in/rest/ProjectController.java:39:    @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/projects/infrastructure/adapter/in/rest/ProjectController.java:46:    @PutMapping("/{id}/status")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/dms/infrastructure/adapter/in/rest/DmsController.java:17:@RequestMapping("/api/v1/dms")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/dms/infrastructure/adapter/in/rest/DmsController.java:27:    @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/dms/infrastructure/adapter/in/rest/DmsController.java:32:    @GetMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/dms/infrastructure/adapter/in/rest/DmsController.java:37:    @PostMapping("/{id}/analyze")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/dms/infrastructure/web/AiInvoicingController.java:15:@RequestMapping("/api/v1/dms/ai-invoicing")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/dms/infrastructure/web/AiInvoicingController.java:27:    @PostMapping("/process")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/integration_chile_data/infrastructure/web/EconomicIndicatorsController.java:19:@RequestMapping("/api/v1/integration/indicators")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/integration_chile_data/infrastructure/web/EconomicIndicatorsController.java:34:    @GetMapping("/today")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/inventory/infrastructure/web/InventoryController.java:26:@RequestMapping("/api/v1/inventory")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/inventory/infrastructure/web/InventoryController.java:41:    @PostMapping("/products")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/inventory/infrastructure/web/InventoryController.java:48:    @PutMapping("/products/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/inventory/infrastructure/web/InventoryController.java:55:    @DeleteMapping("/products/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/inventory/infrastructure/web/InventoryController.java:61:    @GetMapping("/products/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/inventory/infrastructure/web/InventoryController.java:66:    @GetMapping("/products")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/inventory/infrastructure/web/InventoryController.java:71:    @PostMapping("/products/{productId}/movements")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/inventory/infrastructure/web/InventoryController.java:79:    @GetMapping("/products/{productId}/movements")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/invoicing/infrastructure/adapter/in/rest/InvoiceImportController.java:38:@RequestMapping("/api/v1/invoices/import")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/invoicing/infrastructure/adapter/in/rest/InvoiceImportController.java:58:    @PostMapping(value = { "", "/sii-csv" }, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/invoicing/infrastructure/adapter/in/rest/InvoiceController.java:42:@RequestMapping("/api/v1/invoices")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/invoicing/infrastructure/adapter/in/rest/InvoiceController.java:58:        @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/invoicing/infrastructure/adapter/in/rest/InvoiceController.java:83:        @GetMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/invoicing/infrastructure/adapter/in/rest/InvoiceController.java:89:        @PostMapping("/{id}/send")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/procurement/infrastructure/adapter/in/rest/PurchaseOrderController.java:21:@RequestMapping("/api/v1/procurement/orders")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/procurement/infrastructure/adapter/in/rest/PurchaseOrderController.java:31:    @GetMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/procurement/infrastructure/adapter/in/rest/PurchaseOrderController.java:37:    @GetMapping("/{id}")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/procurement/infrastructure/adapter/in/rest/PurchaseOrderController.java:42:    @PostMapping
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/procurement/infrastructure/adapter/in/rest/PurchaseOrderController.java:61:    @PostMapping("/{id}/sent")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/procurement/infrastructure/adapter/in/rest/PurchaseOrderController.java:66:    @PostMapping("/{id}/received")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/pos/infrastructure/adapter/in/rest/PosController.java:20:@RequestMapping("/api/v1/pos")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/pos/infrastructure/adapter/in/rest/PosController.java:30:    @GetMapping("/transactions")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/pos/infrastructure/adapter/in/rest/PosController.java:36:    @PostMapping("/transactions")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/pos/infrastructure/adapter/in/rest/PosController.java:48:    @PostMapping("/sync")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/shared/infrastructure/notification/NotificationController.java:12:@RequestMapping("/api/v1/notifications")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/shared/infrastructure/notification/NotificationController.java:25:    @GetMapping("/subscribe")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/shared/infrastructure/notification/NotificationController.java:31:    @GetMapping("/preferences")
+===== PREAUTHORIZE
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/integration_sii/infrastructure/adapter/in/rest/CafController.java:36:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/integration_sii/infrastructure/adapter/in/rest/SiiIntegrationController.java:36:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/AccountingController.java:47:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/TaxAuditController.java:15:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','AUDITOR')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/PartnerLedgerController.java:17:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/adapter/in/rest/SiiAuditController.java:13:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','AUDITOR')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ReportingController.java:48:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','AUDITOR')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/LearningController.java:21:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/DataCleanupController.java:12:@PreAuthorize("hasRole('ADMIN')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ComplianceController.java:45:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','AUDITOR')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/ComplianceController.java:80:    @PreAuthorize("hasRole('ADMIN') or hasRole('ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/AuditController.java:21:@PreAuthorize("hasAnyRole('ADMIN','AUDITOR')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/accounting/infrastructure/web/AuditController.java:97:        // @PreAuthorize("hasAuthority('AUDIT_READ')") // TODO: Descomentar cuando
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/treasury/infrastructure/adapter/in/rest/TreasuryController.java:21:@PreAuthorize("hasAnyRole('ADMIN','TREASURER','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/RoleController.java:28:@PreAuthorize("hasRole('ADMIN')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/UserController.java:29:@PreAuthorize("hasRole('ADMIN')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/user/infrastructure/adapter/in/rest/OrganizationController.java:27:@PreAuthorize("hasRole('ADMIN')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/crm/infrastructure/adapter/in/rest/CrmController.java:24:@PreAuthorize("hasAnyRole('ADMIN','SALES')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/SsoUserController.java:36:@PreAuthorize("hasRole('ADMIN')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/web/CompanyController.java:30:@PreAuthorize("hasRole('ADMIN')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/security/SecurityFilter.java:33: *     (necesario para que {@code @PreAuthorize} funcione correctamente).</li>
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/infrastructure/security/SecurityFilter.java:82:                // Esto habilita @PreAuthorize("hasRole('ADMIN')") y similares.
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/domain/model/UserRole.java:9: * por lo que habilitan {@code @PreAuthorize("hasRole('ADMIN')")} y
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/mrp/infrastructure/adapter/in/rest/MrpController.java:20:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/financial_shield/infrastructure/web/FinancialShieldController.java:14:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','TREASURER')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fleet/infrastructure/web/FleetController.java:24:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fixed_assets/infrastructure/adapter/in/rest/FixedAssetController.java:19:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/period_close/infrastructure/web/PeriodCloseController.java:16:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/payroll/infrastructure/web/PayrollController.java:20:@PreAuthorize("hasAnyRole('ADMIN','HR')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/ai_assistant/infrastructure/adapter/in/rest/KnowledgeBaseController.java:34:@PreAuthorize("hasRole('ADMIN')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sustainability/infrastructure/adapter/in/rest/SustainabilityMetricsController.java:35:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS','AUDITOR')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sustainability/infrastructure/adapter/in/rest/SustainabilityController.java:32:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS','AUDITOR')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/bankingsync/infrastructure/adapter/in/rest/BankingSyncController.java:19:@PreAuthorize("hasAnyRole('ADMIN','TREASURER')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/fees/infrastructure/adapter/in/rest/FeeImportController.java:15:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/MaintenanceController.java:30:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnhancedPricingController.java:28:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/EnergyReportingController.java:36:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS','AUDITOR')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/DashboardController.java:29:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/rest/ChargerMetadataController.java:30:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/energy/infrastructure/adapter/in/ocpp/controller/OcppRemoteController.java:25:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/wms/infrastructure/adapter/in/rest/WmsController.java:19:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/annual_close/infrastructure/web/AnnualCloseController.java:13:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/projects/infrastructure/adapter/in/rest/ProjectController.java:19:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/dms/infrastructure/adapter/in/rest/DmsController.java:18:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/dms/infrastructure/web/AiInvoicingController.java:16:@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/inventory/infrastructure/web/InventoryController.java:28:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/invoicing/infrastructure/adapter/in/rest/InvoiceImportController.java:39:@PreAuthorize("hasAnyRole('ADMIN','SALES','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/invoicing/infrastructure/adapter/in/rest/InvoiceController.java:43:@PreAuthorize("hasAnyRole('ADMIN','SALES','ACCOUNTANT')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/procurement/infrastructure/adapter/in/rest/PurchaseOrderController.java:22:@PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/pos/infrastructure/adapter/in/rest/PosController.java:21:@PreAuthorize("hasAnyRole('ADMIN','SALES')")
+===== MODALES/DRAWERS
+SII-ERP-AI-FRONT/src/features/settings/components/UserManagement.tsx
+SII-ERP-AI-FRONT/src/features/settings/components/InviteUserModal.tsx
+SII-ERP-AI-FRONT/src/features/accounting/components/BalanceSheetTree.tsx
+SII-ERP-AI-FRONT/src/features/treasury/components/CashEntryModal.tsx
+SII-ERP-AI-FRONT/src/features/b2b/components/NewOrderModal.tsx
+SII-ERP-AI-FRONT/src/features/reports/components/ReportTemplates.tsx
+SII-ERP-AI-FRONT/src/features/fees/components/FeeImportModal.tsx
+SII-ERP-AI-FRONT/src/features/invoicing/components/CsvImportModal.tsx
+SII-ERP-AI-FRONT/src/features/ai-assistant/components/AiDrawer.tsx
+SII-ERP-AI-FRONT/src/app/portal/page.tsx
+SII-ERP-AI-FRONT/src/app/(dashboard)/accounting/balance/page.tsx
+SII-ERP-AI-FRONT/src/app/(dashboard)/layout.tsx
+SII-ERP-AI-FRONT/src/app/(dashboard)/treasury/page.tsx
+SII-ERP-AI-FRONT/src/app/(dashboard)/invoices/page.tsx
+SII-ERP-AI-FRONT/src/app/(dashboard)/fees/page.tsx
+SII-ERP-AI-FRONT/src/app/(auth)/onboarding/page.tsx
+SII-ERP-AI-FRONT/src/components/layout/Header.tsx
+===== GIT BANKING
+4446cf6 rbac(fase2): banca y conciliacion restringidas a ADMIN/TREASURER/ACCOUNTANT
+51c983f Fix .gitignore y recuperar carpetas out/ de la arquitectura hexagonal (Refinamiento iterativo)
+63d92e1 Refactorización en
+b0bfc10 Refactorización en ReconciliationLearningJpaRepository.java
+7153a90 Mejoras de arquitectura en ReconciliationLearningEntity.java
+c248b71 Refactorización en BankStatementController.java
+399f738 Refactorización en BankTransactionEntity.java
+ab4f3f2 Refactorización en BankReconciliationController.java
+e3462c6 Ajuste de persistencia para ReconciliationService.java
+c35dc78 Mejoras de arquitectura en ReconciliationLearningService.java
+732c8ee Optimización interna en BankReconciliationWorkbenchService.java
+db82bf8 Resolución de conflicto en Libro Mayor: Mejorando experiencia de usuario. Han sido horas peleando con CORS pero por fin funciona.
+2cef831 Integración de capa en Cálculo de Precio Medio Ponderado: Migración a TanStack Query para caché. Qué dolor de cabeza fue configurar el entorno, pero ya corre fluido.
+4c5f0c2 Reestructuración en Servicio de LLM: Validaciones de negocio según normativas del SII. Qué dolor de cabeza fue configurar el entorno, pero ya corre fluido.
+adf5fbd Reestructuración en Configuración Docker: Ajustes de latencia de base de datos. El código empieza a tomar forma de producto real, emocionante.

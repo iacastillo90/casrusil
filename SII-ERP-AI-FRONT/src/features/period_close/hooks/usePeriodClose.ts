@@ -16,18 +16,14 @@ export interface PeriodAuditResponse {
 export const usePeriodClose = () => {
     const auditPeriod = useMutation({
         mutationFn: async (request: PeriodCloseRequest) => {
-            const { data } = await api.post<PeriodAuditResponse>('/period-close/audit', request, {
-                headers: { 'X-Company-Id': '1' } // Usually this comes from context or interceptor, but the controller specifically asks for it in header
-            });
+            const { data } = await api.post<PeriodAuditResponse>('/period-close/audit', request);
             return data;
         },
     });
 
     const executeClose = useMutation({
         mutationFn: async (request: PeriodCloseRequest) => {
-            await api.post('/period-close/execute', request, {
-                headers: { 'X-Company-Id': '1' }
-            });
+            await api.post('/period-close/execute', request);
         },
     });
 

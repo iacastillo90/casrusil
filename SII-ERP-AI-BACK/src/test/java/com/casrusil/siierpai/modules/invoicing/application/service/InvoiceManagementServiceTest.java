@@ -3,7 +3,6 @@ package com.casrusil.siierpai.modules.invoicing.application.service;
 import com.casrusil.siierpai.modules.invoicing.domain.event.InvoiceCreatedEvent;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
 import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceType;
-import com.casrusil.siierpai.modules.invoicing.domain.model.TransactionType;
 import com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
@@ -38,10 +37,9 @@ class InvoiceManagementServiceTest {
     @Test
     void createInvoice_shouldPublishEvent() {
         // Given
-        CompanyId companyId = CompanyId.random();
-        Invoice invoice = new Invoice(
-                UUID.randomUUID(),
-                companyId,
+        CompanyId companies = CompanyId.random();
+        Invoice invoice = Invoice.create(
+                companies,
                 InvoiceType.FACTURA_ELECTRONICA,
                 123L,
                 "76.123.456-7",
@@ -50,12 +48,10 @@ class InvoiceManagementServiceTest {
                 new BigDecimal("1000"),
                 new BigDecimal("190"),
                 new BigDecimal("1190"),
-                Invoice.ORIGIN_MANUAL,
-                TransactionType.SALE,
                 Collections.emptyList());
 
         // When
-        CompanyContext.runInCompanyContext(companyId, () -> {
+        CompanyContext.runInCompanyContext(companies, () -> {
             service.createInvoice(invoice);
         });
 
@@ -81,13 +77,28 @@ class InvoiceManagementServiceTest {
         }
 
         @Override
-        public List<Invoice> findByCompanyId(CompanyId companyId) {
+        public List<Invoice> findByCompanyId(CompanyId companies) {
             return Collections.emptyList();
         }
 
         @Override
-        public boolean existsByCompanyIdAndFolioAndIssuerRut(CompanyId companyId, Long folio, String issuerRut) {
+        public boolean existsByCompanyIdAndTypeCodeAndFolioAndIssuerRut(CompanyId companies, Integer typeCode, Long folio, String issuerRut) {
             return false;
+        }
+
+        @Override
+        public Long findMaxFolioByCompanyIdAndTypeCode(CompanyId companies, int typeCode) {
+            return null;
+        }
+
+        @Override
+        public void deleteInPeriod(CompanyId companies, LocalDate start, LocalDate end) {
+            // No-op for test stub
+        }
+
+        @Override
+        public List<Invoice> findByCompanyIdAndDateBetween(CompanyId companies, LocalDate start, LocalDate end) {
+            return Collections.emptyList();
         }
     }
 

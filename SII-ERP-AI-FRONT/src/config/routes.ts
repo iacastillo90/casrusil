@@ -5,6 +5,7 @@ export const APP_ROUTES = {
     },
     PROTECTED: {
         DASHBOARD: '/dashboard',
+        PORTAL: '/portal',
         INVOICES: {
             LIST: '/invoices',
             NEW: '/invoices/new',

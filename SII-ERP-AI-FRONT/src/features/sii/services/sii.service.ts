@@ -9,28 +9,34 @@ export interface CafUploadResult {
     folioRange: CafFolioRange;
 }
 
+/**
+ * Estado de sincronización SII
+ */
 export interface SiiSyncStatus {
-    id: string;
-    documentType: string;
     lastSync: string;
-    status: string;
-    pendingCount: number;
+    nextSync: string;
+    modules: {
+        sii: 'SYNCED' | 'PENDING' | 'ERROR';
+        caf: 'SYNCED' | 'PENDING' | 'ERROR';
+        dte: 'SYNCED' | 'PENDING' | 'ERROR';
+    };
+    lastError?: string;
+}
+
+/**
+ * Estado de un DTE
+ */
+export interface DteStatus {
+    tipo: string;
+    folio: number;
+    rutEmisor: string;
+    rutReceptor: string;
+    estado: 'PENDIENTE' | 'ENVIADO' | 'ACEPTADO' | 'RECHAZADO';
+    fechaEmision: string;
+    monto: number;
 }
 
 export const siiService = {
-    /**
-     * Estado de sincronización con el SII por tipo de documento.
-     * NOTA: integración real con el backend pendiente.
-     */
-    getSyncStatus: async (): Promise<SiiSyncStatus[]> => {
-        try {
-            const { data } = await api.get<SiiSyncStatus[]>('/sii/sync-status');
-            return data ?? [];
-        } catch {
-            return [];
-        }
-    },
-
     /**
      * Sube un archivo CAF (XML) al backend y devuelve el rango de folios cargado.
      */
@@ -40,6 +46,38 @@ export const siiService = {
         const { data } = await api.post<CafUploadResult>('/sii/caf', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
+        return data;
+    },
+
+    /**
+     * Obtener estado de sincronización SII
+     */
+    getSyncStatus: async (): Promise<SiiSyncStatus> => {
+        const { data } = await api.get<SiiSyncStatus>('/sii/status');
+        return data;
+    },
+
+    /**
+     * Forzar sincronización SII
+     */
+    syncSii: async (): Promise<{ success: boolean; message?: string }> => {
+        const { data } = await api.post<{ success: boolean; message?: string }>('/sii/sync');
+        return data;
+    },
+
+    /**
+     * Obtener estado de DTE
+     */
+    getDteStatus: async (tipo: string, folio: number): Promise<DteStatus> => {
+        const { data } = await api.get<DteStatus>(`/sii/dte/${tipo}/${folio}`);
+        return data;
+    },
+
+    /**
+     * Enviar DTE
+     */
+    sendDte: async (dteId: string): Promise<{ success: boolean; message?: string }> => {
+        const { data } = await api.post<{ success: boolean; message?: string }>(`/sii/dte/${dteId}/send`);
         return data;
     },
 };

@@ -16,7 +16,6 @@ interface SettingsState {
     inviteUser: (email: string, role: string, name?: string) => Promise<void>;
     removeUser: (id: string) => Promise<void>;
     updateNotifications: (data: NotificationPreferences) => Promise<void>;
-    triggerReport: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -51,7 +50,6 @@ export const useSettingsStore = create<SettingsState>()(
                     set({ company, users, notifications, isLoading: false });
                 } catch (error) {
                     console.error("Failed to fetch settings", error);
-                    // Use fallback/mock data if backend fails for demo purposes or handle error properly
                     set({ isLoading: false, error: "Error al cargar configuración" });
                 }
             },
@@ -101,9 +99,6 @@ export const useSettingsStore = create<SettingsState>()(
                 }
             },
 
-            triggerReport: async () => {
-                await settingsService.triggerWeeklyReport();
-            }
         }),
         {
             name: 'settings-storage',

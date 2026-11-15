@@ -16,21 +16,15 @@ export interface Fee {
 }
 
 export interface GetFeesParams {
-    companyId: string;
+    year?: number;
 }
 
 export const feeService = {
     /**
      * Lista las boletas de honorarios de la empresa.
-     * NOTA: integración real con el backend pendiente; se intenta la llamada
-     * real y se retorna un arreglo tipado vacío como respaldo.
      */
     getFees: async (params: GetFeesParams): Promise<Fee[]> => {
-        try {
-            const { data } = await api.get<Fee[]>('/fees', { params });
-            return data ?? [];
-        } catch {
-            return [];
-        }
+        const { data } = await api.get<Fee[]>('/fees', { params });
+        return data ?? [];
     },
 };

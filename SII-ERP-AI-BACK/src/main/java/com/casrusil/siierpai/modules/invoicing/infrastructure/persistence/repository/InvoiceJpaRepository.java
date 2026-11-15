@@ -28,4 +28,6 @@ public interface InvoiceJpaRepository extends JpaRepository<InvoiceEntity, UUID>
                         Long folio, String issuerRut);
 
         void deleteByCompanyIdAndDateBetween(UUID companyId, java.time.LocalDate start, java.time.LocalDate end);
+
+        Long findMaxFolioByCompanyIdAndTypeCode(UUID companyId, Integer typeCode);
 }

@@ -9,26 +9,12 @@ export interface FleetMetrics {
     maintenanceScheduled: number;
 }
 
-const MOCK_FLEET_METRICS: FleetMetrics = {
-    activeVehicles: 12,
-    totalVehicles: 15,
-    enRoute: 8,
-    efficiencyPercent: 94,
-    maintenanceScheduled: 2,
-};
-
-export const useFleet = () => {
+    export const useFleet = () => {
     const { data: metrics, isLoading, error } = useQuery({
         queryKey: ['fleet', 'metrics'],
         queryFn: async () => {
-            try {
-                // Try fetching from backend if endpoint exists
-                const { data } = await api.get('/fleet/metrics');
-                return data as FleetMetrics;
-            } catch (err) {
-                // Fallback to mock if endpoint doesn't exist yet
-                return MOCK_FLEET_METRICS;
-            }
+            const { data } = await api.get('/fleet/metrics');
+            return data as FleetMetrics;
         },
     });
 

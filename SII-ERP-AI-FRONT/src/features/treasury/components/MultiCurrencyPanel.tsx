@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ArrowRightLeft, DollarSign } from 'lucide-react';
+import { treasuryService } from '../services/treasury.service';
 
 export const MultiCurrencyPanel = () => {
     const [amount, setAmount] = useState('1000');
     const [fromCurrency, setFromCurrency] = useState('USD');
     const [toCurrency, setToCurrency] = useState('CLP');
 
-    // Mock rates
-    const rates: Record<string, number> = {
-        'USD_CLP': 945.50,
-        'EUR_CLP': 1020.30,
-        'UF_CLP': 37500.20,
-    };
+    const [rates, setRates] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        treasuryService.getExchangeRates().then(setRates);
+    }, []);
 
     const convert = () => {
         const key = `${fromCurrency}_${toCurrency}`;

@@ -69,6 +69,11 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
         invoiceJpaRepository.deleteByCompanyIdAndDateBetween(companyId.value(), start, end);
     }
 
+    @Override
+    public Long findMaxFolioByCompanyIdAndTypeCode(CompanyId companyId, int typeCode) {
+        return invoiceJpaRepository.findMaxFolioByCompanyIdAndTypeCode(companyId.value(), typeCode);
+    }
+
     private InvoiceEntity toEntity(Invoice invoice) {
         InvoiceEntity entity = new InvoiceEntity(
                 invoice.getId(),

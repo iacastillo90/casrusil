@@ -34,6 +34,8 @@ public enum InvoiceType {
     FACTURA_ELECTRONICA(33, "Factura Electrónica"),
     /** Factura No Afecta o Exenta Electrónica (34) */
     FACTURA_NO_AFECTA_O_EXENTA_ELECTRONICA(34, "Factura Exenta"),
+    /** Boleta Electrónica (58) */
+    BOLETA_ELECTRONICA(58, "Boleta Electrónica"),
     /** Liquidación Factura Electrónica (43) */
     LIQUIDACION_FACTURA_ELECTRONICA(43, "Liquidación Factura"),
     /** Factura de Compra Electrónica (46) */

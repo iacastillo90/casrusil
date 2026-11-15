@@ -79,6 +79,16 @@ public interface InvoiceRepository {
                         String issuerRut);
 
         /**
+         * Encuentra el folio máximo de una empresa para un tipo de documento.
+         * Usado por PosTransactionListener para generar el siguiente folio.
+         *
+         * @param companyId ID de la empresa
+         * @param typeCode Código del tipo de documento (ej: 33 para Factura Electrónica)
+         * @return El folio máximo encontrado, o null si no hay facturas
+         */
+        Long findMaxFolioByCompanyIdAndTypeCode(CompanyId companyId, int typeCode);
+
+        /**
          * Encuentra facturas pendientes de pago (abiertas).
          */
         default List<Invoice> findOpenInvoices(CompanyId companyId) {

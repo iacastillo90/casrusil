@@ -41,5 +41,10 @@ export const posService = {
     
     syncTransactions: async (): Promise<void> => {
         await api.post('/pos/sync');
+    },
+    
+    searchProduct: async (barcodeOrSku: string): Promise<PosTransactionItem> => {
+        const response = await api.get(`/pos/products/search`, { params: { query: barcodeOrSku } });
+        return response.data;
     }
 };

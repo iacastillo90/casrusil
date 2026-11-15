@@ -1,12 +1,9 @@
 'use server';
 
-import { createAI, getMutableAIState, streamUI } from 'ai/rsc';
-import { google } from '@ai-sdk/google';
+import { createAI, getMutableAIState } from 'ai/rsc';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { ReactNode } from 'react';
-// import { SalesChart } from '@/features/dashboard/components/SalesChart';
-// import { RecentInvoices } from '@/features/dashboard/components/RecentInvoices';
 import { SkeletonLoader } from '../components/shared/SkeletonLoader';
 
 export interface ServerMessage {
@@ -33,54 +30,63 @@ export async function submitUserMessage(content: string): Promise<ClientMessage>
         },
     ]);
 
-    const ui = await streamUI({
-        model: google(process.env.GOOGLE_GENERATIVE_AI_MODEL || 'models/gemini-1.5-flash') as any,
-        initial: <SkeletonLoader variant="card" rows={1} />,
-        system: 'Eres un asistente financiero experto (CFO AI). Puedes mostrar gráficos y datos en tiempo real.',
-        messages: [
-            {
-                role: 'user',
-                content,
-            },
-        ],
-        text: ({ content, done }) => {
-            if (done) {
-                aiState.done([
-                    ...aiState.get(),
-                    {
-                        role: 'assistant',
-                        content,
-                    },
-                ]);
+    // Use next/headers to extract the auth cookie/token
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get('JSESSIONID')?.value || cookieStore.get('token')?.value || '';
+
+    let backendResponse = "Error de comunicación con el asistente (Backend)";
+    
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+        
+        // Asumiendo que primero creamos una conversación o usamos una genérica
+        // Por simplicidad, enviaremos directo asumiendo un conversationId 'default' o iniciaremos una.
+        const convResponse = await fetch(`${baseUrl}/ai/conversations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cookie': `token=${sessionId}; JSESSIONID=${sessionId}` // Pass session context
             }
-            return <div>{content}</div>;
-        },
-        tools: {
-            show_sales_chart: {
-                description: 'Muestra el gráfico de ventas del último período',
-                parameters: z.object({
-                    period: z.string().describe('El período a mostrar (ej: "trimestre", "año")'),
-                }),
-                generate: async ({ period }) => {
-                    return <div>Gráfico de ventas (Simulado)</div>;
+        });
+        
+        if (convResponse.ok) {
+            const conversation = await convResponse.json();
+            
+            const msgResponse = await fetch(`${baseUrl}/ai/conversations/${conversation.id}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cookie': `token=${sessionId}; JSESSIONID=${sessionId}`
                 },
-            },
-            show_recent_invoices: {
-                description: 'Muestra la lista de facturas recientes',
-                parameters: z.object({
-                    limit: z.number().optional().describe('Número de facturas a mostrar'),
-                }),
-                generate: async ({ limit }) => {
-                    return <div>Lista de facturas (Simulada)</div>;
-                },
-            },
+                body: JSON.stringify({ content })
+            });
+            
+            if (msgResponse.ok) {
+                const msgData = await msgResponse.json();
+                backendResponse = msgData.content || msgData.text || backendResponse;
+            } else {
+                console.error("Error from AI messages endpoint:", msgResponse.status);
+            }
+        } else {
+            console.error("Error creating AI conversation:", convResponse.status);
+        }
+    } catch (err) {
+        console.error("Failed to connect to AI Backend:", err);
+    }
+
+    aiState.done([
+        ...aiState.get(),
+        {
+            role: 'assistant',
+            content: backendResponse,
         },
-    });
+    ]);
 
     return {
         id: uuidv4(),
         role: 'assistant',
-        display: ui.value,
+        display: <div>{backendResponse}</div>,
     };
 }
 

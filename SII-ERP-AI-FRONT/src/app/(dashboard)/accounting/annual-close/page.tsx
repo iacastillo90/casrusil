@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,8 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { formatCLP } from "@/lib/formatters";
+import { usePeriodClose } from "@/features/period_close/hooks/usePeriodClose";
 
 type StepStatus = "pending" | "running" | "done" | "warning" | "error";
 
@@ -89,133 +90,59 @@ export default function AnnualClosePage() {
 
     const completedSteps = steps.filter(s => s.status === "done" || s.status === "warning").length;
     
-    // Result data for the simulation
-    const STEP_RESULTS: Record<string, Partial<AnnualCloseStep>> = {
-        audit: {
-            status: "done",
-            messages: [
-                { type: "success", text: "✓ 12/12 meses (Ene-Dic) cerrados y bloqueados." },
-                { type: "success", text: "✓ Todas las cuentas de resultado han sido refundidas." },
-                { type: "info", text: "ℹ Utilidad Financiera Base: $42.500.000" }
-            ],
-        },
-        rli: {
-            status: "warning",
-            messages: [
-                { type: "info", text: "ℹ Detectados gastos rechazados por $1.200.000 (Multas y recargos)." },
-                { type: "success", text: "✓ Ajuste deducido: Amortización de intangibles ($800.000)." },
-                { type: "warning", text: "⚠ Renta Líquida Imponible Ajustada: $42.900.000" }
-            ],
-            dataPreview: (
-                <div className="mt-3 p-3 bg-amber-50/50 border border-amber-100 rounded-md text-xs">
-                    <div className="flex justify-between border-b border-amber-200 pb-1 mb-1">
-                        <span className="text-slate-600">Resultado Financiero</span>
-                        <span className="font-mono text-slate-800">$42.500.000</span>
-                    </div>
-                    <div className="flex justify-between border-b border-amber-200 pb-1 mb-1 text-red-600">
-                        <span>(+) Agregados (Gastos Rechazados)</span>
-                        <span className="font-mono">$1.200.000</span>
-                    </div>
-                    <div className="flex justify-between border-b border-amber-200 pb-1 mb-1 text-emerald-600">
-                        <span>(-) Deducidos</span>
-                        <span className="font-mono">($800.000)</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-amber-800 pt-1">
-                        <span>Renta Líquida Imponible (RLI)</span>
-                        <span className="font-mono">$42.900.000</span>
-                    </div>
-                </div>
-            )
-        },
-        idpc: {
-            status: "done",
-            messages: [
-                { type: "info", text: "ℹ Régimen detectado: 14 D3 (Propyme General) - Tasa 10%" },
-                { type: "success", text: "✓ Impuesto Calculado: $4.290.000" },
-                { type: "success", text: "✓ PPM Acumulado (Art. 84): $3.850.000" },
-                { type: "info", text: "ℹ Saldo a Pagar IDPC: $440.000" }
-            ],
-        },
-        distribution: {
-            status: "done",
-            messages: [
-                { type: "info", text: "ℹ Utilidad Líquida Distribuible: $38.210.000" },
-                { type: "success", text: "✓ Se sugiere mantener el 20% en utilidades retenidas para reinversión." },
-                { type: "success", text: "✓ Asiento de distribución propuesto para los 2 socios constituyentes." }
-            ],
-            dataPreview: (
-                <div className="mt-3 p-3 bg-indigo-50/50 border border-indigo-100 rounded-md text-xs">
-                    <p className="font-semibold text-indigo-800 mb-2">Propuesta de Distribución (Dividendos)</p>
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="border-b border-indigo-200 text-slate-500">
-                                <th className="pb-1 font-medium">Socio</th>
-                                <th className="pb-1 font-medium text-right">Participación</th>
-                                <th className="pb-1 font-medium text-right">Monto a Retirar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="py-1">Socio A</td>
-                                <td className="text-right">50%</td>
-                                <td className="text-right font-mono text-emerald-700">$15.284.000</td>
-                            </tr>
-                            <tr>
-                                <td className="py-1">Socio B</td>
-                                <td className="text-right">50%</td>
-                                <td className="text-right font-mono text-emerald-700">$15.284.000</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            )
-        },
-        f22: {
-            status: "done",
-            messages: [
-                { type: "success", text: "✓ Recuadros 12 (Base Imponible) y 17 (Capital Propio) generados." },
-                { type: "success", text: "✓ Línea 49 (Impuesto a la Renta) consolidada." },
-                { type: "success", text: "✓ Borrador del Formulario 22 listo para revisión y envío al portal del SII." }
-            ],
-        }
-    };
+    // Removing mock STEP_RESULTS
+
+    const { auditPeriod } = usePeriodClose();
 
     const runAnalysis = async () => {
         setIsRunning(true);
         setCurrentStep(0);
         setAiChat(prev => [...prev, { role: "system", text: "Iniciando proceso de Cierre Anual (Año Comercial 2026)..." }]);
 
-        for (let i = 0; i < INITIAL_STEPS.length; i++) {
-            setCurrentStep(i);
-            setSteps(prev => prev.map((s, idx) => idx === i ? { ...s, status: "running" } : s));
-            setProgress(((i) / INITIAL_STEPS.length) * 100);
+        let aiRecommendation = "";
+        let backendIssues: string[] = [];
 
-            await new Promise(r => setTimeout(r, 2000)); // Simulate work
-
-            const result = STEP_RESULTS[INITIAL_STEPS[i].id];
-            setSteps(prev => prev.map((s, idx) => idx === i ? { ...s, ...result } as AnnualCloseStep : s));
-
-            if (result.status === "warning") {
-                setAiChat(prev => [...prev, { role: "ai", text: `Encontré algunos ajustes tributarios en el paso ${i + 1}. Nada grave, pero es importante que revises el cálculo de la RLI.` }]);
-            } else if (result.status === "done") {
-                if (INITIAL_STEPS[i].id === 'idpc') {
-                    setAiChat(prev => [...prev, { role: "ai", text: `¡Buenas noticias! Debido al régimen Propyme (10%), tu impuesto se redujo significativamente este año. Y gracias al PPM acumulado, el pago en abril será bastante bajo.` }]);
-                } else if (INITIAL_STEPS[i].id === 'f22') {
-                    setAiChat(prev => [...prev, { role: "ai", text: `El borrador preliminar del F22 está listo. 📄` }]);
-                } else {
-                    setAiChat(prev => [...prev, { role: "ai", text: `Paso ${i + 1} completado sin problemas. ✓` }]);
+        try {
+            // Evaluamos diciembre para el cierre anual
+            const auditResult = await auditPeriod.mutateAsync({ year: 2026, month: 12 });
+            aiRecommendation = auditResult.aiRecommendation || "Operación Renta lista.";
+            backendIssues = auditResult.issuesFound || [];
+            
+            setSteps(INITIAL_STEPS.map((s, i) => {
+                if (i === 0 && backendIssues.length > 0) {
+                    return {
+                        ...s,
+                        status: "warning",
+                        messages: backendIssues.map(issue => ({ type: "warning", text: `⚠ ${issue}` }))
+                    };
                 }
-            }
+                return {
+                    ...s,
+                    status: "done",
+                    messages: [{ type: "success", text: "✓ Validado correctamente." }]
+                };
+            }));
 
-            setProgress(((i + 1) / INITIAL_STEPS.length) * 100);
-            await new Promise(r => setTimeout(r, 400));
+            setProgress(100);
+            
+            if (backendIssues.length > 0) {
+                setAiChat(prev => [...prev, { role: "ai", text: "He encontrado observaciones. Revisa los pasos." }]);
+            }
+        } catch (error) {
+            console.error("Error fetching annual audit", error);
+            aiRecommendation = "Error al conectar con la IA o Backend.";
+            setSteps(INITIAL_STEPS.map(s => ({
+                ...s,
+                status: "error",
+                messages: [{ type: "error", text: "Error de conexión." }]
+            })));
         }
 
         setCurrentStep(-1);
         setIsRunning(false);
         setAiChat(prev => [...prev, {
             role: "ai",
-            text: "✅ Proceso de auditoría anual finalizado. Revisa las propuestas y el borrador del F22. Cuando estés seguro, puedes firmar y cerrar el ejercicio contable."
+            text: aiRecommendation || "✅ Proceso de auditoría anual finalizado."
         }]);
     };
 

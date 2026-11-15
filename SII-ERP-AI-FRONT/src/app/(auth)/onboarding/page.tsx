@@ -18,13 +18,17 @@ export default function OnboardingPage() {
     const nextStep = () => setStep((s) => Math.min(s + 1, 3));
     const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
-    const handleComplete = () => {
+    const handleComplete = async () => {
         setIsLoading(true);
-        setTimeout(() => {
+        try {
+            // Lógica de llamada al servicio de configuración (ej: await settingsService.saveConfig(...))
             setIsLoading(false);
             toast.success("¡Configuración completada con éxito!");
             router.push("/dashboard");
-        }, 1500);
+        } catch (error) {
+            setIsLoading(false);
+            toast.error("Error al configurar empresa.");
+        }
     };
 
     return (

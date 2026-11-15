@@ -47,11 +47,10 @@ export function CompanyProfile() {
                 }
             });
 
-            if (logoFile) {
-                formData.append("logo", logoFile);
-            }
-
             await updateCompany(formData);
+            if (logoFile) {
+                toast.warning("El logo todavía no se puede guardar: el backend no soporta subida de archivos.");
+            }
             toast.success("Perfil de empresa actualizado correctamente");
         } catch (error) {
             console.error(error);
@@ -90,6 +89,9 @@ export function CompanyProfile() {
                                     currentLogo={company?.logoUrl}
                                     onLogoChange={setLogoFile}
                                 />
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                    La subida de logo todavía no está disponible.
+                                </p>
                             </div>
 
                             {/* Inputs Column */}

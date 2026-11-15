@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { FinancialShieldWidget } from '@/features/financial-shield/components/FinancialShieldWidget';
 import { EcoScoreCard } from '@/features/sustainability/components/EcoScoreCard';
 import { SalesChart } from '@/features/dashboard/components/SalesChart';
-import { RecentActivityFeed } from '@/features/dashboard/components/RecentActivityFeed';
+import { RecentInvoices } from '@/features/dashboard/components/RecentInvoices';
 import { KPIGrid } from '@/features/dashboard/components/KPIGrid';
 import { SkeletonLoader } from '../../../components/shared/SkeletonLoader';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
@@ -57,7 +57,7 @@ export default function DashboardPage() {
                 {/* Actividad Reciente */}
                 <div className="md:col-span-1 xl:col-span-1">
                     <Suspense fallback={<SkeletonLoader variant="card" />}>
-                        <RecentActivityFeed />
+                        <RecentInvoices />
                     </Suspense>
                 </div>
             </div>

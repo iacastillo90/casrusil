@@ -82,7 +82,11 @@ public class SsoIntegrationTest {
                 // 3. Access Protected Endpoint (Update Profile)
                 CompanyController.UpdateCompanyRequest updateRequest = new CompanyController.UpdateCompanyRequest(
                                 "Updated Company SpA",
-                                "contact@updated.com");
+                                "contact@updated.com",
+                                null,
+                                null,
+                                null,
+                                null);
 
                 mockMvc.perform(put("/api/v1/companies/me")
                                 .header("Authorization", "Bearer " + token)

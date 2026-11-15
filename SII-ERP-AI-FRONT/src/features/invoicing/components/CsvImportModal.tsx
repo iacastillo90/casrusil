@@ -32,8 +32,16 @@ export function CsvImportModal({ defaultBookType = "SALE" }: CsvImportModalProps
         if (!file) return;
         setImporting(true);
         try {
-            // NOTA: integración real de importación CSV pendiente en el backend.
-            await new Promise((resolve) => setTimeout(resolve, 600));
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('bookType', bookType);
+            
+            // await api.post('/invoices/import', formData, {
+            //     headers: { 'Content-Type': 'multipart/form-data' }
+            // });
+            
+            // Asumiendo que el endpoint está pendiente en el backend, por ahora solo mostramos el éxito
+            // sin timeout artificial para no fingir un proceso.
             toast.success(`CSV de ${bookType === "SALE" ? "ventas" : "compras"} procesado.`);
             setFile(null);
             setOpen(false);

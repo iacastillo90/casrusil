@@ -13,6 +13,7 @@ public class Product {
     private String name;
     private String description;
     private BigDecimal currentStock;
+    private BigDecimal minStock;
     private BigDecimal averageCost;
     private BigDecimal salePrice;
     private String category;

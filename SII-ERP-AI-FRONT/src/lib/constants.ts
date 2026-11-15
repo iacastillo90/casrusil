@@ -60,7 +60,8 @@ export const APP_ROUTES = {
     SII_CAF: '/sii/caf',  // Mapped to CAF page
 
     // Banking
-    BANKING_RECONCILIATION: '/treasury', // Mapped to Treasury page
+    BANKING_RECONCILIATION: '/banking/reconciliation',
+    TREASURY: '/treasury',
 
     // Settings
     SETTINGS_COMPANY: '/settings',

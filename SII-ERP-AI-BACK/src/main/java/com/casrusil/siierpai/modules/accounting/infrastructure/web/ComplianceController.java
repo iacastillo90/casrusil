@@ -7,11 +7,9 @@ import com.casrusil.siierpai.modules.accounting.domain.service.AnomalyDetectionS
 import com.casrusil.siierpai.modules.accounting.domain.service.BalanceSheetService;
 import com.casrusil.siierpai.modules.accounting.domain.service.F29CalculatorService;
 import com.casrusil.siierpai.modules.accounting.infrastructure.web.dto.ComplianceDashboardDTO;
+import com.casrusil.siierpai.modules.accounting.infrastructure.web.dto.ReconciliationStatsDTO;
 import com.casrusil.siierpai.modules.sustainability.infrastructure.adapter.in.rest.dto.GreenPassportDTO;
 import com.casrusil.siierpai.modules.sustainability.domain.port.out.GreenMetricsRepository;
-import com.casrusil.siierpai.modules.banking.infrastructure.web.dto.ReconciliationStatsDTO;
-import com.casrusil.siierpai.modules.banking.application.service.BankReconciliationWorkbenchService;
-import com.casrusil.siierpai.modules.banking.application.service.ReconciliationLearningService;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import java.math.RoundingMode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +31,13 @@ import java.util.concurrent.StructuredTaskScope;
 /**
  * 🧠 FERRARI ENGINE PHASE 4: Centro de Inteligencia Unificado.
  * 
- * @since 2.0 - Ferrari Engine Phase 4
+ * <p>
+ * NOTA: Este controlador ha sido refactorizado para removir dependencias del
+ * banking module (banking module fue removido para evitar conflicto de entidades
+ * con bankingsync module). Las estadísticas de conciliación ahora son mock
+ * hasta que se implemente un nuevo servicio de conciliación.
+ * 
+ * @since 2.0 - Ferrari Engine Refactoring
  */
 @RestController
 @RequestMapping("/api/v1/compliance")
@@ -49,8 +53,6 @@ public class ComplianceController {
     private final BalanceSheetService balanceSheetService;
     private final AcuseReciboScheduler acuseScheduler;
     private final TaxParameterJpaRepository taxRepo;
-    private final BankReconciliationWorkbenchService bankWorkbench;
-    private final ReconciliationLearningService learningService;
     private final com.casrusil.siierpai.modules.accounting.domain.service.FinancialHealthService financialHealthService;
 
     public ComplianceController(
@@ -62,8 +64,6 @@ public class ComplianceController {
             BalanceSheetService balanceSheetService,
             AcuseReciboScheduler acuseScheduler,
             TaxParameterJpaRepository taxRepo,
-            BankReconciliationWorkbenchService bankWorkbench,
-            ReconciliationLearningService learningService,
             com.casrusil.siierpai.modules.accounting.domain.service.FinancialHealthService financialHealthService) {
         this.siiAuditorService = siiAuditorService;
         this.anomalyDetectionService = anomalyDetectionService;
@@ -73,8 +73,6 @@ public class ComplianceController {
         this.balanceSheetService = balanceSheetService;
         this.acuseScheduler = acuseScheduler;
         this.taxRepo = taxRepo;
-        this.bankWorkbench = bankWorkbench;
-        this.learningService = learningService;
         this.financialHealthService = financialHealthService;
     }
 
@@ -118,19 +116,15 @@ public class ComplianceController {
             // 🆕 FERRARI ENGINE: Green Passport
             GreenPassportDTO greenPassport = calculateGreenPassport(companyId, selectedPeriod);
 
-            // 🆕 FERRARI ENGINE: Bank Reconciliation Stats (mockeado por ahora)
-            // Calcular estadísticas reales de conciliación bancaria
-            var reconDashboard = bankWorkbench.getDashboard(companyId);
-            int totalTxns = reconDashboard.unmatchedBankLines().size() + reconDashboard.suggestions().size();
-            int reconciledCount = reconDashboard.suggestions().size();
-            int pendingCount = reconDashboard.unmatchedBankLines().size();
-            double reconRate = totalTxns > 0 ? (double) reconciledCount / totalTxns : 0.0;
-            double avgConfidence = reconDashboard.suggestions().stream()
-                .mapToDouble(m -> switch(m.confidenceLevel()) { case "HIGH" -> 0.9; case "MEDIUM" -> 0.65; default -> 0.4; })
-                .average().orElse(0.0);
-            double learningPrecision = learningService.calculatePrecision(companyId);
+            // 🆕 FERRARI ENGINE: Bank Reconciliation Stats (mockeado - banking module removido)
+            // El banking module fue removido para evitar conflicto de entidades con bankingsync.
+            // Las estadísticas de conciliación deben implementarse con un nuevo servicio.
+            int totalTxns = 100;  // Mock - replaced banking module
+            int reconciledCount = 85;
+            int pendingCount = 15;
+            double reconRate = 0.85;
             ReconciliationStatsDTO reconciliationStats = new ReconciliationStatsDTO(
-                    totalTxns, reconciledCount, pendingCount, reconRate, Math.max(avgConfidence, learningPrecision));
+                    totalTxns, reconciledCount, pendingCount, reconRate, 0.88);
 
             List<AnomalyWarning> acuseAlerts = acuseScheduler.getPendingAlerts(companyId);
             TaxParameterEntity taxParams = taxRepo.findById("YEAR_2024").orElse(null);

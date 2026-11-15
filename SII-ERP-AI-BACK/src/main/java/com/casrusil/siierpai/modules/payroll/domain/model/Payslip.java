@@ -3,13 +3,14 @@ package com.casrusil.siierpai.modules.payroll.domain.model;
 import lombok.Builder;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @Builder
 public class Payslip {
     private Long id;
     private String companyId;
-    private Long employeeId;
+    private UUID employeeId;
     private Long periodId;
     
     // Haberes

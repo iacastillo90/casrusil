@@ -12,6 +12,7 @@ import com.casrusil.siierpai.modules.integration_sii.infrastructure.xml.DteXmlBu
 import com.casrusil.siierpai.modules.integration_sii.infrastructure.xml.EnvioDteBuilder;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
 import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceType;
+import com.casrusil.siierpai.modules.sso.domain.port.out.CompanyCertificateRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,9 @@ class DteSenderServiceTest {
     private SiiUploadClient siiUploadClient;
 
     @Mock
+    private CompanyCertificateRepository certificateRepository;
+
+    @Mock
     private SiiCertificate siiCertificate;
 
     @Mock
@@ -81,7 +85,8 @@ class DteSenderServiceTest {
                 tedGenerator,
                 dteXmlBuilder,
                 envioDteBuilder,
-                siiUploadClient);
+                siiUploadClient,
+                certificateRepository);
 
         // Set default certificate path for testing
         ReflectionTestUtils.setField(dteSenderService, "defaultCertPath", "/test/cert.p12");

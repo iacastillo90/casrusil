@@ -17,11 +17,22 @@ export interface UserInvitation {
     name?: string; // Optional for invitation, required for User
 }
 
+export type UserRole =
+    | 'ADMIN'
+    | 'ACCOUNTANT'
+    | 'TREASURER'
+    | 'HR'
+    | 'SALES'
+    | 'OPERATIONS'
+    | 'AUDITOR'
+    | 'USER'
+    | 'VIEWER';
+
 export interface User {
     id: string;
     name: string;
     email: string;
-    role: 'ADMIN' | 'ACCOUNTANT' | 'VIEWER';
+    role: UserRole;
     status: 'ACTIVE' | 'INVITED' | 'PENDING';
     isCurrentUser?: boolean; // For "You" marker
 }

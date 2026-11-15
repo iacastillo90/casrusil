@@ -1,31 +1,20 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { formatCLP } from "@/lib/formatters";
 import { useEffect, useState } from "react";
-
-const data = [
-    { name: "Ene", total: 4500000 },
-    { name: "Feb", total: 3200000 },
-    { name: "Mar", total: 5100000 },
-    { name: "Abr", total: 2800000 },
-    { name: "May", total: 4900000 },
-    { name: "Jun", total: 5800000 },
-    { name: "Jul", total: 4200000 },
-    { name: "Ago", total: 3900000 },
-    { name: "Sep", total: 5500000 },
-    { name: "Oct", total: 4800000 },
-    { name: "Nov", total: 5200000 },
-    { name: "Dic", total: 6100000 },
-];
+import { useDashboardMetrics } from "../hooks/useDashboardMetrics";
 
 export function SalesChart() {
     const [mounted, setMounted] = useState(false);
+    const { metrics, isLoading } = useDashboardMetrics();
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    if (!mounted) {
+    if (!mounted || isLoading || !metrics) {
         return (
             <Card className="col-span-4">
                 <CardHeader>
@@ -38,35 +27,43 @@ export function SalesChart() {
         );
     }
 
+    const hasSales = metrics.monthlySales.some((point) => point.total > 0);
+
     return (
         <Card className="col-span-4">
             <CardHeader>
                 <CardTitle>Resumen de Ventas</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-                <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={data}>
-                        <XAxis
-                            dataKey="name"
-                            stroke="#888888"
-                            fontSize={12}
-                            tickLine={false}
-                            axisLine={false}
-                        />
-                        <YAxis
-                            stroke="#888888"
-                            fontSize={12}
-                            tickLine={false}
-                            axisLine={false}
-                            tickFormatter={(value) => `$${value}`}
-                        />
-                        <Tooltip
-                            formatter={(value: number) => formatCLP(value)}
-                            cursor={{ fill: 'transparent' }}
-                        />
-                        <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
+                {!hasSales ? (
+                    <div className="h-[350px] flex flex-col items-center justify-center text-center text-muted-foreground">
+                        <p className="text-sm">Todavía no hay ventas registradas en los últimos 12 meses.</p>
+                    </div>
+                ) : (
+                    <ResponsiveContainer width="100%" height={350}>
+                        <BarChart data={metrics.monthlySales}>
+                            <XAxis
+                                dataKey="name"
+                                stroke="#888888"
+                                fontSize={12}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <YAxis
+                                stroke="#888888"
+                                fontSize={12}
+                                tickLine={false}
+                                axisLine={false}
+                                tickFormatter={(value) => `$${value}`}
+                            />
+                            <Tooltip
+                                formatter={(value: number) => formatCLP(value)}
+                                cursor={{ fill: 'transparent' }}
+                            />
+                            <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                )}
             </CardContent>
         </Card>
     );

@@ -1,5 +1,6 @@
 package com.casrusil.siierpai;
 
+import com.casrusil.SiiErpAiApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 

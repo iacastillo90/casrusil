@@ -20,6 +20,8 @@ export interface Invoice {
     taxAmount: number;
     totalAmount: number;
     issueDate: string;
+    dueDate?: string;
+    transactionType?: 'SALE' | 'PURCHASE';
 }
 
 /**

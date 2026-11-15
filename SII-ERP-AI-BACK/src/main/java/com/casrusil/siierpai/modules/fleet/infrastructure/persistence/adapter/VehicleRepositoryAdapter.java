@@ -8,6 +8,7 @@ import com.casrusil.siierpai.modules.fleet.infrastructure.persistence.repository
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,6 +17,13 @@ import java.util.UUID;
 public class VehicleRepositoryAdapter implements VehicleRepository {
 
     private final VehicleJpaRepository jpaRepository;
+
+    @Override
+    public List<Vehicle> findAll() {
+        return jpaRepository.findAll().stream()
+                .map(this::mapToDomain)
+                .toList();
+    }
 
     @Override
     public Vehicle save(Vehicle vehicle) {

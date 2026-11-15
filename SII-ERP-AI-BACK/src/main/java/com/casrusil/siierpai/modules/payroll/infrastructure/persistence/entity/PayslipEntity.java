@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "pay_payslips")
@@ -25,7 +26,7 @@ public class PayslipEntity {
     private String companyId;
     
     @Column(nullable = false)
-    private Long employeeId;
+    private UUID employeeId;
     
     @Column(nullable = false)
     private Long periodId;

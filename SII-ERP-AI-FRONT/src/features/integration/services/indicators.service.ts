@@ -8,29 +8,21 @@ export interface EconomicIndicators {
     date?: string;
 }
 
-const emptyIndicators: EconomicIndicators = { uf: 0, utm: 0, usd: 0 };
-
 export const indicatorsService = {
     /**
-     * Indicadores económicos genéricos.
+     * Indicadores económicos del día (UF, UTM, USD).
+     * Fuente: backend `GET /api/v1/integration/indicators/today`.
      */
     getIndicators: async (): Promise<EconomicIndicators> => {
-        try {
-            const { data } = await api.get<EconomicIndicators>('/indicators');
-            return data ?? emptyIndicators;
-        } catch {
-            return emptyIndicators;
-        }
+        const { data } = await api.get<EconomicIndicators>('/integration/indicators/today');
+        return data;
     },
 
     /**
-     * Indicadores económicos del día (UF, UTM, USD).
-     * NOTA: la fuente real (ej. Mindicador.cl vía backend) queda pendiente de
-     * integración; se intenta la llamada real y se propaga el error para que el
-     * widget muestre el estado de "no disponible".
+     * Alias explícito de `getIndicators` para el widget del layout.
      */
     getTodayIndicators: async (): Promise<EconomicIndicators> => {
-        const { data } = await api.get<EconomicIndicators>('/indicators/today');
+        const { data } = await api.get<EconomicIndicators>('/integration/indicators/today');
         return data;
     },
 };

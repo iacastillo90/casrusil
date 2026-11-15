@@ -18,7 +18,7 @@ export function SustainabilityCard({ data, isLoading }: SustainabilityCardProps)
         return (
             <Card>
                 <CardContent className="py-12 text-center text-muted-foreground">
-                    No hay datos de sostenibilidad para este documento.
+                    El detalle de sostenibilidad por documento todavía no está disponible. Consultá el panel de sostenibilidad para ver tu Eco-Score global.
                 </CardContent>
             </Card>
         );

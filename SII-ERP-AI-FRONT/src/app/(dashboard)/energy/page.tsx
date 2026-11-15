@@ -1,9 +1,16 @@
 'use client';
 
-import { Zap, BatteryCharging, Power, AlertTriangle } from 'lucide-react';
+import { Zap, BatteryCharging, Power, AlertTriangle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEnergyMetrics, useEnergyAlerts } from '@/features/energy/hooks/useEnergy';
+import { formatCLP } from '@/lib/formatters';
 
 export default function EnergyPage() {
+    const { data: metrics, isLoading: metricsLoading } = useEnergyMetrics();
+    const { data: alerts, isLoading: alertsLoading } = useEnergyAlerts();
+
+    const loading = metricsLoading || alertsLoading;
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
@@ -18,8 +25,9 @@ export default function EnergyPage() {
                         <BatteryCharging className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">4</div>
-                        <p className="text-xs text-muted-foreground">De 5 estaciones totales</p>
+                        <div className="text-2xl font-bold">
+                            {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : `${metrics?.activeStations || 0} / ${metrics?.totalStations || 0}`}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -28,8 +36,10 @@ export default function EnergyPage() {
                         <Zap className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">142 kW</div>
-                        <p className="text-xs text-muted-foreground">Pico de 180 kW hoy</p>
+                        <div className="text-2xl font-bold">
+                            {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : `${metrics?.totalConsumptionKW || 0} kW`}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Pico de {metrics?.peakConsumptionKW || 0} kW hoy</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -38,8 +48,9 @@ export default function EnergyPage() {
                         <Power className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">$125.000</div>
-                        <p className="text-xs text-muted-foreground">Basado en tarifa horaria actual</p>
+                        <div className="text-2xl font-bold">
+                            {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatCLP(metrics?.estimatedDailyCost || 0)}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -48,11 +59,13 @@ export default function EnergyPage() {
                         <AlertTriangle className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">1</div>
-                        <p className="text-xs text-muted-foreground">Caída de voltaje detectada</p>
+                        <div className="text-2xl font-bold">
+                            {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (alerts?.length || 0)}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
+            {/* ... resto del componente igual */}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-4">

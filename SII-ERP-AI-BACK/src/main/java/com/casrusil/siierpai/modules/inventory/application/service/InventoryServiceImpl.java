@@ -38,6 +38,7 @@ public class InventoryServiceImpl implements InventoryUseCase {
                 .description(request.getDescription())
                 .salePrice(request.getSalePrice())
                 .category(request.getCategory())
+                .minStock(request.getMinStock() != null ? request.getMinStock() : BigDecimal.valueOf(5))
                 .currentStock(BigDecimal.ZERO)
                 .averageCost(BigDecimal.ZERO)
                 .build();
@@ -57,6 +58,9 @@ public class InventoryServiceImpl implements InventoryUseCase {
         product.setDescription(request.getDescription());
         product.setSalePrice(request.getSalePrice());
         product.setCategory(request.getCategory());
+        if (request.getMinStock() != null) {
+            product.setMinStock(request.getMinStock());
+        }
         
         return mapToResponse(productRepository.save(product));
     }
@@ -150,6 +154,7 @@ public class InventoryServiceImpl implements InventoryUseCase {
                 .name(product.getName())
                 .description(product.getDescription())
                 .currentStock(product.getCurrentStock())
+                .minStock(product.getMinStock())
                 .averageCost(product.getAverageCost())
                 .salePrice(product.getSalePrice())
                 .category(product.getCategory())

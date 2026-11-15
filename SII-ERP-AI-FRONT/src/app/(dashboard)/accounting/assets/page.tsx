@@ -9,10 +9,10 @@ import { toast } from "sonner";
 
 export default function FixedAssetsPage() {
     const { data: assets, isLoading } = useFixedAssets();
-    const { mutate: runDepreciation, isPending } = useRunDepreciation();
+    const runDepreciation = useRunDepreciation();
 
     const handleRunDepreciation = () => {
-        runDepreciation(undefined, {
+        runDepreciation.mutate(undefined, {
             onSuccess: () => toast.success("Depreciación mensual calculada y guardada.")
         });
     };
@@ -32,7 +32,7 @@ export default function FixedAssetsPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Activos Fijos y Depreciación</h1>
                     <p className="text-muted-foreground mt-1">Control de ciclo de vida y valor residual de activos.</p>
                 </div>
-                <Button onClick={handleRunDepreciation} disabled={isPending}>
+                <Button onClick={handleRunDepreciation} disabled={runDepreciation.isPending}>
                     <Calculator className="mr-2 h-4 w-4" /> Ejecutar Depreciación Mensual
                 </Button>
             </div>

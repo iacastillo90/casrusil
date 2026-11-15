@@ -7,7 +7,9 @@ import com.casrusil.siierpai.modules.payroll.infrastructure.persistence.reposito
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -31,9 +33,14 @@ public class PayslipRepositoryAdapter implements PayslipRepositoryPort {
 
     @Override
     public List<Payslip> findByEmployeeId(String employeeId) {
-        return jpaRepository.findByEmployeeId(employeeId).stream()
-                .map(this::mapToDomain)
-                .collect(Collectors.toList());
+        try {
+            UUID uuid = UUID.fromString(employeeId);
+            return jpaRepository.findByEmployeeId(uuid).stream()
+                    .map(this::mapToDomain)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            return Collections.emptyList();
+        }
     }
     
     private PayslipEntity mapToEntity(Payslip domain) {

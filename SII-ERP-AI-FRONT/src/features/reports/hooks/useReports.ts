@@ -12,7 +12,15 @@ export const useReports = () => {
         queryKey: ['invoices'],
         queryFn: async () => {
             const { data } = await api.get('/invoices');
-            return data.map((inv: any) => ({
+            interface InvoiceApiResponse {
+                date?: string;
+                fechaEmision?: string;
+                folio?: string | number;
+                issuerRut?: string;
+                totalAmount?: number;
+                montoTotal?: number;
+            }
+            return data.map((inv: InvoiceApiResponse) => ({
                 date: inv.date || inv.fechaEmision || new Date().toISOString().split('T')[0],
                 description: `Venta Folio #${inv.folio || 'S/N'} - ${inv.issuerRut || ''}`,
                 amount: inv.totalAmount || inv.montoTotal || 0

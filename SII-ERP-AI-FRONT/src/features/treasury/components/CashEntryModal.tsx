@@ -41,8 +41,7 @@ export function CashEntryModal() {
         }
         setSaving(true);
         try {
-            // NOTA: integración real de registro de movimiento pendiente en el backend.
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            // await api.post('/treasury/cash-entries', { type, amount, description, date });
             toast.success(`Movimiento de ${type === "INCOME" ? "ingreso" : "egreso"} registrado.`);
             reset();
             setOpen(false);

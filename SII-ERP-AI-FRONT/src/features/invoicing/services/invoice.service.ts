@@ -14,42 +14,82 @@ export interface InvoiceListResponse {
     pageSize: number;
 }
 
+interface InvoiceApiDto {
+    id: string;
+    folio: number;
+    status: string;
+    issuerRut: string;
+    receiverRut: string;
+    businessName: string;
+    date: string;
+    dueDate?: string;
+    netAmount: number;
+    taxAmount: number;
+    totalAmount: number;
+    transactionType?: 'SALE' | 'PURCHASE';
+}
+
+const mapInvoice = (dto: InvoiceApiDto): Invoice => ({
+    id: dto.id,
+    folio: dto.folio,
+    status: dto.status,
+    issuerRut: dto.issuerRut,
+    recipientRut: dto.receiverRut,
+    recipientName: dto.businessName,
+    lines: [],
+    netAmount: dto.netAmount,
+    taxAmount: dto.taxAmount,
+    totalAmount: dto.totalAmount,
+    issueDate: dto.date,
+    dueDate: dto.dueDate,
+    transactionType: dto.transactionType,
+});
+
 export const invoiceService = {
     /**
-     * Lista paginada de facturas.
-     * NOTA: se intenta la llamada real al backend y se retorna una respuesta
-     * tipada vacía como respaldo.
+     * Lista de facturas de la empresa.
+     * El backend devuelve un arreglo plano; se normaliza al modelo del frontend.
      */
     getInvoices: async (params?: InvoiceListParams): Promise<InvoiceListResponse> => {
-        try {
-            const { data } = await api.get<InvoiceListResponse>('/invoices', { params });
-            return data;
-        } catch {
-            return {
-                invoices: [],
-                total: 0,
-                page: params?.page ?? 1,
-                pageSize: params?.pageSize ?? 20,
-            };
-        }
+        const { data } = await api.get<InvoiceApiDto[]>('/invoices', { params });
+        const invoices = (data ?? []).map(mapInvoice);
+
+        return {
+            invoices,
+            total: invoices.length,
+            page: params?.page ?? 1,
+            pageSize: params?.pageSize ?? invoices.length,
+        };
     },
 
     /**
      * Detalle de una factura por id.
      */
     getInvoice: async (id: string): Promise<Invoice | null> => {
-        try {
-            const { data } = await api.get<Invoice>(`/invoices/${id}`);
-            return data ?? null;
-        } catch {
-            return null;
-        }
+        const { data } = await api.get<InvoiceApiDto | null>(`/invoices/${id}`);
+        return data ? mapInvoice(data) : null;
     },
 
     /**
-     * Envía la factura al SII.
+     * Envía la factura por email al destinatario indicado.
      */
-    sendInvoice: async (id: string): Promise<void> => {
-        await api.post(`/invoices/${id}/send`);
+    sendInvoice: async (id: string, email: string): Promise<void> => {
+        await api.post(`/invoices/${id}/send`, null, { params: { email } });
+    },
+
+    /**
+     * Crea una nueva factura.
+     */
+    createInvoice: async (invoice: Partial<Invoice> & { lines: any[] }): Promise<Invoice> => {
+        const { data } = await api.post<InvoiceApiDto>('/invoices', invoice);
+        return mapInvoice(data);
+    },
+
+    /**
+     * Actualiza una factura existente.
+     */
+    updateInvoice: async (id: string, invoice: Partial<Invoice> & { lines: any[] }): Promise<Invoice> => {
+        const { data } = await api.put<InvoiceApiDto>(`/invoices/${id}`, invoice);
+        return mapInvoice(data);
     },
 };

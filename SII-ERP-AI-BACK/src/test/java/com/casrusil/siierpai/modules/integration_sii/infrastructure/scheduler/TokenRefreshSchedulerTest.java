@@ -187,12 +187,13 @@ class TokenRefreshSchedulerTest {
     }
 
     private Company createCompany(boolean active) {
-        return new Company(
-                new CompanyId(UUID.randomUUID()),
+        Company company = Company.create(
                 "76123456-7",
                 "Test Company",
-                "test@company.cl",
-                active,
-                Instant.now());
+                "test@company.cl");
+        if (!active) {
+            company.deactivate();
+        }
+        return company;
     }
 }

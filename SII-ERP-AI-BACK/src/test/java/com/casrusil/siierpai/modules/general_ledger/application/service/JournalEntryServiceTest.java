@@ -36,7 +36,7 @@ class JournalEntryServiceTest {
                 "comp-1",
                 1L,
                 "IN",
-                10,
+                new BigDecimal("10"),
                 new BigDecimal("1000"),
                 new BigDecimal("10000"),
                 LocalDateTime.now()

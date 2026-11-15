@@ -1,6 +1,8 @@
 package com.casrusil.siierpai.modules.user.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -26,6 +28,7 @@ public class RoleEntity {
     @Column(name = "is_system_role", nullable = false)
     private boolean systemRole;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
     private String permissions;
 

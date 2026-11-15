@@ -20,7 +20,6 @@ import { AccountingEntryCard } from "@/features/accounting/components/Accounting
 import { SustainabilityCard } from "@/features/sustainability/components/SustainabilityCard";
 import { InvoiceAuditTrail } from "@/features/invoicing/components/InvoiceAuditTrail";
 import { accountingService } from "@/features/accounting/services/accounting.service";
-import { sustainabilityService } from "@/features/sustainability/services/sustainability.service";
 import { useQuery } from "@tanstack/react-query";
 
 export default function InvoiceDetailPage() {
@@ -32,13 +31,6 @@ export default function InvoiceDetailPage() {
     const { data: accountingEntry, isLoading: isLoadingEntry } = useQuery({
         queryKey: ['invoice-accounting-entry', id],
         queryFn: () => accountingService.getInvoiceAccountingEntry(id),
-        enabled: !!id,
-    });
-
-    // Fetch sustainability data for this invoice
-    const { data: sustainabilityData, isLoading: isLoadingSustainability } = useQuery({
-        queryKey: ['invoice-sustainability', id],
-        queryFn: () => sustainabilityService.getInvoiceSustainability(id),
         enabled: !!id,
     });
 
@@ -97,7 +89,7 @@ export default function InvoiceDetailPage() {
                 </div>
             </div>
 
-            <DTEStatusTracker status={invoice.status} />
+            <DTEStatusTracker invoiceId={id} status={invoice.status} />
 
             {/* Tabbed Interface */}
             <Tabs defaultValue="general" className="w-full">
@@ -204,8 +196,8 @@ export default function InvoiceDetailPage() {
                 {/* Sostenibilidad Tab */}
                 <TabsContent value="sostenibilidad" className="mt-6">
                     <SustainabilityCard
-                        data={sustainabilityData}
-                        isLoading={isLoadingSustainability}
+                        data={null}
+                        isLoading={false}
                     />
                 </TabsContent>
 

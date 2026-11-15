@@ -3,28 +3,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "../stores/settings.store";
-import { Bell, Loader2, Send } from "lucide-react";
+import { Bell, Send } from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { useState } from "react";
-import { toast } from "sonner";
 
 export function PersonalSettings() {
-    const { notifications, updateNotifications, triggerReport } = useSettingsStore();
+    const { notifications, updateNotifications } = useSettingsStore();
     const { isConnected } = usePushNotifications(); // Just to initialize connection
-    const [isSendingReport, setIsSendingReport] = useState(false);
-
-    const handleTriggerReport = async () => {
-        setIsSendingReport(true);
-        try {
-            await triggerReport();
-            toast.success("Tu resumen semanal ha sido enviado a tu correo.");
-        } catch (error) {
-            console.error(error);
-            toast.error("Error al generar el reporte.");
-        } finally {
-            setIsSendingReport(false);
-        }
-    };
 
     return (
         <Card>
@@ -83,16 +67,11 @@ export function PersonalSettings() {
                     <div className="flex flex-col space-y-1">
                         <span className="text-sm font-medium">Resumen Semanal</span>
                         <span className="text-xs text-muted-foreground">
-                            ¿No quieres esperar al lunes? Genera tu reporte ahora.
+                            La generación manual del resumen todavía no está disponible.
                         </span>
                     </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleTriggerReport}
-                        disabled={isSendingReport}
-                    >
-                        {isSendingReport ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                    <Button variant="outline" size="sm" disabled title="Disponible próximamente">
+                        <Send className="mr-2 h-4 w-4" />
                         Enviar Resumen Ahora
                     </Button>
                 </div>

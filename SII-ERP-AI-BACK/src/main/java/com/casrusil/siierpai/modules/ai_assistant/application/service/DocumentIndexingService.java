@@ -13,6 +13,7 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -34,7 +35,7 @@ public class DocumentIndexingService {
     private final EmbeddingStore<TextSegment> embeddingStore;
 
     public DocumentIndexingService(
-            EmbeddingModel embeddingModel,
+            @Lazy EmbeddingModel embeddingModel,
             EmbeddingStore<TextSegment> embeddingStore) {
         this.embeddingModel = embeddingModel;
         this.embeddingStore = embeddingStore;

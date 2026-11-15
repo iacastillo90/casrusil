@@ -10,11 +10,7 @@ export interface Payslip {
 
 export const employeeService = {
     getMyPayslips: async (): Promise<Payslip[]> => {
-        const response = await api.get('/payroll/employee/payslips', {
-            headers: {
-                'X-Employee-Id': '11111111-1111-1111-1111-111111111111' // Mock ID for now
-            }
-        });
+        const response = await api.get('/payroll/employee/payslips');
         return response.data;
     }
 };

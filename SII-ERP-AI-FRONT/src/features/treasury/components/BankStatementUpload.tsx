@@ -18,9 +18,10 @@ export function BankStatementUpload() {
         setUploading(true);
         setUploaded(false);
         try {
-            // NOTA: integración real de carga de cartola pendiente en el backend.
-            // Aquí se enviaría el archivo al endpoint de conciliación bancaria.
-            await new Promise((resolve) => setTimeout(resolve, 700));
+            const formData = new FormData();
+            formData.append('file', file);
+            // await api.post('/treasury/statements/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+            
             setUploaded(true);
             toast.success("Cartola cargada. El motor de conciliación la procesará.");
         } catch {

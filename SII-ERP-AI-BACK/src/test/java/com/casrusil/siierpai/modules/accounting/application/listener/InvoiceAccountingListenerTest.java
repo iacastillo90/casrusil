@@ -4,6 +4,7 @@ import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntry;
 import com.casrusil.siierpai.modules.accounting.domain.service.AccountingEntryService;
 import com.casrusil.siierpai.modules.invoicing.domain.event.InvoiceCreatedEvent;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
+import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceLine;
 import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceType;
 import com.casrusil.siierpai.modules.invoicing.domain.model.TransactionType;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
@@ -17,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,19 +40,16 @@ class InvoiceAccountingListenerTest {
     void handle_ShouldCreateAndSaveAccountingEntry() {
         // Given
         CompanyId companyId = CompanyId.random();
-        Invoice invoice = new Invoice(
-                UUID.randomUUID(),
-                companyId,
+        Invoice invoice = Invoice.create(
+               companyId,
                 InvoiceType.FACTURA_ELECTRONICA,
                 123L,
                 "76.123.456-7",
-                "Test Company",
+                "76987654-3",
                 LocalDate.now(),
                 new BigDecimal("1000"),
                 new BigDecimal("190"),
                 new BigDecimal("1190"),
-                Invoice.ORIGIN_SII,
-                TransactionType.SALE,
                 Collections.emptyList());
         InvoiceCreatedEvent event = new InvoiceCreatedEvent(invoice);
 
