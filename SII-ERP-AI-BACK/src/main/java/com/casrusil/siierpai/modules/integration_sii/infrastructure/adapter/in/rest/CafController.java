@@ -2,8 +2,9 @@ package com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.in.
 
 import com.casrusil.siierpai.modules.integration_sii.domain.model.Caf;
 import com.casrusil.siierpai.modules.integration_sii.domain.port.out.CafRepository;
+import com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.in.rest.dto.CafUploadResponse;
 import com.casrusil.siierpai.modules.integration_sii.infrastructure.parser.CafParser;
-import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
+import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,20 +15,19 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 /**
  * Controlador REST para la gestión de CAF (Código de Autorización de Folios).
- * 
+ *
  * <p>
  * Permite la carga de archivos XML de folios autorizados por el SII.
  * Estos archivos son necesarios para emitir facturas electrónicas válidas.
- * 
+ *
  * <h2>Endpoints:</h2>
  * <ul>
  * <li>{@code POST /api/v1/sii/caf}: Cargar archivo CAF XML.</li>
  * </ul>
- * 
+ *
  * @see CafParser
  * @since 1.0
  */
@@ -45,18 +45,14 @@ public class CafController {
     }
 
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<String> uploadCaf(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("companyId") UUID companyId) {
-
+    public ResponseEntity<?> uploadCaf(@RequestParam("file") MultipartFile file) {
         try {
             String xmlContent = new String(file.getBytes(), StandardCharsets.ISO_8859_1); // SII uses ISO-8859-1
             Caf caf = cafParser.parse(xmlContent);
 
-            cafRepository.save(new CompanyId(companyId), caf);
+            cafRepository.save(CompanyContext.requireCompanyId(), caf);
 
-            return ResponseEntity
-                    .ok("CAF uploaded successfully. Range: " + caf.rangoDesde() + " - " + caf.rangoHasta());
+            return ResponseEntity.ok(CafUploadResponse.from(caf));
 
         } catch (IOException e) {
             return ResponseEntity.badRequest().body("Error reading file: " + e.getMessage());

@@ -5,7 +5,9 @@ import com.casrusil.siierpai.modules.integration_sii.domain.port.out.CafReposito
 import com.casrusil.siierpai.modules.integration_sii.infrastructure.barcode.Pdf417Generator;
 import com.casrusil.siierpai.modules.integration_sii.infrastructure.crypto.TedGenerator;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
+import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceAuditLog;
 import com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository;
+import com.casrusil.siierpai.modules.invoicing.application.service.InvoiceAuditTrailService;
 import com.casrusil.siierpai.modules.invoicing.infrastructure.mail.InvoiceEmailSender;
 import com.casrusil.siierpai.modules.invoicing.infrastructure.pdf.InvoicePdfGenerator;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
@@ -22,6 +24,7 @@ public class InvoiceDispatchService {
     private final Pdf417Generator pdf417Generator;
     private final InvoicePdfGenerator invoicePdfGenerator;
     private final InvoiceEmailSender invoiceEmailSender;
+    private final InvoiceAuditTrailService auditTrailService;
 
     public InvoiceDispatchService(
             InvoiceRepository invoiceRepository,
@@ -29,13 +32,15 @@ public class InvoiceDispatchService {
             TedGenerator tedGenerator,
             Pdf417Generator pdf417Generator,
             InvoicePdfGenerator invoicePdfGenerator,
-            InvoiceEmailSender invoiceEmailSender) {
+            InvoiceEmailSender invoiceEmailSender,
+            InvoiceAuditTrailService auditTrailService) {
         this.invoiceRepository = invoiceRepository;
         this.cafRepository = cafRepository;
         this.tedGenerator = tedGenerator;
         this.pdf417Generator = pdf417Generator;
         this.invoicePdfGenerator = invoicePdfGenerator;
         this.invoiceEmailSender = invoiceEmailSender;
+        this.auditTrailService = auditTrailService;
     }
 
     public void dispatchInvoice(UUID invoiceId, String recipientEmail) {
@@ -64,5 +69,8 @@ public class InvoiceDispatchService {
         String filename = "DTE_" + invoice.getFolio() + ".pdf";
 
         invoiceEmailSender.sendInvoiceEmail(recipientEmail, subject, body, pdfContent, filename);
+
+        auditTrailService.record(invoice.getCompanyId(), invoice.getId(), InvoiceAuditLog.ACTION_SENT,
+                "Invoice folio " + invoice.getFolio() + " sent to " + recipientEmail);
     }
 }

@@ -65,6 +65,23 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
     }
 
     @Override
+    public boolean existsByCompanyIdAndOrigin(CompanyId companyId, String origin) {
+        return invoiceJpaRepository.existsByCompanyIdAndOrigin(companyId.value(), origin);
+    }
+
+    @Override
+    public Optional<Invoice> findByCompanyIdAndTypeCodeAndFolio(CompanyId companyId, Integer typeCode, Long folio) {
+        return invoiceJpaRepository.findByCompanyIdAndTypeCodeAndFolio(companyId.value(), typeCode, folio)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public Optional<Invoice> findFirstByCompanyIdAndTypeCodeAndFolio(CompanyId companyId, Integer typeCode, Long folio) {
+        return invoiceJpaRepository.findFirstByCompanyIdAndTypeCodeAndFolio(companyId.value(), typeCode, folio)
+                .map(this::toDomain);
+    }
+
+    @Override
     public void deleteInPeriod(CompanyId companyId, java.time.LocalDate start, java.time.LocalDate end) {
         invoiceJpaRepository.deleteByCompanyIdAndDateBetween(companyId.value(), start, end);
     }
@@ -93,6 +110,10 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
                 invoice.getOrigin(),
                 invoice.getTransactionType(),
                 invoice.getStatus());
+
+        entity.setDteStatus(invoice.getDteStatus());
+        entity.setSiiTrackId(invoice.getSiiTrackId());
+        entity.setSentAt(invoice.getSentAt());
 
         if (invoice.getItems() != null) {
             for (InvoiceLine line : invoice.getItems()) {
@@ -125,7 +146,7 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
                     .collect(Collectors.toList());
         }
 
-        return new Invoice(
+        Invoice invoice = new Invoice(
                 entity.getId(),
                 new CompanyId(entity.getCompanyId()),
                 InvoiceType.fromCode(entity.getTypeCode()),
@@ -146,6 +167,8 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
                         : com.casrusil.siierpai.modules.invoicing.domain.model.PaymentStatus.PENDING, // Fallback
                 items,
                 "CLP");
+        invoice.applySiiStatus(entity.getDteStatus(), entity.getSiiTrackId(), entity.getSentAt());
+        return invoice;
     }
 
     @Override
@@ -155,12 +178,23 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
             LocalDate end) {
         return invoiceJpaRepository.findAll().stream()
             .filter(e -> e.getCompanyId() != null
-                && e.getCompanyId().equals(companyId.value().toString())
+                && e.getCompanyId().equals(companyId.value())
                 && e.getDate() != null
                 && !e.getDate().isBefore(start)
                 && !e.getDate().isAfter(end))
             .map(this::toDomain)
             .toList();
+    }
+
+    @Override
+    public List<Invoice> findRecentByCompanyId(CompanyId companyId, int limit) {
+        int pageSize = Math.max(1, limit);
+        return invoiceJpaRepository
+                .findByCompanyIdOrderByDateDesc(companyId.value(),
+                        org.springframework.data.domain.PageRequest.of(0, pageSize))
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 
 }

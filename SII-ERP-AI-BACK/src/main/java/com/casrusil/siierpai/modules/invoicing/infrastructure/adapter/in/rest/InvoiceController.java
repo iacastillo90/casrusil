@@ -4,8 +4,13 @@ import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
 import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceLine;
 import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceType;
 import com.casrusil.siierpai.modules.invoicing.domain.port.in.CreateInvoiceUseCase;
+import com.casrusil.siierpai.modules.invoicing.domain.port.in.GetInvoiceAuditTrailUseCase;
+import com.casrusil.siierpai.modules.invoicing.domain.port.in.ManageInvoiceUseCase;
 import com.casrusil.siierpai.modules.invoicing.domain.port.in.SearchInvoicesUseCase;
+import com.casrusil.siierpai.modules.invoicing.domain.port.in.UpdateInvoiceUseCase;
 import com.casrusil.siierpai.modules.invoicing.domain.service.InvoiceDispatchService;
+import com.casrusil.siierpai.modules.invoicing.infrastructure.adapter.in.rest.dto.InvoiceAuditTrailEntryDto;
+import com.casrusil.siierpai.modules.invoicing.infrastructure.adapter.in.rest.dto.UpdateInvoiceRequest;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import jakarta.validation.Valid;
@@ -16,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,13 +52,22 @@ public class InvoiceController {
         private final CreateInvoiceUseCase createInvoiceUseCase;
         private final SearchInvoicesUseCase searchInvoicesUseCase;
         private final InvoiceDispatchService invoiceDispatchService;
+        private final ManageInvoiceUseCase manageInvoiceUseCase;
+        private final UpdateInvoiceUseCase updateInvoiceUseCase;
+        private final GetInvoiceAuditTrailUseCase getInvoiceAuditTrailUseCase;
 
         public InvoiceController(CreateInvoiceUseCase createInvoiceUseCase,
                         SearchInvoicesUseCase searchInvoicesUseCase,
-                        InvoiceDispatchService invoiceDispatchService) {
+                        InvoiceDispatchService invoiceDispatchService,
+                        ManageInvoiceUseCase manageInvoiceUseCase,
+                        UpdateInvoiceUseCase updateInvoiceUseCase,
+                        GetInvoiceAuditTrailUseCase getInvoiceAuditTrailUseCase) {
                 this.createInvoiceUseCase = createInvoiceUseCase;
                 this.searchInvoicesUseCase = searchInvoicesUseCase;
                 this.invoiceDispatchService = invoiceDispatchService;
+                this.manageInvoiceUseCase = manageInvoiceUseCase;
+                this.updateInvoiceUseCase = updateInvoiceUseCase;
+                this.getInvoiceAuditTrailUseCase = getInvoiceAuditTrailUseCase;
         }
 
         @PostMapping
@@ -75,7 +90,7 @@ public class InvoiceController {
                                 Invoice.ORIGIN_MANUAL,
                                 com.casrusil.siierpai.modules.invoicing.domain.model.TransactionType.SALE, // Default to
                                                                                                            // Sale?
-                                request.lines().stream().map(this::mapLine).collect(Collectors.toList()));
+                                mapLines(request.lines()));
 
                 return ResponseEntity.ok(createInvoiceUseCase.createInvoice(invoice));
         }
@@ -84,6 +99,26 @@ public class InvoiceController {
         public ResponseEntity<List<Invoice>> getInvoices() {
                 CompanyId companyId = CompanyContext.requireCompanyId();
                 return ResponseEntity.ok(searchInvoicesUseCase.getInvoicesByCompany(companyId));
+        }
+
+        @GetMapping("/{id}")
+        public ResponseEntity<Invoice> getInvoice(@PathVariable UUID id) {
+                return ResponseEntity.ok(manageInvoiceUseCase.getInvoice(id));
+        }
+
+        @PutMapping("/{id}")
+        public ResponseEntity<Invoice> updateInvoice(@PathVariable UUID id,
+                        @RequestBody UpdateInvoiceRequest request) {
+                return ResponseEntity.ok(updateInvoiceUseCase.updateInvoice(id, request.toCommand()));
+        }
+
+        @GetMapping("/{id}/audit-trail")
+        public ResponseEntity<List<InvoiceAuditTrailEntryDto>> getAuditTrail(@PathVariable UUID id) {
+                manageInvoiceUseCase.getInvoice(id);
+                List<InvoiceAuditTrailEntryDto> entries = getInvoiceAuditTrailUseCase.getAuditTrail(id).stream()
+                                .map(InvoiceAuditTrailEntryDto::from)
+                                .toList();
+                return ResponseEntity.ok(entries);
         }
 
         @PostMapping("/{id}/send")
@@ -95,6 +130,28 @@ public class InvoiceController {
         private InvoiceLine mapLine(InvoiceLineRequest line) {
                 return new InvoiceLine(1, line.description(), null, line.quantity(), line.unitPrice(),
                                 line.totalAmount(), "UN");
+        }
+
+        /**
+         * Mapea el request del frontend al dominio, asignando lineNumber por índice
+         * (no hardcodea 1) y calculando amount = quantity * unitPrice cuando el request
+         * no provee totalAmount explícito.
+         */
+        private List<InvoiceLine> mapLines(List<InvoiceLineRequest> lines) {
+                if (lines == null) {
+                        return List.of();
+                }
+                int index = 0;
+                List<InvoiceLine> result = new ArrayList<>(lines.size());
+                for (InvoiceLineRequest line : lines) {
+                        BigDecimal amount = line.totalAmount() != null
+                                        ? line.totalAmount()
+                                        : line.quantity().multiply(line.unitPrice());
+                        result.add(new InvoiceLine(index + 1, line.description(), null,
+                                        line.quantity(), line.unitPrice(), amount, "UN"));
+                        index++;
+                }
+                return result;
         }
 
         /**

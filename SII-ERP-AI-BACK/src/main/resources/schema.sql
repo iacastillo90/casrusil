@@ -238,6 +238,19 @@ CREATE TABLE IF NOT EXISTS invoicing.invoices (
     CONSTRAINT invoices_transaction_type_check CHECK (((transaction_type)::text = ANY ((ARRAY['PURCHASE'::character varying, 'SALE'::character varying])::text[])))
 );
 
+CREATE TABLE IF NOT EXISTS invoicing.invoice_audit_log (
+    id uuid NOT NULL,
+    invoice_id uuid NOT NULL,
+    company_id uuid NOT NULL,
+    action character varying(32) NOT NULL,
+    username character varying(150) NOT NULL,
+    detail character varying(500),
+    occurred_at timestamp with time zone NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoice_audit_log_invoice
+    ON invoicing.invoice_audit_log (company_id, invoice_id, occurred_at DESC);
+
 CREATE TABLE IF NOT EXISTS public.ai_insights (
     id character varying(255) NOT NULL,
     analysis_context text NOT NULL,
@@ -1369,3 +1382,21 @@ ALTER TABLE ONLY sso.user_preferences
 ALTER TABLE ONLY sustainability.sustainability_records
     ADD CONSTRAINT fknkv7999kpx2lq9f3fg54asqcy FOREIGN KEY (invoice_id) REFERENCES invoicing.invoices(id);
 
+
+CREATE SCHEMA IF NOT EXISTS integration_sii;
+
+CREATE TABLE IF NOT EXISTS integration_sii.sii_sync_state (
+    company_id uuid NOT NULL,
+    last_sync_at timestamp(6),
+    next_sync_at timestamp(6),
+    sii_status character varying(16),
+    caf_status character varying(16),
+    dte_status character varying(16),
+    last_error character varying(500),
+    updated_at timestamp(6),
+    CONSTRAINT sii_sync_state_pkey PRIMARY KEY (company_id)
+);
+
+ALTER TABLE invoicing.invoices ADD COLUMN IF NOT EXISTS dte_status character varying(16) NOT NULL DEFAULT 'PENDIENTE';
+ALTER TABLE invoicing.invoices ADD COLUMN IF NOT EXISTS sii_track_id character varying(64);
+ALTER TABLE invoicing.invoices ADD COLUMN IF NOT EXISTS sent_at timestamp(6);

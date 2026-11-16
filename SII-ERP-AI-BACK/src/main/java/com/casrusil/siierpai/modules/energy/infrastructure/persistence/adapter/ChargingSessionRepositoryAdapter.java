@@ -106,4 +106,19 @@ public class ChargingSessionRepositoryAdapter implements ChargingSessionReposito
                 chargerOcppId.getValue(),
                 connectorId.getValue());
     }
+
+    @Override
+    public List<ChargingSession> findRecentByStationIds(List<UUID> stationIds, int limit) {
+        return jpaRepository.findRecentByStationIds(stationIds).stream()
+                .limit(limit)
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ChargingSession> findCompletedByStationIds(List<UUID> stationIds, LocalDateTime start, LocalDateTime end) {
+        return jpaRepository.findCompletedByStationIds(stationIds, start, end).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
 }

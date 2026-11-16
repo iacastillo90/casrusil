@@ -52,4 +52,10 @@ public interface AccountingEntryJpaRepository extends JpaRepository<AccountingEn
 
     void deleteByCompanyIdAndReferenceTypeAndOccurredOnBetween(UUID companyId, String referenceType, Instant startDate,
             Instant endDate);
+
+    List<AccountingEntryEntity> findByCompanyIdAndReferenceTypeInAndReferenceId(UUID companyId,
+            List<String> referenceTypes, String referenceId);
+
+    org.springframework.data.domain.Page<AccountingEntryEntity> findByCompanyIdOrderByOccurredOnDesc(UUID companyId,
+            org.springframework.data.domain.Pageable pageable);
 }

@@ -97,4 +97,18 @@ public interface AccountingEntryRepository {
          */
         void deleteByReferenceTypeAndPeriod(CompanyId companyId, String referenceType, java.time.LocalDate from,
                         java.time.LocalDate to);
+
+        /**
+         * Finds entries linked to a reference, restricted to the given reference
+         * types.
+         */
+        List<AccountingEntry> findByCompanyIdAndReferenceTypeInAndReferenceId(
+                        CompanyId companyId,
+                        List<String> referenceTypes,
+                        String referenceId);
+
+        /**
+         * Returns the most recent entries for a company, newest first.
+         */
+        List<AccountingEntry> findRecentByCompanyId(CompanyId companyId, int limit);
 }

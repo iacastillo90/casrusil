@@ -4,6 +4,7 @@ import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -57,6 +58,8 @@ import java.util.UUID;
 public class Invoice {
     public static final String ORIGIN_SII = "SII_SYNC";
     public static final String ORIGIN_MANUAL = "MANUAL_IMPORT";
+    public static final String DTE_STATUS_PENDING = "PENDIENTE";
+    public static final String DTE_STATUS_SENT = "ENVIADO";
 
     private final UUID id;
     private final CompanyId companyId;
@@ -78,6 +81,10 @@ public class Invoice {
     private final String currency;
 
     private PaymentStatus status;
+
+    private String dteStatus = DTE_STATUS_PENDING;
+    private String siiTrackId;
+    private LocalDateTime sentAt;
 
     public Invoice(UUID id, CompanyId companyId, InvoiceType type, Long folio, String issuerRut, String receiverRut,
             String businessName, LocalDate date, LocalDate dueDate, BigDecimal netAmount, BigDecimal taxAmount,
@@ -243,6 +250,36 @@ public class Invoice {
 
     public void markAsPaid() {
         this.status = PaymentStatus.PAID;
+    }
+
+    /**
+     * Marks this DTE as accepted by the SII.
+     */
+    public void markAsSent(String siiTrackId, LocalDateTime sentAt) {
+        this.dteStatus = DTE_STATUS_SENT;
+        this.siiTrackId = siiTrackId;
+        this.sentAt = sentAt != null ? sentAt : LocalDateTime.now();
+    }
+
+    /**
+     * Restores the SII submission metadata when rehydrating from persistence.
+     */
+    public void applySiiStatus(String dteStatus, String siiTrackId, LocalDateTime sentAt) {
+        this.dteStatus = dteStatus != null ? dteStatus : DTE_STATUS_PENDING;
+        this.siiTrackId = siiTrackId;
+        this.sentAt = sentAt;
+    }
+
+    public String getDteStatus() {
+        return dteStatus;
+    }
+
+    public String getSiiTrackId() {
+        return siiTrackId;
+    }
+
+    public LocalDateTime getSentAt() {
+        return sentAt;
     }
 
     public List<InvoiceLine> getItems() {

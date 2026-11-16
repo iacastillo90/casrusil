@@ -4,6 +4,7 @@ import com.casrusil.siierpai.modules.invoicing.domain.event.InvoiceCreatedEvent;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
 import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceType;
 import com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository;
+import com.casrusil.siierpai.modules.accounting.domain.port.out.AccountingEntryRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 class InvoiceManagementServiceTest {
 
@@ -31,7 +33,11 @@ class InvoiceManagementServiceTest {
     void setUp() {
         invoiceRepository = new StubInvoiceRepository();
         eventPublisher = new StubEventPublisher();
-        service = new InvoiceManagementService(invoiceRepository, eventPublisher);
+        service = new InvoiceManagementService(
+                invoiceRepository,
+                eventPublisher,
+                mock(InvoiceAuditTrailService.class),
+                mock(AccountingEntryRepository.class));
     }
 
     @Test
@@ -87,6 +93,17 @@ class InvoiceManagementServiceTest {
         }
 
         @Override
+        public boolean existsByCompanyIdAndOrigin(CompanyId companies, String origin) {
+            return false;
+        }
+
+        @Override
+        public Optional<Invoice> findFirstByCompanyIdAndTypeCodeAndFolio(CompanyId companies, Integer typeCode,
+                Long folio) {
+            return Optional.empty();
+        }
+
+        @Override
         public Long findMaxFolioByCompanyIdAndTypeCode(CompanyId companies, int typeCode) {
             return null;
         }
@@ -98,6 +115,11 @@ class InvoiceManagementServiceTest {
 
         @Override
         public List<Invoice> findByCompanyIdAndDateBetween(CompanyId companies, LocalDate start, LocalDate end) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Invoice> findRecentByCompanyId(CompanyId companies, int limit) {
             return Collections.emptyList();
         }
     }

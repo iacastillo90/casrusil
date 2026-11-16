@@ -23,6 +23,14 @@ public interface InvoiceJpaRepository extends JpaRepository<InvoiceEntity, UUID>
         boolean existsByCompanyIdAndTypeCodeAndFolioAndIssuerRut(UUID companyId, Integer typeCode, Long folio,
                         String issuerRut);
 
+        boolean existsByCompanyIdAndOrigin(UUID companyId, String origin);
+
+        java.util.Optional<InvoiceEntity> findFirstByCompanyIdAndTypeCodeAndFolio(UUID companyId, Integer typeCode,
+                        Long folio);
+
+        java.util.Optional<InvoiceEntity> findByCompanyIdAndTypeCodeAndFolio(UUID companyId, Integer typeCode,
+                        Long folio);
+
         java.util.Optional<InvoiceEntity> findByCompanyIdAndTypeCodeAndFolioAndIssuerRut(UUID companyId,
                         Integer typeCode,
                         Long folio, String issuerRut);
@@ -30,4 +38,7 @@ public interface InvoiceJpaRepository extends JpaRepository<InvoiceEntity, UUID>
         void deleteByCompanyIdAndDateBetween(UUID companyId, java.time.LocalDate start, java.time.LocalDate end);
 
         Long findMaxFolioByCompanyIdAndTypeCode(UUID companyId, Integer typeCode);
+
+        org.springframework.data.domain.Page<InvoiceEntity> findByCompanyIdOrderByDateDesc(UUID companyId,
+                        org.springframework.data.domain.Pageable pageable);
 }

@@ -13,7 +13,16 @@ import com.casrusil.siierpai.modules.accounting.domain.service.F29CalculatorServ
 import com.casrusil.siierpai.modules.accounting.domain.service.PeriodClosingService;
 import com.casrusil.siierpai.modules.accounting.domain.service.BalanceSheetService;
 import com.casrusil.siierpai.modules.accounting.domain.model.BalanceSheetReport;
+import com.casrusil.siierpai.modules.accounting.infrastructure.adapter.in.rest.dto.AccountNodeDto;
+import com.casrusil.siierpai.modules.accounting.infrastructure.adapter.in.rest.dto.AccountingEntryApiDto;
+import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
+import com.casrusil.siierpai.modules.invoicing.domain.port.in.ManageInvoiceUseCase;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.domain.valueobject.UserId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
@@ -47,6 +56,8 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT')")
 public class AccountingController {
 
+    private static final LocalDate BALANCE_START_DATE = LocalDate.of(1900, 1, 1);
+
     private final AccountingEntryRepository accountingEntryRepository;
     private final AccountRepository accountRepository;
     private final F29CalculatorService f29CalculatorService;
@@ -56,6 +67,7 @@ public class AccountingController {
     private final com.casrusil.siierpai.modules.accounting.infrastructure.parser.BalanceSheetParser balanceSheetParser;
     private final BalanceSheetService balanceSheetService;
     private final com.casrusil.siierpai.modules.accounting.application.service.ReportingService reportingService;
+    private final ManageInvoiceUseCase manageInvoiceUseCase;
 
     public AccountingController(AccountingEntryRepository accountingEntryRepository,
             AccountRepository accountRepository,
@@ -65,7 +77,8 @@ public class AccountingController {
             com.casrusil.siierpai.modules.accounting.domain.service.AccountingEntryService accountingEntryService,
             com.casrusil.siierpai.modules.accounting.infrastructure.parser.BalanceSheetParser balanceSheetParser,
             BalanceSheetService balanceSheetService,
-            com.casrusil.siierpai.modules.accounting.application.service.ReportingService reportingService) {
+            com.casrusil.siierpai.modules.accounting.application.service.ReportingService reportingService,
+            ManageInvoiceUseCase manageInvoiceUseCase) {
         this.accountingEntryRepository = accountingEntryRepository;
         this.accountRepository = accountRepository;
         this.f29CalculatorService = f29CalculatorService;
@@ -75,6 +88,7 @@ public class AccountingController {
         this.balanceSheetParser = balanceSheetParser;
         this.balanceSheetService = balanceSheetService;
         this.reportingService = reportingService;
+        this.manageInvoiceUseCase = manageInvoiceUseCase;
     }
 
     @GetMapping("/reports/income-statement")
@@ -119,6 +133,59 @@ public class AccountingController {
     public ResponseEntity<List<AccountingEntry>> getEntries() {
         CompanyId companyId = CompanyContext.requireCompanyId();
         return ResponseEntity.ok(accountingEntryRepository.findByCompanyId(companyId));
+    }
+
+    @GetMapping("/entries/by-invoice/{invoiceId}")
+    @PreAuthorize("hasAnyRole('ADMIN','SALES','ACCOUNTANT')")
+    public ResponseEntity<List<AccountingEntryApiDto>> getEntriesByInvoice(@PathVariable java.util.UUID invoiceId) {
+        CompanyId companyId = CompanyContext.requireCompanyId();
+        Invoice invoice = manageInvoiceUseCase.getInvoice(invoiceId);
+        List<AccountingEntryApiDto> entries = accountingEntryRepository
+                .findByCompanyIdAndReferenceTypeInAndReferenceId(companyId, List.of("INVOICE", "FACTURA_AI"),
+                        String.valueOf(invoice.getFolio()))
+                .stream()
+                .map(AccountingEntryApiDto::from)
+                .toList();
+        return ResponseEntity.ok(entries);
+    }
+
+    @GetMapping("/accounts/tree")
+    public ResponseEntity<List<AccountNodeDto>> getAccountTree(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate date) {
+        CompanyId companyId = CompanyContext.requireCompanyId();
+        LocalDate asOf = date != null ? date : LocalDate.now();
+
+        List<Account> accounts = accountRepository.findAll(companyId);
+        Map<String, BigDecimal> balances = new HashMap<>();
+        accounts.forEach(account -> balances.put(account.getCode(), BigDecimal.ZERO));
+        accountingEntryRepository
+                .findByCompanyIdAndEntryDateBetween(companyId, BALANCE_START_DATE, asOf)
+                .forEach(entry -> entry.getLines().forEach(line -> {
+                    if (balances.containsKey(line.accountCode())) {
+                        BigDecimal debit = line.debit() != null ? line.debit() : BigDecimal.ZERO;
+                        BigDecimal credit = line.credit() != null ? line.credit() : BigDecimal.ZERO;
+                        balances.merge(line.accountCode(), debit.subtract(credit), BigDecimal::add);
+                    }
+                }));
+
+        Map<String, MutableAccountNode> nodes = new java.util.LinkedHashMap<>();
+        accounts.stream()
+                .sorted(Comparator.comparing(Account::getCode))
+                .forEach(account -> nodes.put(account.getCode(), new MutableAccountNode(account)));
+
+        List<MutableAccountNode> roots = new ArrayList<>();
+        for (MutableAccountNode node : nodes.values()) {
+            MutableAccountNode parent = findParent(node, nodes);
+            if (parent != null) {
+                parent.children.add(node);
+            } else {
+                roots.add(node);
+            }
+        }
+
+        return ResponseEntity.ok(roots.stream()
+                .map(node -> toAccountNodeDto(node, balances))
+                .toList());
     }
 
     @GetMapping("/ledger/{accountCode}")
@@ -198,6 +265,49 @@ public class AccountingController {
     }
 
     // ========== Helper Methods ==========
+
+    private MutableAccountNode findParent(MutableAccountNode node, Map<String, MutableAccountNode> nodes) {
+        String code = node.account.getCode();
+        MutableAccountNode parent = null;
+        int bestLength = -1;
+        for (MutableAccountNode candidate : nodes.values()) {
+            String candidateCode = candidate.account.getCode();
+            if (candidateCode.length() < code.length()
+                    && code.startsWith(candidateCode)
+                    && candidateCode.length() > bestLength) {
+                parent = candidate;
+                bestLength = candidateCode.length();
+            }
+        }
+        return parent;
+    }
+
+    private AccountNodeDto toAccountNodeDto(MutableAccountNode node, Map<String, BigDecimal> balances) {
+        String type = switch (node.account.getType()) {
+            case GAIN -> "REVENUE";
+            case LOSS -> "EXPENSE";
+            default -> node.account.getType().name();
+        };
+        List<AccountNodeDto> children = node.children.stream()
+                .map(child -> toAccountNodeDto(child, balances))
+                .toList();
+        return new AccountNodeDto(
+                node.account.getCode(),
+                node.account.getName(),
+                type,
+                children,
+                balances.getOrDefault(node.account.getCode(), BigDecimal.ZERO),
+                children.isEmpty());
+    }
+
+    private static final class MutableAccountNode {
+        private final Account account;
+        private final List<MutableAccountNode> children = new ArrayList<>();
+
+        private MutableAccountNode(Account account) {
+            this.account = account;
+        }
+    }
 
     private YearMonth parsePeriod(String period) {
         if (period.contains("-")) {

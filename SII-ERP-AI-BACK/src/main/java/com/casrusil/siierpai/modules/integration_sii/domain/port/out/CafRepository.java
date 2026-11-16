@@ -9,4 +9,6 @@ public interface CafRepository {
     void save(CompanyId companyId, Caf caf);
 
     Optional<Caf> findActiveForFolio(CompanyId companyId, String tipoDte, Long folio);
+
+    boolean existsActiveByCompanyId(CompanyId companyId);
 }

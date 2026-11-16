@@ -43,7 +43,28 @@ class InvoiceControllerTest {
     private SearchInvoicesUseCase searchInvoicesUseCase;
 
     @MockBean
+    private InvoiceDispatchService invoiceDispatchService;
+
+    @MockBean
+    private com.casrusil.siierpai.modules.invoicing.domain.port.in.ManageInvoiceUseCase manageInvoiceUseCase;
+
+    @MockBean
+    private com.casrusil.siierpai.modules.invoicing.domain.port.in.UpdateInvoiceUseCase updateInvoiceUseCase;
+
+    @MockBean
+    private com.casrusil.siierpai.modules.invoicing.domain.port.in.GetInvoiceAuditTrailUseCase getInvoiceAuditTrailUseCase;
+
+    @MockBean
     private com.casrusil.siierpai.modules.sso.infrastructure.security.JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private com.casrusil.siierpai.modules.sso.infrastructure.security.TokenBlacklistService tokenBlacklistService;
+
+    @MockBean
+    private com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository companyRepository;
+
+    @MockBean
+    private com.casrusil.siierpai.modules.accounting.domain.port.out.AccountRepository accountRepository;
 
     @Autowired
     public InvoiceControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {

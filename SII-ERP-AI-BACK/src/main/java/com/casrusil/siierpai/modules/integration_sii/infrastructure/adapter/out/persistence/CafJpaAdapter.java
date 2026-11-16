@@ -36,6 +36,11 @@ public class CafJpaAdapter implements CafRepository {
     }
 
     @Override
+    public boolean existsActiveByCompanyId(CompanyId companyId) {
+        return jpaRepo.existsByCompanyId(companyId.value().toString());
+    }
+
+    @Override
     public Optional<Caf> findActiveForFolio(CompanyId companyId, String tipoDte, Long folio) {
         return jpaRepo.findAll().stream()
             .filter(e -> e.getCompanyId().equals(companyId.value().toString()))

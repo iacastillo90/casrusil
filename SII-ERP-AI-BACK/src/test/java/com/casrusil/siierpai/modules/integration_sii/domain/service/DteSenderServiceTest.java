@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.integration_sii.domain.service;
 
+import com.casrusil.siierpai.modules.integration_sii.domain.model.DteSendResult;
 import com.casrusil.siierpai.modules.integration_sii.domain.model.SiiCertificate;
 import com.casrusil.siierpai.modules.integration_sii.domain.model.SiiToken;
 import com.casrusil.siierpai.modules.integration_sii.domain.port.out.CafRepository;
@@ -119,10 +120,10 @@ class DteSenderServiceTest {
                 .thenReturn("<SignedXML>...</SignedXML>");
 
         // When
-        boolean result = dteSenderService.sendInvoice(invoice, companyId);
+        DteSendResult result = dteSenderService.sendInvoice(invoice, companyId);
 
         // Then
-        assertTrue(result);
+        assertTrue(result.success());
         verify(tokenRepository).findByCompanyId(companyId);
         verify(pkcs12Handler).loadCertificate("/test/cert.p12", "test-password");
         verify(xmlDsigSigner, atLeastOnce()).signXml(anyString(), anyString(), eq(siiCertificate));
@@ -148,10 +149,10 @@ class DteSenderServiceTest {
                 .thenReturn("<SignedXML>...</SignedXML>");
 
         // When
-        boolean result = dteSenderService.sendInvoice(invoice, companyId);
+        DteSendResult result = dteSenderService.sendInvoice(invoice, companyId);
 
         // Then
-        assertFalse(result);
+        assertFalse(result.success());
         verify(tokenRepository).findByCompanyId(companyId);
     }
 
@@ -176,10 +177,10 @@ class DteSenderServiceTest {
                 .thenReturn("<SignedXML>...</SignedXML>");
 
         // When
-        boolean result = dteSenderService.sendInvoice(invoice, companyId);
+        DteSendResult result = dteSenderService.sendInvoice(invoice, companyId);
 
         // Then
-        assertFalse(result);
+        assertFalse(result.success());
         verify(tokenRepository).findByCompanyId(companyId);
     }
 
@@ -208,10 +209,10 @@ class DteSenderServiceTest {
                 .thenReturn("<SignedXML>...</SignedXML>");
 
         // When
-        boolean result = dteSenderService.sendInvoice(invoice, companyId);
+        DteSendResult result = dteSenderService.sendInvoice(invoice, companyId);
 
         // Then
-        assertTrue(result);
+        assertTrue(result.success());
         verify(dteXmlBuilder).buildDte(eq(invoice), anyString());
     }
 

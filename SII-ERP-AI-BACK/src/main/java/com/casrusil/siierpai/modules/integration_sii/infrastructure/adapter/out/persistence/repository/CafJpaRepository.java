@@ -6,4 +6,6 @@ import java.util.UUID;
 
 public interface CafJpaRepository extends JpaRepository<CafEntity, UUID> {
     Optional<CafEntity> findTopByCompanyIdOrderByInitialFolioDesc(String companyId);
+
+    boolean existsByCompanyId(String companyId);
 }
