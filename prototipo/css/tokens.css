@@ -1,0 +1,167 @@
+/* Design tokens v2 — SII-ERP-AI
+   Fuente: Doc/rediseno/PLAN-REDISENO.md §4. Marca: verde petróleo (D-01).
+   Todos los pares texto/fondo cumplen 4.5:1 o más; bordes de controles 3:1 o más. */
+
+/* Inter incluida localmente (SIL Open Font License, ver fonts/LICENSE-Inter.txt); si no carga, se usa system-ui. */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("../fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 600; font-display: swap; src: url("../fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap; src: url("../fonts/inter-latin-700-normal.woff2") format("woff2"); }
+
+:root {
+  color-scheme: light;
+
+  /* Superficies */
+  --background: #ffffff;
+  --surface: #f8fafc;          /* fondo del área de trabajo */
+  --foreground: #020817;
+  --card: #ffffff;
+  --card-foreground: #020817;
+  --popover: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+  --accent: #f1f5f9;           /* hover de filas e ítems */
+  --border: #e2e8f0;           /* divisores decorativos */
+  --input: #64748b;            /* borde de controles (4.75:1) */
+  --overlay: rgba(2, 8, 23, 0.55);
+
+  /* Marca — verde petróleo */
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --primary-foreground: #ffffff;
+  --primary-subtle: #ccfbf1;
+  --primary-subtle-foreground: #115e59;
+  --ring: #0f766e;
+
+  /* Semánticos */
+  --success: #15803d;
+  --success-solid: #15803d;
+  --success-solid-foreground: #ffffff;
+  --success-subtle: #dcfce7;
+  --success-subtle-foreground: #166534;
+
+  --warning: #b45309;
+  --warning-solid: #b45309;
+  --warning-solid-foreground: #ffffff;
+  --warning-subtle: #fef3c7;
+  --warning-subtle-foreground: #92400e;
+
+  --info: #1d4ed8;
+  --info-solid: #1d4ed8;
+  --info-solid-foreground: #ffffff;
+  --info-subtle: #dbeafe;
+  --info-subtle-foreground: #1e40af;
+
+  --destructive: #b91c1c;
+  --destructive-solid: #dc2626;
+  --destructive-solid-foreground: #ffffff;
+  --destructive-subtle: #fee2e2;
+  --destructive-subtle-foreground: #991b1b;
+
+  --neutral-subtle: #f1f5f9;
+  --neutral-subtle-foreground: #334155;
+
+  /* Estado "Firmado" (violeta, distinto de la marca y de Aceptado) */
+  --signed: #6d28d9;
+  --signed-subtle: #ede9fe;
+  --signed-subtle-foreground: #5b21b6;
+
+  /* Gráficos: mismo tono en ambos temas */
+  --chart-1: #2563eb;
+  --chart-2: #0d9488;
+  --chart-3: #d97706;
+  --chart-4: #7c3aed;
+  --chart-5: #db2777;
+
+  /* Documento impreso (marco rojo exigido por el SII para el recuadro del folio) */
+  --dte-frame: #b91c1c;
+
+  /* Forma */
+  --radius-lg: 8px;
+  --radius-md: 6px;
+  --radius-sm: 4px;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.18);
+
+  /* Tipografía */
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+
+  /* Layout */
+  --sidebar-w: 256px;
+  --sidebar-w-collapsed: 64px;
+  --header-h: 56px;
+  --banner-h: 28px;
+  --ctrl-h: 44px;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: #020817;
+  --surface: #020817;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --border: #1e293b;
+  --input: #64748b;
+  --overlay: rgba(0, 0, 0, 0.7);
+
+  --primary: #2dd4bf;
+  --primary-hover: #5eead4;
+  --primary-foreground: #042f2e;
+  --primary-subtle: #042f2e;
+  --primary-subtle-foreground: #5eead4;
+  --ring: #2dd4bf;
+
+  --success: #4ade80;
+  --success-solid: #22c55e;
+  --success-solid-foreground: #052e16;
+  --success-subtle: #052e16;
+  --success-subtle-foreground: #86efac;
+
+  --warning: #fbbf24;
+  --warning-solid: #f59e0b;
+  --warning-solid-foreground: #451a03;
+  --warning-subtle: #451a03;
+  --warning-subtle-foreground: #fcd34d;
+
+  --info: #60a5fa;
+  --info-solid: #60a5fa;
+  --info-solid-foreground: #172554;
+  --info-subtle: #172554;
+  --info-subtle-foreground: #93c5fd;
+
+  --destructive: #f87171;
+  --destructive-solid: #f87171;
+  --destructive-solid-foreground: #450a0a;
+  --destructive-subtle: #450a0a;
+  --destructive-subtle-foreground: #fca5a5;
+
+  --neutral-subtle: #1e293b;
+  --neutral-subtle-foreground: #cbd5e1;
+
+  --signed: #c4b5fd;
+  --signed-subtle: #2e1065;
+  --signed-subtle-foreground: #c4b5fd;
+
+  --chart-1: #60a5fa;
+  --chart-2: #2dd4bf;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #f472b6;
+
+  --dte-frame: #f87171;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
