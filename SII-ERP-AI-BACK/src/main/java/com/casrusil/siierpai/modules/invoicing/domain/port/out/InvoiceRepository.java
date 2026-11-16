@@ -79,6 +79,39 @@ public interface InvoiceRepository {
                         String issuerRut);
 
         /**
+         * Verifica si la empresa tiene al menos una factura con el origen indicado.
+         *
+         * <p>
+         * Usado por el estado de integración SII para saber si ya se han importado
+         * documentos desde el SII.
+         *
+         * @param companyId ID de la empresa
+         * @param origin    Origen de la factura (por ejemplo {@code SII_SYNC})
+         * @return true si existe al menos una factura con ese origen
+         */
+        boolean existsByCompanyIdAndOrigin(CompanyId companyId, String origin);
+
+        /**
+         * Busca una factura de una empresa por tipo de documento y folio.
+         *
+         * @param companyId ID de la empresa
+         * @param typeCode  Código del tipo de documento (ej: 33)
+         * @param folio     Folio del documento
+         * @return Optional con la factura si existe
+         */
+        Optional<Invoice> findByCompanyIdAndTypeCodeAndFolio(CompanyId companyId, Integer typeCode, Long folio);
+
+        /**
+         * Busca la primera factura de una empresa por tipo de documento y folio.
+         *
+         * @param companyId ID de la empresa
+         * @param typeCode  Código del tipo de documento (ej: 33)
+         * @param folio     Folio del documento
+         * @return Optional con la factura si existe
+         */
+        Optional<Invoice> findFirstByCompanyIdAndTypeCodeAndFolio(CompanyId companyId, Integer typeCode, Long folio);
+
+        /**
          * Encuentra el folio máximo de una empresa para un tipo de documento.
          * Usado por PosTransactionListener para generar el siguiente folio.
          *
@@ -119,5 +152,14 @@ public interface InvoiceRepository {
             CompanyId companyId,
             java.time.LocalDate start,
             java.time.LocalDate end);
+
+    /**
+     * Returns the most recent invoices for a company, newest first.
+     *
+     * @param companyId ID of the company
+     * @param limit     maximum number of invoices to return
+     * @return recent invoices
+     */
+    List<Invoice> findRecentByCompanyId(CompanyId companyId, int limit);
 
 }

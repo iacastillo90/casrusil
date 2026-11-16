@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.integration_sii.domain.service;
 
+import com.casrusil.siierpai.modules.integration_sii.domain.model.DteSendResult;
 import com.casrusil.siierpai.modules.integration_sii.domain.model.SiiCertificate;
 import com.casrusil.siierpai.modules.integration_sii.domain.model.SiiToken;
 import com.casrusil.siierpai.modules.integration_sii.domain.port.out.SiiTokenRepository;
@@ -71,9 +72,9 @@ public class DteSenderService {
      * 
      * @param invoice   The invoice to send
      * @param companyId The company ID
-     * @return true if sent successfully, false otherwise
+     * @return the SII response, including the track ID when accepted
      */
-    public boolean sendInvoice(Invoice invoice, CompanyId companyId) {
+    public DteSendResult sendInvoice(Invoice invoice, CompanyId companyId) {
         logger.info("Sending Invoice #{} to SII for company {}", invoice.getFolio(), companyId);
 
         try {
@@ -118,11 +119,13 @@ public class DteSenderService {
             String trackId = siiUploadClient.uploadEnvioDte(token.token(), signedEnvioXml, rutEmisor, rutEmpresa);
 
             logger.info("Invoice #{} sent successfully. Track ID: {}", invoice.getFolio(), trackId);
-            return true;
+            return new DteSendResult(true, trackId,
+                    "DTE " + invoice.getFolio() + " sent successfully. Track ID: " + trackId);
 
         } catch (Exception e) {
             logger.error("Failed to send invoice #{} to SII: {}", invoice.getFolio(), e.getMessage(), e);
-            return false;
+            String detail = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            return new DteSendResult(false, null, "Failed to send DTE " + invoice.getFolio() + ": " + detail);
         }
     }
 

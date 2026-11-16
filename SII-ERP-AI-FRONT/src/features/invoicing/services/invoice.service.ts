@@ -27,6 +27,17 @@ interface InvoiceApiDto {
     taxAmount: number;
     totalAmount: number;
     transactionType?: 'SALE' | 'PURCHASE';
+    items?: InvoiceLineApiDto[];
+}
+
+interface InvoiceLineApiDto {
+    lineNumber?: number;
+    itemName?: string;
+    itemCode?: string | null;
+    quantity?: number;
+    price?: number;
+    amount?: number;
+    unit?: string;
 }
 
 const mapInvoice = (dto: InvoiceApiDto): Invoice => ({
@@ -36,7 +47,13 @@ const mapInvoice = (dto: InvoiceApiDto): Invoice => ({
     issuerRut: dto.issuerRut,
     recipientRut: dto.receiverRut,
     recipientName: dto.businessName,
-    lines: [],
+    lines: (dto.items ?? []).map((item) => ({
+        id: item.lineNumber != null ? String(item.lineNumber) : '',
+        description: item.itemName ?? '',
+        quantity: item.quantity ?? 0,
+        unitPrice: item.price ?? 0,
+        lineTotal: item.amount ?? 0,
+    })),
     netAmount: dto.netAmount,
     taxAmount: dto.taxAmount,
     totalAmount: dto.totalAmount,

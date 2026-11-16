@@ -1,6 +1,7 @@
 package com.casrusil.siierpai.shared.infrastructure.web;
 
 import com.casrusil.siierpai.shared.domain.exception.DomainException;
+import com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,22 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
         private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+        @ExceptionHandler(ResourceNotFoundException.class)
+        public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
+                        ResourceNotFoundException ex,
+                        HttpServletRequest request) {
+                log.warn("Resource not found: {} at {}", ex.getMessage(), request.getRequestURI());
+
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.NOT_FOUND.value(),
+                                "Not Found",
+                                ex.getMessage(),
+                                request.getRequestURI(),
+                                "RESOURCE_NOT_FOUND");
+
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
 
         @ExceptionHandler(DomainException.class)
         public ResponseEntity<ErrorResponse> handleDomainException(

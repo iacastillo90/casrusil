@@ -3,6 +3,7 @@ package com.casrusil.siierpai.modules.invoicing.infrastructure.persistence.entit
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -80,6 +81,15 @@ public class InvoiceEntity {
 
     @Column(name = "common_use_vat_amount")
     private BigDecimal commonUseVatAmount;
+
+    @Column(name = "dte_status", length = 16)
+    private String dteStatus = "PENDIENTE";
+
+    @Column(name = "sii_track_id", length = 64)
+    private String siiTrackId;
+
+    @Column(name = "sent_at")
+    private LocalDateTime sentAt;
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InvoiceItemEntity> items = new ArrayList<>();
@@ -225,5 +235,29 @@ public class InvoiceEntity {
 
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public String getDteStatus() {
+        return dteStatus;
+    }
+
+    public void setDteStatus(String dteStatus) {
+        this.dteStatus = dteStatus;
+    }
+
+    public String getSiiTrackId() {
+        return siiTrackId;
+    }
+
+    public void setSiiTrackId(String siiTrackId) {
+        this.siiTrackId = siiTrackId;
+    }
+
+    public LocalDateTime getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
     }
 }

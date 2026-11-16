@@ -66,4 +66,14 @@ public interface ChargingSessionRepository {
      * Verifica si existe una sesión activa en un conector.
      */
     boolean hasActiveSession(StationId stationId, OcppIdentifier chargerOcppId, ConnectorId connectorId);
+
+    /**
+     * Busca sesiones recientes por IDs de estación (para query de empresa).
+     */
+    List<ChargingSession> findRecentByStationIds(List<UUID> stationIds, int limit);
+
+    /**
+     * Busca sesiones completadas por IDs de estación.
+     */
+    List<ChargingSession> findCompletedByStationIds(List<UUID> stationIds, LocalDateTime start, LocalDateTime end);
 }

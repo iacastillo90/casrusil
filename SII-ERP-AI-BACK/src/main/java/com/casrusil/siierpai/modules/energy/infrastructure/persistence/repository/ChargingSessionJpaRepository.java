@@ -86,4 +86,26 @@ public interface ChargingSessionJpaRepository extends JpaRepository<ChargingSess
             AND s.status IN ('INITIATED', 'CHARGING', 'SUSPENDED')
             """)
     boolean hasActiveSession(UUID stationId, String chargerOcppId, Integer connectorNumber);
+
+    /**
+     * Busca sesiones recientes por IDs de estación (empresa scope).
+     */
+    @Query("""
+            SELECT s FROM ChargingSessionEntity s
+            WHERE s.stationId IN :stationIds
+            ORDER BY s.startedAt DESC
+            """)
+    List<ChargingSessionEntity> findRecentByStationIds(List<UUID> stationIds);
+
+    /**
+     * Busca sesiones completadas por IDs de estación en un rango de fechas.
+     */
+    @Query("""
+            SELECT s FROM ChargingSessionEntity s
+            WHERE s.stationId IN :stationIds
+            AND s.status = 'COMPLETED'
+            AND s.startedAt BETWEEN :start AND :end
+            ORDER BY s.startedAt DESC
+            """)
+    List<ChargingSessionEntity> findCompletedByStationIds(List<UUID> stationIds, LocalDateTime start, LocalDateTime end);
 }

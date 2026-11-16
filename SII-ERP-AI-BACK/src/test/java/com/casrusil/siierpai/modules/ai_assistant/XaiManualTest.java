@@ -94,6 +94,17 @@ public class XaiManualTest {
             public void deleteByReferenceTypeAndPeriod(CompanyId companies, String referenceType,
                     java.time.LocalDate from, java.time.LocalDate to) {
             }
+
+            @Override
+            public List<AccountingEntry> findByCompanyIdAndReferenceTypeInAndReferenceId(CompanyId companies,
+                    List<String> referenceTypes, String referenceId) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public List<AccountingEntry> findRecentByCompanyId(CompanyId companies, int limit) {
+                return Collections.emptyList();
+            }
         };
 
         // Mock Anomaly Service
@@ -129,6 +140,11 @@ public class XaiManualTest {
 
             @Override
             public java.util.List<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findByCompanyIdAndDateBetween(CompanyId companies, java.time.LocalDate start, java.time.LocalDate end) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public java.util.List<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findRecentByCompanyId(CompanyId companies, int limit) {
                 return Collections.emptyList();
             }
         };

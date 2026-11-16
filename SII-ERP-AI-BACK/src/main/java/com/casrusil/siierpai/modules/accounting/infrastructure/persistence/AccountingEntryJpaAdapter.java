@@ -175,4 +175,26 @@ public class AccountingEntryJpaAdapter implements AccountingEntryRepository {
                                 startDate,
                                 endDate);
         }
+
+        @Override
+        public List<AccountingEntry> findByCompanyIdAndReferenceTypeInAndReferenceId(CompanyId companyId,
+                        List<String> referenceTypes, String referenceId) {
+                return jpaRepository
+                                .findByCompanyIdAndReferenceTypeInAndReferenceId(companyId.value(), referenceTypes,
+                                                referenceId)
+                                .stream()
+                                .map(this::toDomain)
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        public List<AccountingEntry> findRecentByCompanyId(CompanyId companyId, int limit) {
+                int pageSize = Math.max(1, limit);
+                return jpaRepository
+                                .findByCompanyIdOrderByOccurredOnDesc(companyId.value(),
+                                                org.springframework.data.domain.PageRequest.of(0, pageSize))
+                                .stream()
+                                .map(this::toDomain)
+                                .collect(Collectors.toList());
+        }
 }
