@@ -229,7 +229,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Auditoría y control',
         icon: 'audit',
         items: [
-            { label: 'Auditoría', href: APP_ROUTES.PROTECTED.ACCOUNTING.AUDIT, roles: ADMIN_ACCOUNTANT_AUDITOR },
+            { label: 'Auditoría', href: APP_ROUTES.PROTECTED.ACCOUNTING.AUDIT, roles: ADMIN_ACCOUNTANT },
         ],
     },
     {
