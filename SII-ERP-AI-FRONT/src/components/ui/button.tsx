@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -8,7 +9,7 @@ const buttonVariants = cva(
     {
         variants: {
             variant: {
-                default: "bg-primary text-primary-foreground hover:bg-primary/90",
+                default: "bg-primary text-primary-foreground hover:bg-primary-hover",
                 destructive:
                     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
                 outline:
@@ -36,17 +37,33 @@ export interface ButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
     asChild?: boolean
+    /** Muestra un spinner, expone `aria-busy` y bloquea el botón mientras la acción corre. */
+    loading?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant, size, asChild = false, ...props }, ref) => {
+    ({ className, variant, size, asChild = false, loading = false, disabled, children, ...props }, ref) => {
         const Comp = asChild ? Slot : "button"
+        const showSpinner = loading && !asChild
+
         return (
             <Comp
-                className={cn(buttonVariants({ variant, size, className }))}
+                className={cn(
+                    buttonVariants({ variant, size, className }),
+                    asChild && loading && "pointer-events-none opacity-50"
+                )}
                 ref={ref}
+                aria-busy={loading || undefined}
+                aria-disabled={asChild && loading ? true : undefined}
+                disabled={asChild ? disabled : disabled || loading}
+                data-loading={loading ? "true" : undefined}
                 {...props}
-            />
+            >
+                {showSpinner && (
+                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {children}
+            </Comp>
         )
     }
 )
