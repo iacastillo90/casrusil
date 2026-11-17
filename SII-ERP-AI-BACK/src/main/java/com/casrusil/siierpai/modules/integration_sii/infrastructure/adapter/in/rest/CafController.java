@@ -1,12 +1,15 @@
 package com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.in.rest;
 
 import com.casrusil.siierpai.modules.integration_sii.domain.model.Caf;
+import com.casrusil.siierpai.modules.integration_sii.application.service.CafQueryService;
 import com.casrusil.siierpai.modules.integration_sii.domain.port.out.CafRepository;
+import com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.in.rest.dto.CafStatusResponse;
 import com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.in.rest.dto.CafUploadResponse;
 import com.casrusil.siierpai.modules.integration_sii.infrastructure.parser.CafParser;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /**
  * Controlador REST para la gestión de CAF (Código de Autorización de Folios).
@@ -26,6 +30,7 @@ import java.nio.charset.StandardCharsets;
  * <h2>Endpoints:</h2>
  * <ul>
  * <li>{@code POST /api/v1/sii/caf}: Cargar archivo CAF XML.</li>
+ * <li>{@code GET /api/v1/sii/caf}: Listar CAF con su estado y folios disponibles.</li>
  * </ul>
  *
  * @see CafParser
@@ -38,10 +43,19 @@ public class CafController {
 
     private final CafParser cafParser;
     private final CafRepository cafRepository;
+    private final CafQueryService cafQueryService;
 
-    public CafController(CafParser cafParser, CafRepository cafRepository) {
+    public CafController(CafParser cafParser, CafRepository cafRepository, CafQueryService cafQueryService) {
         this.cafParser = cafParser;
         this.cafRepository = cafRepository;
+        this.cafQueryService = cafQueryService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CafStatusResponse>> listCafs() {
+        return ResponseEntity.ok(cafQueryService.listCafs().stream()
+                .map(CafStatusResponse::from)
+                .toList());
     }
 
     @PostMapping(consumes = "multipart/form-data")

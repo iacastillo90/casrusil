@@ -2,6 +2,8 @@ package com.casrusil.siierpai.modules.invoicing.infrastructure.persistence.repos
 
 import com.casrusil.siierpai.modules.invoicing.infrastructure.persistence.entity.InvoiceEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -37,7 +39,9 @@ public interface InvoiceJpaRepository extends JpaRepository<InvoiceEntity, UUID>
 
         void deleteByCompanyIdAndDateBetween(UUID companyId, java.time.LocalDate start, java.time.LocalDate end);
 
-        Long findMaxFolioByCompanyIdAndTypeCode(UUID companyId, Integer typeCode);
+        @Query("select max(i.folio) from InvoiceEntity i where i.companyId = :companyId and i.typeCode = :typeCode and i.folio between :fromFolio and :toFolio")
+        Long findMaxFolioInRange(@Param("companyId") UUID companyId, @Param("typeCode") Integer typeCode,
+                        @Param("fromFolio") Long fromFolio, @Param("toFolio") Long toFolio);
 
         org.springframework.data.domain.Page<InvoiceEntity> findByCompanyIdOrderByDateDesc(UUID companyId,
                         org.springframework.data.domain.Pageable pageable);

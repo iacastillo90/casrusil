@@ -41,10 +41,10 @@ public class SiiIntegrationController {
     private final Pkcs12Handler pkcs12Handler;
     private final com.casrusil.siierpai.shared.domain.event.EventPublisher eventPublisher;
 
-    @Value("${sii.test.cert.path:}")
+    @Value("${sii.certificate.path:}")
     private String certPath;
 
-    @Value("${sii.test.cert.password:}")
+    @Value("${sii.certificate.password:}")
     private String certPassword;
 
     public SiiIntegrationController(AuthenticateSiiUseCase authenticateSiiUseCase,
@@ -64,7 +64,7 @@ public class SiiIntegrationController {
 
         if (certPath.isEmpty() || certPassword.isEmpty()) {
             throw new IllegalStateException(
-                    "SII Certificate not configured. Set sii.test.cert.path and sii.test.cert.password");
+                    "SII Certificate not configured. Set sii.certificate.path and sii.certificate.password");
         }
 
         CompanyId companyId;

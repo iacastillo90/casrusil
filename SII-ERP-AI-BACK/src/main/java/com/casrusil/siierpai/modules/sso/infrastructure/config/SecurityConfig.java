@@ -61,10 +61,9 @@ public class SecurityConfig {
                         // Endpoints públicos de autenticación
                         .requestMatchers("/api/v1/auth/**", "/error").permitAll()
                         // Actuator: solo health/info son públicos (probes de LB/k8s).
-                        // El resto (metrics, prometheus, env, loggers...) requiere autenticación.
-                        // SEGURIDAD: idealmente restringir a rol ADMIN cuando el RBAC esté cableado.
+                        // El resto (metrics, prometheus, env, loggers...) requiere rol ADMIN.
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
-                        .requestMatchers("/actuator/**").authenticated()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // Todo lo demás requiere autenticación
                         .anyRequest().authenticated())
 

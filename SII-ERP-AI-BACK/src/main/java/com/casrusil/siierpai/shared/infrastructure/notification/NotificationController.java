@@ -2,6 +2,9 @@ package com.casrusil.siierpai.shared.infrastructure.notification;
 
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -10,6 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
+@PreAuthorize("isAuthenticated()")
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -24,7 +28,12 @@ public class NotificationController {
 
     @GetMapping("/subscribe")
     public SseEmitter subscribe(@RequestParam String userId) {
-        // In a real app, userId should come from SecurityContext, not RequestParam
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null
+                || !(auth.getPrincipal() instanceof com.casrusil.siierpai.shared.domain.valueobject.UserId principal)
+                || !principal.value().toString().equals(userId)) {
+            throw new AccessDeniedException("Cannot subscribe to another user's notifications");
+        }
         return notificationService.subscribe(userId);
     }
 

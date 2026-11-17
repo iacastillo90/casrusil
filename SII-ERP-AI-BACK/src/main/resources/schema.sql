@@ -861,8 +861,23 @@ CREATE TABLE IF NOT EXISTS public.sii_cafs (
     current_folio bigint,
     final_folio bigint,
     initial_folio bigint,
-    xml_content character varying(255)
+    tipo_dte character varying(255),
+    fecha_autorizacion date,
+    fecha_vencimiento date,
+    xml_content text
 );
+
+-- Migración idempotente para bases existentes creadas con xml_content varchar(255).
+ALTER TABLE public.sii_cafs ADD COLUMN IF NOT EXISTS tipo_dte character varying(255);
+ALTER TABLE public.sii_cafs ADD COLUMN IF NOT EXISTS fecha_autorizacion date;
+ALTER TABLE public.sii_cafs ADD COLUMN IF NOT EXISTS fecha_vencimiento date;
+ALTER TABLE public.sii_cafs ALTER COLUMN xml_content TYPE text;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_caf_company_type_range
+    ON public.sii_cafs (company_id, tipo_dte, initial_folio, final_folio);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_invoices_company_type_folio
+    ON invoicing.invoices (company_id, type_code, folio);
 
 CREATE TABLE IF NOT EXISTS public.sii_tokens (
     id uuid NOT NULL,

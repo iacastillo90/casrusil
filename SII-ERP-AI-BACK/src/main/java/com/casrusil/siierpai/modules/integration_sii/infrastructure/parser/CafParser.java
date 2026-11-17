@@ -13,6 +13,7 @@ import java.io.StringReader;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.LocalDate;
 import java.util.Base64;
 
 /**
@@ -58,7 +59,11 @@ public class CafParser {
             String rsask = getTagValue(daElement, "RSASK");
             PrivateKey privateKey = parsePrivateKey(rsask);
 
-            return new Caf(xmlContent, rangoDesde, rangoHasta, privateKey, tipoDte);
+            LocalDate fechaAutorizacion = parseOptionalDate(getOptionalTagValue(daElement, "FA"));
+            LocalDate fechaVencimiento = parseOptionalDate(getOptionalTagValue(daElement, "FV"));
+
+            return new Caf(xmlContent, rangoDesde, rangoHasta, privateKey, tipoDte, fechaAutorizacion,
+                    fechaVencimiento);
 
         } catch (Exception e) {
             throw new SiiParsingException("Error parsing CAF XML", e);
@@ -67,6 +72,36 @@ public class CafParser {
 
     private String getTagValue(Element element, String tagName) {
         return element.getElementsByTagName(tagName).item(0).getTextContent();
+    }
+
+    /**
+     * Obtiene el valor de una etiqueta opcional del CAF (por ejemplo FA o FV).
+     *
+     * @return el texto de la etiqueta, o {@code null} si no está presente o viene
+     *         vacía
+     */
+    private String getOptionalTagValue(Element element, String tagName) {
+        org.w3c.dom.NodeList nodes = element.getElementsByTagName(tagName);
+        if (nodes.getLength() == 0) {
+            return null;
+        }
+        String value = nodes.item(0).getTextContent();
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private LocalDate parseOptionalDate(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (java.time.DateTimeException ex) {
+            // Una fecha inválida en el CAF no debe impedir cargar el rango de folios.
+            return null;
+        }
     }
 
     private PrivateKey parsePrivateKey(String rsaskBase64) throws Exception {

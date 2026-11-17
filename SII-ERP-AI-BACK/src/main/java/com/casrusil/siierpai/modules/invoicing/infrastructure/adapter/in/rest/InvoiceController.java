@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +77,7 @@ public class InvoiceController {
                 Invoice invoice = Invoice.create(
                                 companyId,
                                 InvoiceType.fromCode(request.tipoDte()),
-                                request.folio(),
+                                null, // El folio se asigna server-side desde el CAF correspondiente
                                 request.rutEmisor(),
                                 request.rutReceptor() != null ? request.rutReceptor() : "66.666.666-6", // Fallback or
                                                                                                         // require it
@@ -84,7 +85,7 @@ public class InvoiceController {
                                 request.fechaEmision(),
                                 request.montoNeto(),
                                 request.montoIva(),
-                                request.montoTotal(),
+                                resolveTotalAmount(request.montoTotal(), request.lines()),
                                 BigDecimal.ZERO, // Fixed Asset
                                 BigDecimal.ZERO, // Common Use VAT
                                 Invoice.ORIGIN_MANUAL,
@@ -155,6 +156,26 @@ public class InvoiceController {
         }
 
         /**
+         * Resuelve el monto total de la factura. Si el request lo omite, se calcula
+         * sumando los totales de las líneas (usando cantidad * precio unitario cuando
+         * la línea no trae total explícito) y se redondea a escala 0 HALF_UP.
+         */
+        private BigDecimal resolveTotalAmount(BigDecimal requestedTotal, List<InvoiceLineRequest> lines) {
+                if (requestedTotal != null) {
+                        return requestedTotal;
+                }
+                if (lines == null) {
+                        return BigDecimal.ZERO;
+                }
+                BigDecimal sum = lines.stream()
+                                .map(line -> line.totalAmount() != null
+                                                ? line.totalAmount()
+                                                : line.quantity().multiply(line.unitPrice()))
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                return sum.setScale(0, RoundingMode.HALF_UP);
+        }
+
+        /**
          * DTO de creación de factura con validaciones.
          * Todos los campos obligatorios generan errores 400 claros si se omiten.
          */
@@ -163,10 +184,6 @@ public class InvoiceController {
                         @Min(value = 33, message = "Tipo DTE mínimo es 33 (Factura Afecta)")
                         @Max(value = 112, message = "Tipo DTE máximo es 112")
                         Integer tipoDte,
-
-                        @NotNull(message = "El folio es obligatorio")
-                        @Positive(message = "El folio debe ser un número positivo")
-                        Long folio,
 
                         @NotBlank(message = "El RUT del emisor es obligatorio")
                         @Pattern(regexp = "^\\d{1,8}-[\\dkK]$", message = "Formato de RUT inválido (ej: 12345678-9)")
@@ -182,7 +199,6 @@ public class InvoiceController {
                         @NotNull(message = "La fecha de emisión es obligatoria")
                         LocalDate fechaEmision,
 
-                        @NotNull(message = "El monto total es obligatorio")
                         @DecimalMin(value = "0.0", inclusive = false, message = "El monto total debe ser mayor a 0")
                         BigDecimal montoTotal,
 
@@ -210,7 +226,7 @@ public class InvoiceController {
                         @NotNull @DecimalMin(value = "0.0", inclusive = false)
                         BigDecimal unitPrice,
 
-                        @NotNull @DecimalMin(value = "0.0", inclusive = false)
+                        @DecimalMin(value = "0.0", inclusive = false)
                         BigDecimal totalAmount) {
         }
 }
