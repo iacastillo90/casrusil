@@ -108,46 +108,8 @@ public class XaiManualTest {
         };
 
         // Mock Anomaly Service
-        com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository invoiceRepo = new com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository() {
-            @Override
-            public com.casrusil.siierpai.modules.invoicing.domain.model.Invoice save(com.casrusil.siierpai.modules.invoicing.domain.model.Invoice invoice) {
-                return null;
-            }
-
-            @Override
-            public java.util.Optional<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findById(java.util.UUID id) {
-                return java.util.Optional.empty();
-            }
-
-            @Override
-            public java.util.List<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findByCompanyId(CompanyId companies) {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public boolean existsByCompanyIdAndTypeCodeAndFolioAndIssuerRut(CompanyId companies, Integer typeCode, Long folio, String issuerRut) {
-                return false;
-            }
-
-            @Override
-            public Long findMaxFolioByCompanyIdAndTypeCode(CompanyId companies, int typeCode) {
-                return null;
-            }
-
-            @Override
-            public void deleteInPeriod(CompanyId companies, java.time.LocalDate start, java.time.LocalDate end) {
-            }
-
-            @Override
-            public java.util.List<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findByCompanyIdAndDateBetween(CompanyId companies, java.time.LocalDate start, java.time.LocalDate end) {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public java.util.List<com.casrusil.siierpai.modules.invoicing.domain.model.Invoice> findRecentByCompanyId(CompanyId companies, int limit) {
-                return Collections.emptyList();
-            }
-        };
+        com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository invoiceRepo = org.mockito.Mockito
+                .mock(com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository.class);
 
         AnomalyDetectionService anomalyService = new AnomalyDetectionService(invoiceRepo, repo) {
             @Override
