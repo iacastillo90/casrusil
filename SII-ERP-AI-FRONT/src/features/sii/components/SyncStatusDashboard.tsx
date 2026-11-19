@@ -153,9 +153,8 @@ export const SyncStatusDashboard = () => {
                         variant="outline"
                         size="sm"
                         onClick={handleForceSync}
-                        disabled={isSyncing}
+                        loading={isSyncing}
                     >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
                         {isSyncing ? 'Sincronizando...' : 'Forzar Sincronización'}
                     </Button>
                 </div>
