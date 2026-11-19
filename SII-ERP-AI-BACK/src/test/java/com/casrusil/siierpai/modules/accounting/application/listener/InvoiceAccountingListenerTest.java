@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class InvoiceAccountingListenerTest {
@@ -34,7 +35,7 @@ class InvoiceAccountingListenerTest {
     private AccountingEntryService accountingEntryService;
 
     @Mock
-    private com.casrusil.siierpai.modules.accounting.application.service.LearningService learningService;
+    private com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository invoiceRepository;
 
     @Test
     void handle_ShouldCreateAndSaveAccountingEntry() {
@@ -51,6 +52,7 @@ class InvoiceAccountingListenerTest {
                 new BigDecimal("190"),
                 new BigDecimal("1190"),
                 Collections.emptyList());
+        when(invoiceRepository.findById(invoice.getId())).thenReturn(java.util.Optional.of(invoice));
         InvoiceCreatedEvent event = new InvoiceCreatedEvent(invoice);
 
         // When
@@ -63,7 +65,7 @@ class InvoiceAccountingListenerTest {
         AccountingEntry savedEntry = entryCaptor.getValue();
         assertEquals(companyId, savedEntry.getCompanyId());
         assertEquals("INVOICE", savedEntry.getReferenceType());
-        assertEquals(invoice.getId().toString(), savedEntry.getReferenceId());
+        assertEquals(String.valueOf(invoice.getFolio()), savedEntry.getReferenceId());
         assertEquals(3, savedEntry.getLines().size()); // Debit Client, Credit Sales, Credit VAT
     }
 }
