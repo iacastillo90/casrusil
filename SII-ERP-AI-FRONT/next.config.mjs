@@ -3,7 +3,7 @@
 // URL interna del backend a la que el proxy same-origin reenvía /api/v1.
 // El proxy permite que la cookie httpOnly del backend se almacene y reenvíe
 // bajo el mismo origen del frontend (mismo dominio => sin problemas de CORS/cookies).
-const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || 'http://localhost:8080';
+const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || 'http://localhost:8092';
 
 const nextConfig = {
   output: 'standalone',
