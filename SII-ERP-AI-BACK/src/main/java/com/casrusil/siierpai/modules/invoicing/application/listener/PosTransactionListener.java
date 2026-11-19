@@ -18,11 +18,9 @@ public class PosTransactionListener {
 
     private static final Logger logger = LoggerFactory.getLogger(PosTransactionListener.class);
     private final CreateInvoiceUseCase createInvoiceUseCase;
-    private final com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository invoiceRepository;
 
-    public PosTransactionListener(CreateInvoiceUseCase createInvoiceUseCase, com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository invoiceRepository) {
+    public PosTransactionListener(CreateInvoiceUseCase createInvoiceUseCase) {
         this.createInvoiceUseCase = createInvoiceUseCase;
-        this.invoiceRepository = invoiceRepository;
     }
 
     @EventListener
@@ -34,16 +32,11 @@ public class PosTransactionListener {
             BigDecimal totalAmount = event.getTransaction().getTotalAmount();
             BigDecimal netAmount = totalAmount.divide(new BigDecimal("1.19"), 0, RoundingMode.HALF_UP);
             BigDecimal vatAmount = totalAmount.subtract(netAmount);
-            
-            Long nextFolio = invoiceRepository.findMaxFolioByCompanyIdAndTypeCode(
-                event.getTransaction().getCompanyId(), 
-                InvoiceType.BOLETA_ELECTRONICA.getCode()
-            ) + 1;
 
             Invoice invoice = Invoice.create(
                 event.getTransaction().getCompanyId(),
                 InvoiceType.BOLETA_ELECTRONICA,
-                nextFolio,
+                null, // El folio se asigna server-side desde el CAF correspondiente
                 "66666666-6", // Generic public RUT for B2C sales
                 "Cliente Final",
                 LocalDate.now(),
@@ -54,7 +47,7 @@ public class PosTransactionListener {
             );
 
             createInvoiceUseCase.createInvoice(invoice);
-            logger.info("Successfully generated Boleta con folio {} para POS transaction: {}", nextFolio, event.getTransaction().getId());
+            logger.info("Successfully generated Boleta for POS transaction: {}", event.getTransaction().getId());
         } catch (Exception e) {
             logger.error("Error generating Boleta for POS transaction: {}", event.getTransaction().getId(), e);
         }

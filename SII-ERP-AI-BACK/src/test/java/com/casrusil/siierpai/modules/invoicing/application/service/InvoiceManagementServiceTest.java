@@ -1,8 +1,10 @@
 package com.casrusil.siierpai.modules.invoicing.application.service;
 
 import com.casrusil.siierpai.modules.invoicing.domain.event.InvoiceCreatedEvent;
+import com.casrusil.siierpai.modules.invoicing.domain.exception.FolioNotAvailableException;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
 import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceType;
+import com.casrusil.siierpai.modules.invoicing.domain.port.out.FolioSource;
 import com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository;
 import com.casrusil.siierpai.modules.accounting.domain.port.out.AccountingEntryRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
@@ -20,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -27,17 +30,20 @@ class InvoiceManagementServiceTest {
 
     private StubInvoiceRepository invoiceRepository;
     private StubEventPublisher eventPublisher;
+    private StubFolioSource folioSource;
     private InvoiceManagementService service;
 
     @BeforeEach
     void setUp() {
         invoiceRepository = new StubInvoiceRepository();
         eventPublisher = new StubEventPublisher();
+        folioSource = new StubFolioSource();
         service = new InvoiceManagementService(
                 invoiceRepository,
                 eventPublisher,
                 mock(InvoiceAuditTrailService.class),
-                mock(AccountingEntryRepository.class));
+                mock(AccountingEntryRepository.class),
+                folioSource);
     }
 
     @Test
@@ -68,12 +74,74 @@ class InvoiceManagementServiceTest {
         assertEquals(invoice, ((InvoiceCreatedEvent) eventPublisher.events.get(0)).invoice());
     }
 
+    @Test
+    void createInvoice_shouldAssignFolioFromServerSideSourceWhenNull() {
+        // Given
+        CompanyId companies = CompanyId.random();
+        folioSource.next = Optional.of(500L);
+        Invoice invoice = Invoice.create(
+                companies,
+                InvoiceType.FACTURA_ELECTRONICA,
+                null,
+                "76.123.456-7",
+                "12.345.678-9",
+                LocalDate.now(),
+                new BigDecimal("1000"),
+                new BigDecimal("190"),
+                new BigDecimal("1190"),
+                Collections.emptyList());
+
+        // When
+        CompanyContext.runInCompanyContext(companies, () -> service.createInvoice(invoice));
+
+        // Then
+        assertTrue(invoiceRepository.saved);
+        assertEquals(500L, invoiceRepository.lastSaved.getFolio());
+        assertEquals(1, folioSource.calls);
+    }
+
+    @Test
+    void createInvoice_shouldThrowWhenNoFolioAvailable() {
+        // Given
+        CompanyId companies = CompanyId.random();
+        folioSource.next = Optional.empty();
+        Invoice invoice = Invoice.create(
+                companies,
+                InvoiceType.FACTURA_ELECTRONICA,
+                null,
+                "76.123.456-7",
+                "12.345.678-9",
+                LocalDate.now(),
+                new BigDecimal("1000"),
+                new BigDecimal("190"),
+                new BigDecimal("1190"),
+                Collections.emptyList());
+
+        // When / Then
+        assertThrows(FolioNotAvailableException.class,
+                () -> CompanyContext.runInCompanyContext(companies, () -> service.createInvoice(invoice)));
+        assertEquals(false, invoiceRepository.saved);
+    }
+
+    static class StubFolioSource implements FolioSource {
+        Optional<Long> next = Optional.of(1L);
+        int calls = 0;
+
+        @Override
+        public Optional<Long> reserveNextFolio(CompanyId companyId, int tipoDte) {
+            calls++;
+            return next;
+        }
+    }
+
     static class StubInvoiceRepository implements InvoiceRepository {
         boolean saved = false;
+        Invoice lastSaved;
 
         @Override
         public Invoice save(Invoice invoice) {
             saved = true;
+            lastSaved = invoice;
             return invoice;
         }
 
@@ -98,14 +166,19 @@ class InvoiceManagementServiceTest {
         }
 
         @Override
+        public Optional<Invoice> findByCompanyIdAndTypeCodeAndFolio(CompanyId companies, Integer typeCode, Long folio) {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<Invoice> findFirstByCompanyIdAndTypeCodeAndFolio(CompanyId companies, Integer typeCode,
                 Long folio) {
             return Optional.empty();
         }
 
         @Override
-        public Long findMaxFolioByCompanyIdAndTypeCode(CompanyId companies, int typeCode) {
-            return null;
+        public Optional<Long> findMaxFolioInRange(CompanyId companies, int typeCode, long fromFolio, long toFolio) {
+            return Optional.empty();
         }
 
         @Override

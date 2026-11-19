@@ -87,8 +87,9 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
     }
 
     @Override
-    public Long findMaxFolioByCompanyIdAndTypeCode(CompanyId companyId, int typeCode) {
-        return invoiceJpaRepository.findMaxFolioByCompanyIdAndTypeCode(companyId.value(), typeCode);
+    public Optional<Long> findMaxFolioInRange(CompanyId companyId, int typeCode, long fromFolio, long toFolio) {
+        return Optional.ofNullable(invoiceJpaRepository.findMaxFolioInRange(companyId.value(), typeCode, fromFolio,
+                toFolio));
     }
 
     private InvoiceEntity toEntity(Invoice invoice) {

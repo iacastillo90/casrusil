@@ -78,7 +78,6 @@ class InvoiceControllerTest {
         CompanyId companyId = new CompanyId(UUID.randomUUID());
         InvoiceController.CreateInvoiceRequest request = new InvoiceController.CreateInvoiceRequest(
                 33,
-                123L,
                 "76123456-7",
                 "76987654-3",
                 "Emisor SpA",

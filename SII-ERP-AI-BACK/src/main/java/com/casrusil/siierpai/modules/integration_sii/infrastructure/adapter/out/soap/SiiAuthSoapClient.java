@@ -17,7 +17,7 @@ public class SiiAuthSoapClient {
     private final HttpClient httpClient;
     private final String siiUrlAuth;
 
-    public SiiAuthSoapClient(@Value("${sii.url.auth}") String siiUrlAuth) {
+    public SiiAuthSoapClient(@Value("${sii.url.auth:https://maullin.sii.cl/DTEWS}") String siiUrlAuth) {
         this(siiUrlAuth, HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build());

@@ -5,6 +5,7 @@ import com.casrusil.siierpai.modules.invoicing.domain.dto.UpdateInvoiceCommand;
 import com.casrusil.siierpai.modules.invoicing.domain.dto.UpdateInvoiceCommand.UpdateInvoiceLineCommand;
 import com.casrusil.siierpai.modules.invoicing.domain.event.InvoiceCreatedEvent;
 import com.casrusil.siierpai.modules.invoicing.domain.exception.InvalidInvoiceException;
+import com.casrusil.siierpai.modules.invoicing.domain.exception.FolioNotAvailableException;
 import com.casrusil.siierpai.modules.invoicing.domain.exception.InvoiceAlreadyExistsException;
 import com.casrusil.siierpai.modules.invoicing.domain.exception.InvoiceNotFoundException;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
@@ -16,6 +17,7 @@ import com.casrusil.siierpai.modules.invoicing.domain.port.in.ManageInvoiceUseCa
 import com.casrusil.siierpai.modules.invoicing.domain.port.in.SearchInvoicesUseCase;
 import com.casrusil.siierpai.modules.invoicing.domain.port.in.UpdateInvoiceUseCase;
 import com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository;
+import com.casrusil.siierpai.modules.invoicing.domain.port.out.FolioSource;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,15 +43,18 @@ public class InvoiceManagementService implements ManageInvoiceUseCase, CreateInv
     private final ApplicationEventPublisher eventPublisher;
     private final InvoiceAuditTrailService auditTrailService;
     private final AccountingEntryRepository accountingEntryRepository;
+    private final FolioSource folioSource;
 
     public InvoiceManagementService(InvoiceRepository invoiceRepository,
             ApplicationEventPublisher eventPublisher,
             InvoiceAuditTrailService auditTrailService,
-            AccountingEntryRepository accountingEntryRepository) {
+            AccountingEntryRepository accountingEntryRepository,
+            FolioSource folioSource) {
         this.invoiceRepository = invoiceRepository;
         this.eventPublisher = eventPublisher;
         this.auditTrailService = auditTrailService;
         this.accountingEntryRepository = accountingEntryRepository;
+        this.folioSource = folioSource;
     }
 
     @Override
@@ -61,12 +66,20 @@ public class InvoiceManagementService implements ManageInvoiceUseCase, CreateInv
             throw new InvalidInvoiceException("Invoice company ID does not match current context");
         }
 
-        if (invoiceRepository.existsByCompanyIdAndTypeCodeAndFolioAndIssuerRut(
-                companyId, invoice.getType().getCode(), invoice.getFolio(), invoice.getIssuerRut())) {
-            throw new InvoiceAlreadyExistsException("Invoice already exists: " + invoice.getFolio());
+        Invoice invoiceToSave = invoice;
+        if (invoice.getFolio() == null) {
+            Long assignedFolio = folioSource.reserveNextFolio(companyId, invoice.getType().getCode())
+                    .orElseThrow(() -> new FolioNotAvailableException(invoice.getType().getCode()));
+            invoiceToSave = invoice.withFolio(assignedFolio);
         }
 
-        Invoice savedInvoice = invoiceRepository.save(invoice);
+        if (invoiceRepository.existsByCompanyIdAndTypeCodeAndFolioAndIssuerRut(
+                companyId, invoiceToSave.getType().getCode(), invoiceToSave.getFolio(),
+                invoiceToSave.getIssuerRut())) {
+            throw new InvoiceAlreadyExistsException("Invoice already exists: " + invoiceToSave.getFolio());
+        }
+
+        Invoice savedInvoice = invoiceRepository.save(invoiceToSave);
         auditTrailService.record(companyId, savedInvoice.getId(), InvoiceAuditLog.ACTION_CREATED,
                 "Invoice folio " + savedInvoice.getFolio() + " created");
         eventPublisher.publishEvent(new InvoiceCreatedEvent(savedInvoice));
@@ -103,7 +116,7 @@ public class InvoiceManagementService implements ManageInvoiceUseCase, CreateInv
                 existing.getId(),
                 companyId,
                 type,
-                command.folio() != null ? command.folio() : existing.getFolio(),
+                existing.getFolio(),
                 hasText(command.issuerRut()) ? command.issuerRut().trim() : existing.getIssuerRut(),
                 hasText(command.clientRut()) ? command.clientRut().trim() : existing.getReceiverRut(),
                 hasText(command.recipientName()) ? command.recipientName().trim() : existing.getBusinessName(),

@@ -15,7 +15,7 @@ public class SiiUploadClient {
 
     private final HttpClient httpClient;
 
-    @Value("${sii.url.upload:https://palena.sii.cl/cgi_dte/UPL/DTEUpload}")
+    @Value("${sii.url.upload:https://maullin.sii.cl/cgi_dte/UPL/DTEUpload}")
     private String uploadUrl;
 
     public SiiUploadClient() {

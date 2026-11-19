@@ -16,7 +16,7 @@ public class SiiRcvSoapClient {
     private final String siiUrlRcv;
 
     public SiiRcvSoapClient(
-            @Value("${sii.url.rcv:https://www4.sii.cl/consulfaliinternetws/reporte/}") String siiUrlRcv) {
+            @Value("${sii.url.rcv:https://maullin.sii.cl/consulfaliinternetws/reporte/}") String siiUrlRcv) {
         this(siiUrlRcv, HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .build());

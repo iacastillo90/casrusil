@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.invoicing.domain.model;
 
+import com.casrusil.siierpai.modules.invoicing.domain.exception.InvalidInvoiceException;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 
 import java.math.BigDecimal;
@@ -142,6 +143,7 @@ public class Invoice {
             String receiverRut,
             LocalDate date, BigDecimal netAmount, BigDecimal taxAmount, BigDecimal totalAmount,
             List<InvoiceLine> items) {
+        validateFolio(folio);
         return new Invoice(UUID.randomUUID(), companyId, type, folio, issuerRut, receiverRut, null, date, date,
                 netAmount,
                 taxAmount, totalAmount, BigDecimal.ZERO, BigDecimal.ZERO, ORIGIN_SII, TransactionType.SALE,
@@ -155,6 +157,7 @@ public class Invoice {
             String receiverRut,
             LocalDate date, BigDecimal netAmount, BigDecimal taxAmount, BigDecimal totalAmount, String origin,
             TransactionType transactionType, List<InvoiceLine> items) {
+        validateFolio(folio);
         return new Invoice(UUID.randomUUID(), companyId, type, folio, issuerRut, receiverRut, null, date, date,
                 netAmount,
                 taxAmount, totalAmount, BigDecimal.ZERO, BigDecimal.ZERO, origin, transactionType,
@@ -170,10 +173,40 @@ public class Invoice {
             BigDecimal fixedAssetAmount, BigDecimal commonUseVatAmount,
             String origin,
             TransactionType transactionType, List<InvoiceLine> items) {
+        validateFolio(folio);
         return new Invoice(UUID.randomUUID(), companyId, type, folio, issuerRut, receiverRut, businessName, date, date,
                 netAmount,
                 taxAmount, totalAmount, fixedAssetAmount, commonUseVatAmount, origin, transactionType,
                 PaymentStatus.PENDING, items, "CLP");
+    }
+
+    /**
+     * Valida el folio sólo cuando viene informado. Un folio nulo indica que el
+     * servidor debe asignarlo desde un CAF al momento de persistir la factura.
+     */
+    private static void validateFolio(Long folio) {
+        if (folio != null && folio <= 0) {
+            throw new InvalidInvoiceException("Invoice folio must be greater than zero");
+        }
+    }
+
+    /**
+     * Devuelve una copia de esta factura con el folio indicado.
+     *
+     * <p>
+     * Se usa para asignar el folio server-side sin mutar la instancia original.
+     * Copia todos los campos, incluidos los metadatos de envío al SII.
+     * </p>
+     *
+     * @param folio folio a asignar
+     * @return nueva instancia con el folio indicado
+     */
+    public Invoice withFolio(Long folio) {
+        Invoice copy = new Invoice(id, companyId, type, folio, issuerRut, receiverRut, businessName, date, dueDate,
+                netAmount, taxAmount, totalAmount, fixedAssetAmount, commonUseVatAmount, origin, transactionType,
+                status, items, currency);
+        copy.applySiiStatus(dteStatus, siiTrackId, sentAt);
+        return copy;
     }
 
     public UUID getId() {

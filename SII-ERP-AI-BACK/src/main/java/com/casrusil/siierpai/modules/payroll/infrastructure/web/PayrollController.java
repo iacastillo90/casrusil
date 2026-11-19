@@ -46,7 +46,17 @@ public class PayrollController {
                 .body(fileContent);
     }
 
+    /**
+     * Obtiene las liquidaciones del empleado indicado.
+     *
+     * <p>
+     * En una implementación completa el {@code employeeId} se extrae del JWT; hoy
+     * llega por header. La autorización del endpoint se declara de forma explícita
+     * para no depender únicamente de la anotación a nivel de clase.
+     * </p>
+     */
     @GetMapping("/employee/payslips")
+    @PreAuthorize("hasAnyRole('ADMIN','HR','USER')")
     public ResponseEntity<List<PayslipResponse>> getMyPayslips(
             @RequestHeader(value = "X-Employee-Id", defaultValue = "00000000-0000-0000-0000-000000000000") String employeeId) {
         // In a real scenario, employeeId is extracted from JWT (SecurityContextHolder).

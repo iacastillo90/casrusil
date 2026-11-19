@@ -112,14 +112,16 @@ public interface InvoiceRepository {
         Optional<Invoice> findFirstByCompanyIdAndTypeCodeAndFolio(CompanyId companyId, Integer typeCode, Long folio);
 
         /**
-         * Encuentra el folio máximo de una empresa para un tipo de documento.
-         * Usado por PosTransactionListener para generar el siguiente folio.
+         * Encuentra el folio máximo usado por una empresa para un tipo de documento
+         * dentro de un rango de folios (ventana de un CAF).
          *
          * @param companyId ID de la empresa
-         * @param typeCode Código del tipo de documento (ej: 33 para Factura Electrónica)
-         * @return El folio máximo encontrado, o null si no hay facturas
+         * @param typeCode  Código del tipo de documento (ej: 33 para Factura Electrónica)
+         * @param fromFolio Folio inicial del rango (inclusive)
+         * @param toFolio   Folio final del rango (inclusive)
+         * @return El folio máximo encontrado, o vacío si no hay facturas en el rango
          */
-        Long findMaxFolioByCompanyIdAndTypeCode(CompanyId companyId, int typeCode);
+        Optional<Long> findMaxFolioInRange(CompanyId companyId, int typeCode, long fromFolio, long toFolio);
 
         /**
          * Encuentra facturas pendientes de pago (abiertas).

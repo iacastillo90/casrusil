@@ -9,6 +9,7 @@ import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.domain.valueobject.UserId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/ai")
+@PreAuthorize("hasAnyRole('ADMIN','ACCOUNTANT','SALES','TREASURER','AUDITOR')")
 public class AiAssistantController {
 
     private final ConversationService conversationService;
