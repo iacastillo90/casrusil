@@ -104,8 +104,6 @@ class DteSenderServiceTest {
 
         when(tokenRepository.findByCompanyId(companyId)).thenReturn(Optional.of(validToken));
         when(pkcs12Handler.loadCertificate(anyString(), anyString())).thenReturn(siiCertificate);
-        when(siiCertificate.certificate()).thenReturn(x509Certificate);
-        when(siiCertificate.privateKey()).thenReturn(privateKey);
 
         // Mocks for new dependencies
         when(cafRepository.findActiveForFolio(any(), anyString(), anyLong()))
@@ -194,8 +192,6 @@ class DteSenderServiceTest {
 
         when(tokenRepository.findByCompanyId(companyId)).thenReturn(Optional.of(validToken));
         when(pkcs12Handler.loadCertificate(anyString(), anyString())).thenReturn(siiCertificate);
-        when(siiCertificate.certificate()).thenReturn(x509Certificate);
-        when(siiCertificate.privateKey()).thenReturn(privateKey);
 
         when(cafRepository.findActiveForFolio(any(), anyString(), anyLong()))
                 .thenReturn(Optional.of(mock(com.casrusil.siierpai.modules.integration_sii.domain.model.Caf.class)));

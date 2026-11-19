@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.ai_assistant.application.tools;
 
+import com.casrusil.siierpai.modules.accounting.domain.model.DraftF29;
 import com.casrusil.siierpai.modules.accounting.domain.model.F29Report;
 import com.casrusil.siierpai.modules.accounting.domain.service.F29CalculatorService;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
@@ -33,8 +34,9 @@ class CalculateF29ToolTest {
 
     @BeforeEach
     void setUp() {
-        calculateF29Tool = new CalculateF29Tool(f29CalculatorService,
-                new com.fasterxml.jackson.databind.ObjectMapper());
+        com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        calculateF29Tool = new CalculateF29Tool(f29CalculatorService, objectMapper);
         companyContextMock = mockStatic(CompanyContext.class);
     }
 
@@ -67,15 +69,16 @@ class CalculateF29ToolTest {
         );
 
         companyContextMock.when(CompanyContext::requireCompanyId).thenReturn(companyId);
-        when(f29CalculatorService.calculateF29(eq(companyId), eq(period))).thenReturn(report);
+        when(f29CalculatorService.calculateDraftF29(eq(companyId), eq(period)))
+                .thenReturn(new DraftF29(report, java.util.List.of(), true));
 
         // When
         String result = calculateF29Tool.execute(periodArg);
 
         // Then
-        assertTrue(result.contains("F29 Calculation for 2025-12"));
-        assertTrue(result.contains("Taxable Sales: $10000"));
-        assertTrue(result.contains("Net VAT Payable: $950"));
+        assertTrue(result.contains("\"period\":[2025,12]"), result);
+        assertTrue(result.contains("\"totalSalesTaxable\":10000"), result);
+        assertTrue(result.contains("\"vatPayable\":950"), result);
     }
 
     @Test
@@ -97,7 +100,7 @@ class CalculateF29ToolTest {
         CompanyId companyId = new CompanyId(UUID.randomUUID());
 
         companyContextMock.when(CompanyContext::requireCompanyId).thenReturn(companyId);
-        when(f29CalculatorService.calculateF29(any(), any()))
+        when(f29CalculatorService.calculateDraftF29(any(), any()))
                 .thenThrow(new RuntimeException("Calculation failed"));
 
         // When

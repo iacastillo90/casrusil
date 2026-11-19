@@ -62,7 +62,7 @@ class ConversationServiceTest {
         String userContent = "Hello AI";
         String aiContent = "Hello User";
 
-        when(chatLanguageModel.generate(anyList())).thenReturn(Response.from(new AiMessage(aiContent)));
+        when(chatLanguageModel.generate(anyList(), anyList())).thenReturn(Response.from(new AiMessage(aiContent)));
 
         // When
         Message responseMsg = conversationService.sendMessage(conversation.getId(), userContent);
