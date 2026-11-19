@@ -5,9 +5,9 @@ import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceType;
 import com.casrusil.siierpai.modules.invoicing.domain.port.in.SearchInvoicesUseCase;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -27,8 +27,14 @@ class SearchInvoicesToolTest {
     @Mock
     private SearchInvoicesUseCase searchInvoicesUseCase;
 
-    @InjectMocks
     private SearchInvoicesTool searchInvoicesTool;
+
+    @BeforeEach
+    void setUp() {
+        com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        searchInvoicesTool = new SearchInvoicesTool(searchInvoicesUseCase, objectMapper);
+    }
 
     @Test
     void shouldReturnInvoiceList() throws Exception {
@@ -55,9 +61,10 @@ class SearchInvoicesToolTest {
 
         // Then
         assertNotNull(result);
-        assertTrue(result.contains("Invoice #123"));
-        assertTrue(result.contains("76123456-7"));
-        assertTrue(result.contains("1190"));
+        assertTrue(result.contains("\"summary\":\"Found 1 invoices.\""), result);
+        assertTrue(result.contains("\"folio\":123"), result);
+        assertTrue(result.contains("76123456-7"), result);
+        assertTrue(result.contains("\"totalAmount\":1190"), result);
     }
 
     @Test
@@ -72,7 +79,7 @@ class SearchInvoicesToolTest {
                 .call(() -> searchInvoicesTool.execute(""));
 
         // Then
-        assertEquals("No invoices found.", result);
+        assertEquals("[]", result);
     }
 
     @Test

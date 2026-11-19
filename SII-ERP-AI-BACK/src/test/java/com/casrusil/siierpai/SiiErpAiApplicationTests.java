@@ -1,12 +1,9 @@
 package com.casrusil.siierpai;
 
-import com.casrusil.SiiErpAiApplication;
+import com.casrusil.siierpai.shared.test.BaseIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-@org.springframework.test.context.ContextConfiguration(classes = SiiErpAiApplication.class)
-class SiiErpAiApplicationTests {
+class SiiErpAiApplicationTests extends BaseIntegrationTest {
 
 	@Test
 	void contextLoads() {

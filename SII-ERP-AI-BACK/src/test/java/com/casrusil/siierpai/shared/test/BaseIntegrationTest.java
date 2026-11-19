@@ -5,39 +5,41 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * Base class for integration tests using Testcontainers.
- * Provides a shared PostgreSQL container for all integration tests.
+ * Base para tests de integración con PostgreSQL real (Testcontainers).
+ *
+ * <p>Se usa una única imagen {@code postgres:15-alpine} para todos los tests de
+ * contexto Spring, de modo que el dialecto, las palabras reservadas y las
+ * transacciones sean los de producción. Docker es un requisito del gate de
+ * tests de integración (en CI debe estar disponible).</p>
  */
 @SpringBootTest(classes = SiiErpAiApplication.class)
-@Testcontainers
 public abstract class BaseIntegrationTest {
 
     /**
-     * Shared PostgreSQL container (singleton pattern).
-     * Container is reused across all tests in the same JVM for performance.
+     * Contenedor singleton arrancado una sola vez por JVM. No se usa
+     * `@Container`/`@Testcontainers` porque esa extensión detiene el contenedor
+     * al terminar cada clase y las clases siguientes quedan sin base.
      */
-    @Container
-    protected static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    protected static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
             .withDatabaseName("sii_erp_test")
             .withUsername("test")
-            .withPassword("test")
-            .withReuse(true);
+            .withPassword("test");
 
-    /**
-     * Configure Spring datasource properties dynamically from the container.
-     */
+    static {
+        postgres.start();
+    }
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
-
-        // JPA configuration for tests
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
         registry.add("spring.jpa.show-sql", () -> "false");
+        registry.add("spring.sql.init.mode", () -> "never");
     }
 }

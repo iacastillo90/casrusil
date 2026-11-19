@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "node --max-old-space-size=4096 node_modules/next/dist/bin/next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint .",
     "generate-docs": "node scripts/generate-architecture.js"
   },
   "dependencies": {

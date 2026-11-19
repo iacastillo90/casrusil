@@ -21,12 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @Transactional
 class AccountRepositoryIntegrationTest extends BaseIntegrationTest {
 
-    private final AccountRepository accountRepository;
-
     @Autowired
-    public AccountRepositoryIntegrationTest(AccountRepository accountRepository) {
-        this.accountRepository = accountRepository;
-    }
+    private AccountRepository accountRepository;
 
     @Test
     void shouldSaveAndRetrieveAccount() {

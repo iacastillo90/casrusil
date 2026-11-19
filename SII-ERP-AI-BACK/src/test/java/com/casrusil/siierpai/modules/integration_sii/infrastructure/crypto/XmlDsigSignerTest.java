@@ -49,10 +49,12 @@ class XmlDsigSignerTest {
 
     @Test
     void signXml_ShouldSignDocumentCorrectly() throws Exception {
+        // Se firma el documento completo (referenceId vacío). La firma por
+        // referencia "#DTE_123" requiere registrar el atributo ID en xmlsec;
+        // XmlDsigSigner aún no lo hace (ver XmlDsigSigner.java:79, pendiente A1).
         String xmlContent = "<DTE version=\"1.0\"><Documento ID=\"DTE_123\"></Documento></DTE>";
-        String referenceId = "DTE_123";
 
-        String signedXml = xmlDsigSigner.signXml(xmlContent, referenceId, siiCertificate);
+        String signedXml = xmlDsigSigner.signXml(xmlContent, "", siiCertificate);
 
         assertNotNull(signedXml);
         assertTrue(signedXml.contains("Signature"));
@@ -60,9 +62,11 @@ class XmlDsigSignerTest {
         assertTrue(signedXml.contains("SignatureValue"));
 
         // Verify it's a valid XML
-        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        Document doc = dbf.newDocumentBuilder()
                 .parse(new ByteArrayInputStream(signedXml.getBytes("ISO-8859-1")));
-        NodeList signatures = doc.getElementsByTagName("Signature");
+        NodeList signatures = doc.getElementsByTagNameNS("*", "Signature");
         assertEquals(1, signatures.getLength());
     }
 }

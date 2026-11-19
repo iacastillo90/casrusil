@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -43,14 +44,17 @@ class InvoiceImportControllerTest {
 
     @Test
     void importSiiCsv_shouldParseAndCreateInvoices() throws Exception {
-        String csvContent = "Tipo Doc,Folio,RUT Emisor,RUT Receptor,Fecha Emision,Monto Neto,Monto IVA,Monto Total\n" +
-                "33,1001,76123456-7,12345678-9,2023-10-27,100000,19000,119000";
+        byte[] csvContent;
+        try (var is = getClass().getResourceAsStream("/fixtures/import-sale.csv")) {
+            assertNotNull(is, "No se encontró el fixture /fixtures/import-sale.csv");
+            csvContent = is.readAllBytes();
+        }
 
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "invoices.csv",
+                "import-sale.csv",
                 MediaType.TEXT_PLAIN_VALUE,
-                csvContent.getBytes());
+                csvContent);
 
         UUID companyId = UUID.randomUUID();
 
