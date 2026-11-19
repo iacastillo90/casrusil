@@ -136,16 +136,22 @@ public class F29CalculatorService {
         // Calculate net VAT payable
         BigDecimal vatPayable = vatDebit.subtract(usableVatCredit);
 
-        // Fetch Tax Parameters
-        BigDecimal bheRate = taxParameterRepository.findById("YEAR_2024")
-                .map(TaxParameterEntity::getBheRetentionRate)
-                .orElse(new BigDecimal("13.75"));
-
         // Sum Fee Retentions for the period
         List<FeeReceipt> fees = feeReceiptRepository.findByCompanyIdAndIssueDateBetween(companyId, start, end);
         BigDecimal feeWithholding = fees.stream()
                 .map(FeeReceipt::getRetentionAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // La tasa BHE depende del año del período (tabla tax_parameters), no de
+        // una constante. Solo se consulta si hay retenciones que informar.
+        BigDecimal bheRate = null;
+        if (feeWithholding.compareTo(BigDecimal.ZERO) > 0) {
+            String parameterId = "YEAR_" + period.getYear();
+            bheRate = taxParameterRepository.findById(parameterId)
+                    .map(TaxParameterEntity::getBheRetentionRate)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Falta el parámetro tributario " + parameterId + " para calcular la retención BHE"));
+        }
 
         // Calculate final total to pay
         BigDecimal vatToPay = vatPayable.max(BigDecimal.ZERO);
@@ -179,7 +185,7 @@ public class F29CalculatorService {
         }
 
         if (feeWithholding.compareTo(BigDecimal.ZERO) > 0) {
-            details.add(new F29Report.F29Line("151", String.format("Retención Honorarios (%s%%)", bheRate), feeWithholding));
+            details.add(new F29Report.F29Line("151", String.format("Retención Honorarios (%s%%)", bheRate.toPlainString()), feeWithholding));
         }
 
         return new F29Report(
