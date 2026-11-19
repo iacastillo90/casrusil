@@ -12,7 +12,9 @@ const config: Config = {
         extend: {
             colors: {
                 background: 'hsl(var(--background))',
+                surface: 'hsl(var(--surface))',
                 foreground: 'hsl(var(--foreground))',
+                overlay: 'var(--overlay)',
                 card: {
                     DEFAULT: 'hsl(var(--card))',
                     foreground: 'hsl(var(--card-foreground))'
@@ -23,7 +25,10 @@ const config: Config = {
                 },
                 primary: {
                     DEFAULT: 'hsl(var(--primary))',
-                    foreground: 'hsl(var(--primary-foreground))'
+                    hover: 'hsl(var(--primary-hover))',
+                    foreground: 'hsl(var(--primary-foreground))',
+                    subtle: 'hsl(var(--primary-subtle))',
+                    'subtle-foreground': 'hsl(var(--primary-subtle-foreground))'
                 },
                 secondary: {
                     DEFAULT: 'hsl(var(--secondary))',
@@ -39,7 +44,44 @@ const config: Config = {
                 },
                 destructive: {
                     DEFAULT: 'hsl(var(--destructive))',
-                    foreground: 'hsl(var(--destructive-foreground))'
+                    foreground: 'hsl(var(--destructive-foreground))',
+                    solid: 'hsl(var(--destructive-solid))',
+                    'solid-foreground': 'hsl(var(--destructive-solid-foreground))',
+                    subtle: 'hsl(var(--destructive-subtle))',
+                    'subtle-foreground': 'hsl(var(--destructive-subtle-foreground))'
+                },
+                success: {
+                    DEFAULT: 'hsl(var(--success))',
+                    solid: 'hsl(var(--success-solid))',
+                    'solid-foreground': 'hsl(var(--success-solid-foreground))',
+                    subtle: 'hsl(var(--success-subtle))',
+                    'subtle-foreground': 'hsl(var(--success-subtle-foreground))'
+                },
+                warning: {
+                    DEFAULT: 'hsl(var(--warning))',
+                    solid: 'hsl(var(--warning-solid))',
+                    'solid-foreground': 'hsl(var(--warning-solid-foreground))',
+                    subtle: 'hsl(var(--warning-subtle))',
+                    'subtle-foreground': 'hsl(var(--warning-subtle-foreground))'
+                },
+                info: {
+                    DEFAULT: 'hsl(var(--info))',
+                    solid: 'hsl(var(--info-solid))',
+                    'solid-foreground': 'hsl(var(--info-solid-foreground))',
+                    subtle: 'hsl(var(--info-subtle))',
+                    'subtle-foreground': 'hsl(var(--info-subtle-foreground))'
+                },
+                signed: {
+                    DEFAULT: 'hsl(var(--signed))',
+                    subtle: 'hsl(var(--signed-subtle))',
+                    'subtle-foreground': 'hsl(var(--signed-subtle-foreground))'
+                },
+                neutral: {
+                    subtle: 'hsl(var(--neutral-subtle))',
+                    'subtle-foreground': 'hsl(var(--neutral-subtle-foreground))'
+                },
+                dte: {
+                    frame: 'hsl(var(--dte-frame))'
                 },
                 border: 'hsl(var(--border))',
                 input: 'hsl(var(--input))',

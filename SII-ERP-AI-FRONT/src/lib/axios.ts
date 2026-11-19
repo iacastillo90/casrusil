@@ -1,8 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
 
-// Asegúrate de que apunte al BACKEND (puerto 8080), no al frontend
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+// URL relativa: las peticiones salen al mismo origen del frontend y next.config.mjs
+// las reenvía al backend (BACKEND_INTERNAL_URL). Así la cookie httpOnly del login
+// viaja siempre en el mismo origen y no depende de CORS.
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 // Create axios instance
 const api = axios.create({
