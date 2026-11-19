@@ -6,9 +6,6 @@ import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
@@ -35,26 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * del siguiente folio fueran incorrectos, dos hilos obtendrían el mismo folio.
  * </p>
  */
-@SpringBootTest
-@ActiveProfiles("test")
-@TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:h2:mem:folio_concurrency;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;LOCK_TIMEOUT=20000",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.sql.init.mode=never",
-        "langchain4j.google-ai-gemini.chat-model.api-key=demo",
-        "langchain4j.google-ai-gemini.chat-model.model-name=gemini-1.5-flash",
-        "langchain4j.pgvector.host=localhost",
-        "langchain4j.pgvector.port=5432",
-        "langchain4j.pgvector.user=test",
-        "langchain4j.pgvector.password=test",
-        "langchain4j.pgvector.database=test",
-        "langchain4j.pgvector.dimension=1536",
-        "spring.mail.host=localhost",
-        "spring.mail.port=2525",
-        "spring.mail.username=test",
-        "spring.mail.password=test"
-})
-class FolioConcurrencyTest {
+class FolioConcurrencyTest extends com.casrusil.siierpai.shared.test.BaseIntegrationTest {
 
     private static final int THREADS = 8;
     private static final String TIPO_DTE = "33";
