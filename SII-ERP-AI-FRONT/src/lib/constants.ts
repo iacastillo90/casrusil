@@ -79,7 +79,7 @@ export const QUERY_KEYS = {
 
     // Invoices
     INVOICES: ['invoices'],
-    INVOICES_FILTERED: (filters: any) => ['invoices', 'filtered', filters],
+    INVOICES_FILTERED: (filters: Record<string, unknown>) => ['invoices', 'filtered', filters],
     INVOICE_DETAIL: (id: string) => ['invoices', id],
 
     // Accounting

@@ -5,7 +5,8 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, FileText } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -117,10 +118,24 @@ export function InvoiceForm({ invoice, onClose }: InvoiceFormProps) {
             } else {
                 router.push("/invoices");
             }
-        } catch (error) {
-            toast.error("Error al guardar la factura", {
-                description: error instanceof Error ? error.message : "Inténtalo nuevamente",
-            });
+        } catch (error: unknown) {
+            const err = error as { response?: { status?: number } } | null;
+            if (err?.response?.status === 409) {
+                toast.error("No hay folios disponibles", {
+                    description: (
+                        <div className="flex flex-col gap-1">
+                            <p>No hay folios disponibles en el CAF.</p>
+                            <Link href="/sii/caf" className="text-primary underline hover:no-underline">
+                                Ir a cargar CAF <FileText className="inline h-4 w-4 ml-1" />
+                            </Link>
+                        </div>
+                    ),
+                });
+            } else {
+                toast.error("Error al guardar la factura", {
+                    description: error instanceof Error ? error.message : "Inténtalo nuevamente",
+                });
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -143,7 +158,7 @@ export function InvoiceForm({ invoice, onClose }: InvoiceFormProps) {
     };
 
     const watchedLines = watch("lines");
-    const netAmount = watchedLines.reduce((sum: number, line: any) => sum + (Number(line.quantity) * Number(line.unitPrice)), 0);
+    const netAmount = watchedLines.reduce((sum: number, line: InvoiceFormData['lines'][0]) => sum + (Number(line.quantity) * Number(line.unitPrice)), 0);
     const taxAmount = netAmount * 0.19;
     const totalAmount = netAmount + taxAmount;
 

@@ -97,7 +97,7 @@ export const invoiceService = {
     /**
      * Crea una nueva factura.
      */
-    createInvoice: async (invoice: Partial<Invoice> & { lines: any[] }): Promise<Invoice> => {
+    createInvoice: async (invoice: Partial<Invoice> & { lines: InvoiceLineApiDto[] }): Promise<Invoice> => {
         const { data } = await api.post<InvoiceApiDto>('/invoices', invoice);
         return mapInvoice(data);
     },
@@ -105,7 +105,7 @@ export const invoiceService = {
     /**
      * Actualiza una factura existente.
      */
-    updateInvoice: async (id: string, invoice: Partial<Invoice> & { lines: any[] }): Promise<Invoice> => {
+    updateInvoice: async (id: string, invoice: Partial<Invoice> & { lines: InvoiceLineApiDto[] }): Promise<Invoice> => {
         const { data } = await api.put<InvoiceApiDto>(`/invoices/${id}`, invoice);
         return mapInvoice(data);
     },

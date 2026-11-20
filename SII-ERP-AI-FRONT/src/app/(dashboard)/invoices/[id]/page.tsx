@@ -13,6 +13,7 @@ const PDFDownloadButton = dynamic(
 );
 import { InvoicePDF } from "@/features/invoicing/components/InvoicePDF";
 import { DTEStatusTracker } from "@/features/invoicing/components/DTEStatusTracker";
+import type { InvoiceLine } from "@/features/invoicing/types/invoice.types";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, Leaf, History, Calculator } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -156,7 +157,7 @@ export default function InvoiceDetailPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {invoice.lines.map((line: any) => (
+                                    {invoice.lines.map((line: InvoiceLine) => (
                                         <TableRow key={line.id}>
                                             <TableCell>{line.description}</TableCell>
                                             <TableCell className="text-right">{line.quantity}</TableCell>
