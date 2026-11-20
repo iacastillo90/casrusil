@@ -1,11 +1,14 @@
+'use client';
+
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
-import { Building2, Save, Loader2, AlertCircle } from "lucide-react";
+import { Building2, Save, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSettingsStore } from "../stores/settings.store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { companyProfileSchema, CompanyProfile as ICompanyProfile } from "../types/settings.types";
@@ -13,7 +16,7 @@ import { toast } from "sonner";
 import { LogoUpload } from "@/components/shared/LogoUpload";
 
 export function CompanyProfile() {
-    const { company, updateCompany, isLoading } = useSettingsStore();
+    const { company, updateCompany, isLoading, error, fetchSettings } = useSettingsStore();
     const [logoFile, setLogoFile] = useState<File | null>(null);
 
     // Fallback default values
@@ -31,6 +34,14 @@ export function CompanyProfile() {
         resolver: zodResolver(companyProfileSchema),
         defaultValues: company ?? defaultCompany,
     });
+
+    // El perfil se carga al entrar: el store se persiste y antes de este fetch
+    // el formulario quedaba con los valores vacíos por defecto.
+    useEffect(() => {
+        if (!company.name) {
+            fetchSettings();
+        }
+    }, [company.name, fetchSettings]);
 
     useEffect(() => {
         if (company) {
@@ -70,6 +81,14 @@ export function CompanyProfile() {
                 </Alert>
             )}
 
+            {error ? (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>No se pudo cargar el perfil de empresa</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            ) : null}
+
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -81,6 +100,13 @@ export function CompanyProfile() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    {isLoading && !company.name ? (
+                        <div className="space-y-4" role="status" aria-label="Cargando perfil">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-2/3" />
+                        </div>
+                    ) : (
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         <div className="grid md:grid-cols-[200px_1fr] gap-8">
                             {/* Logo Column */}
@@ -97,45 +123,48 @@ export function CompanyProfile() {
                             {/* Inputs Column */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">Razón Social <span className="text-red-500">*</span></Label>
+                                    <Label htmlFor="name">Razón Social <span className="text-destructive">*</span></Label>
                                     <Input id="name" {...register("name")} placeholder="Ej. Mi Empresa SpA" />
-                                    {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+                                    {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="rut">RUT <span className="text-red-500">*</span></Label>
-                                    <Input id="rut" {...register("rut")} placeholder="76.123.456-K" />
-                                    {errors.rut && <p className="text-xs text-red-500">{errors.rut.message}</p>}
+                                    <Label htmlFor="rut">RUT</Label>
+                                    <Input id="rut" {...register("rut")} readOnly aria-readonly="true" className="bg-muted" />
+                                    <p className="text-xs text-muted-foreground">
+                                        El RUT no se puede modificar desde acá.
+                                    </p>
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="address">Dirección Comercial <span className="text-red-500">*</span></Label>
+                                    <Label htmlFor="address">Dirección Comercial <span className="text-destructive">*</span></Label>
                                     <Input id="address" {...register("address")} placeholder="Calle, Número, Comuna, Ciudad" />
-                                    {errors.address && <p className="text-xs text-red-500">{errors.address.message}</p>}
+                                    {errors.address && <p className="text-xs text-destructive">{errors.address.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="email">Email Contacto <span className="text-red-500">*</span></Label>
+                                    <Label htmlFor="email">Email Contacto <span className="text-destructive">*</span></Label>
                                     <Input id="email" type="email" {...register("email")} placeholder="contacto@empresa.cl" />
-                                    {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+                                    {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="phone">Teléfono <span className="text-red-500">*</span></Label>
+                                    <Label htmlFor="phone">Teléfono <span className="text-destructive">*</span></Label>
                                     <Input id="phone" {...register("phone")} placeholder="+56 9 1234 5678" />
-                                    {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
+                                    {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="website">Sitio Web</Label>
                                     <Input id="website" {...register("website")} placeholder="https://" />
-                                    {errors.website && <p className="text-xs text-red-500">{errors.website.message}</p>}
+                                    {errors.website && <p className="text-xs text-destructive">{errors.website.message}</p>}
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex justify-end pt-4 border-t">
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                Guardar Cambios
+                            <Button type="submit" loading={isLoading}>
+                                {!isLoading && <Save aria-hidden="true" className="mr-2 h-4 w-4" />}
+                                Guardar cambios
                             </Button>
                         </div>
                     </form>
+                    )}
                 </CardContent>
             </Card>
         </div>
