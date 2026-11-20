@@ -30,10 +30,10 @@ jobs:
           filters: |
             backend:
               - 'SII-ERP-AI-BACK/**'
-              - '.github/workflows/ci.yml'
+              - '.github/workflows/**'
             frontend:
               - 'SII-ERP-AI-FRONT/**'
-              - '.github/workflows/ci.yml'
+              - '.github/workflows/**'
 
   backend:
     name: Backend (JDK 21 + Testcontainers)
