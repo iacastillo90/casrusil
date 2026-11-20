@@ -15,25 +15,63 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/axios";
+import { useAuthStore } from "@/features/auth/stores/auth.store";
+
+interface FeeImportResult {
+    successCount: number;
+    errorCount: number;
+    message?: string;
+}
+
+const getErrorMessage = (error: unknown): string =>
+    error instanceof Error ? error.message : "Inténtalo nuevamente";
 
 export function FeeImportModal() {
     const [open, setOpen] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
+    const companyId = useAuthStore((state) => state.companyId);
+    const queryClient = useQueryClient();
 
     const handleImport = async () => {
         if (!file) return;
+
+        if (!companyId) {
+            toast.error("No se pudo identificar la empresa. Vuelve a iniciar sesión.");
+            return;
+        }
+
         setImporting(true);
         try {
             const formData = new FormData();
-            formData.append('file', file);
-            // await api.post('/fees/import', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-            
-            toast.success("Archivo de boletas procesado correctamente.");
-            setFile(null);
-            setOpen(false);
-        } catch {
-            toast.error("Error al importar el archivo de honorarios.");
+            formData.append("file", file);
+
+            // El backend actual exige companyId como request param en POST /fees/import.
+            const { data } = await api.post<FeeImportResult>("/fees/import", formData, {
+                params: { companyId },
+            });
+
+            if (data.successCount > 0) {
+                toast.success(`Se importaron ${data.successCount} boletas.`, {
+                    description:
+                        data.errorCount > 0
+                            ? `${data.errorCount} filas no se pudieron procesar.`
+                            : undefined,
+                });
+                await queryClient.invalidateQueries({ queryKey: ["fees"] });
+                setFile(null);
+                setOpen(false);
+            } else {
+                toast.error("No se importaron boletas.", {
+                    description: data.message || "Revisa el formato del archivo e inténtalo nuevamente.",
+                });
+            }
+        } catch (error) {
+            toast.error("Error al importar el archivo de honorarios.", {
+                description: getErrorMessage(error),
+            });
         } finally {
             setImporting(false);
         }
@@ -54,15 +92,15 @@ export function FeeImportModal() {
                         Importar Boletas de Honorarios
                     </DialogTitle>
                     <DialogDescription>
-                        Sube el archivo (CSV / Excel) exportado desde el portal del SII con las boletas recibidas.
+                        Sube el archivo CSV exportado desde el portal del SII con las boletas recibidas.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-2 py-2">
-                    <Label htmlFor="fee-file">Archivo</Label>
+                    <Label htmlFor="fee-file">Archivo CSV</Label>
                     <Input
                         id="fee-file"
                         type="file"
-                        accept=".csv,.xls,.xlsx"
+                        accept=".csv"
                         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                     />
                     {file && <p className="text-sm text-muted-foreground truncate">{file.name}</p>}
