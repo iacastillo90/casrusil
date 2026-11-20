@@ -77,7 +77,7 @@ class DteStatusServiceTest {
         assertTrue(service.refresh(invoice));
 
         assertEquals("ACEPTADO", invoice.getDteStatus());
-        verify(invoiceRepository).save(invoice);
+        verify(invoiceRepository, org.mockito.Mockito.atLeastOnce()).save(invoice);
         verify(auditTrailService).record(any(), any(), anyString(), anyString());
         ArgumentCaptor<Object> event = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher).publishEvent(event.capture());

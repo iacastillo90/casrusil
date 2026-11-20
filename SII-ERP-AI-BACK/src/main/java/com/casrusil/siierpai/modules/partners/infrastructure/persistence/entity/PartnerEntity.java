@@ -22,6 +22,9 @@ public class PartnerEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "email")
+    private String email;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "partner_types", joinColumns = @JoinColumn(name = "partner_id"))
     @Column(name = "type")
@@ -30,12 +33,25 @@ public class PartnerEntity {
     public PartnerEntity() {
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public PartnerEntity(UUID id, UUID companyId, String rut, String name, Set<String> types) {
+        this(id, companyId, rut, name, types, null);
+    }
+
+    public PartnerEntity(UUID id, UUID companyId, String rut, String name, Set<String> types, String email) {
         this.id = id;
         this.companyId = companyId;
         this.rut = rut;
         this.name = name;
         this.types = types;
+        this.email = email;
     }
 
     // Getters and Setters

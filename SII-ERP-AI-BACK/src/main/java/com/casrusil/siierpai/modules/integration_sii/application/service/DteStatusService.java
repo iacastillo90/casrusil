@@ -18,10 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  * Consulta el estado de los DTE enviados y actualiza la factura.
@@ -54,7 +51,6 @@ public class DteStatusService {
     private final SiiDteStatusMapper mapper;
     private final int maxAttempts;
     private final String envioProcesadoCode;
-    private final Map<UUID, AtomicInteger> attempts = new ConcurrentHashMap<>();
 
     public DteStatusService(
             InvoiceRepository invoiceRepository,
@@ -100,12 +96,12 @@ public class DteStatusService {
             return false;
         }
 
-        AtomicInteger count = attempts.computeIfAbsent(invoice.getId(), id -> new AtomicInteger());
-        if (count.get() >= maxAttempts) {
+        if (invoice.getSiiStatusAttempts() >= maxAttempts) {
             log.warn("DTE {} alcanzó el máximo de reintentos de consulta ({})", invoice.getFolio(), maxAttempts);
             return false;
         }
-        count.incrementAndGet();
+        invoice.registerSiiStatusAttempt();
+        invoiceRepository.save(invoice);
 
         SiiToken token = tokenRepository.findByCompanyId(invoice.getCompanyId())
                 .filter(SiiToken::isValid)
@@ -151,7 +147,6 @@ public class DteStatusService {
         if (accepted && wasAccepted) {
             eventPublisher.publishEvent(new InvoiceSiiAcceptedEvent(invoice));
         }
-        attempts.remove(invoice.getId());
         return true;
     }
 

@@ -120,6 +120,7 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
                 invoice.getStatus());
 
         entity.setReceiverName(invoice.getReceiverName());
+        entity.setSiiStatusAttempts(invoice.getSiiStatusAttempts());
         entity.setDteStatus(invoice.getDteStatus());
         entity.setSiiTrackId(invoice.getSiiTrackId());
         entity.setSentAt(invoice.getSentAt());
@@ -178,6 +179,7 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
                 "CLP",
                 entity.getReceiverName());
         invoice.applySiiStatus(entity.getDteStatus(), entity.getSiiTrackId(), entity.getSentAt());
+        invoice.applySiiStatusAttempts(entity.getSiiStatusAttempts() != null ? entity.getSiiStatusAttempts() : 0);
         return invoice;
     }
 

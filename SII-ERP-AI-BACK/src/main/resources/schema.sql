@@ -710,7 +710,8 @@ CREATE TABLE IF NOT EXISTS public.partners (
     id uuid NOT NULL,
     company_id uuid NOT NULL,
     name character varying(255) NOT NULL,
-    rut character varying(255) NOT NULL
+    rut character varying(255) NOT NULL,
+    email character varying(255)
 );
 
 CREATE TABLE IF NOT EXISTS public.pay_employees (
@@ -878,6 +879,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_caf_company_type_range
     ON public.sii_cafs (company_id, tipo_dte, initial_folio, final_folio);
 
 ALTER TABLE invoicing.invoices ADD COLUMN IF NOT EXISTS receiver_name character varying(255);
+
+ALTER TABLE public.partners ADD COLUMN IF NOT EXISTS email character varying(255);
+ALTER TABLE invoicing.invoices ADD COLUMN IF NOT EXISTS sii_status_attempts integer DEFAULT 0;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uk_invoices_company_type_folio
     ON invoicing.invoices (company_id, type_code, folio);

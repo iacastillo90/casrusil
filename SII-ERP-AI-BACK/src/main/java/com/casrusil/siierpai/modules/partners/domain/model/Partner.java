@@ -10,14 +10,20 @@ public class Partner {
     private final CompanyId companyId;
     private final String rut;
     private String name;
+    private String email;
     private final Set<PartnerType> types; // CUSTOMER, SUPPLIER
 
     public Partner(UUID id, CompanyId companyId, String rut, String name, Set<PartnerType> types) {
+        this(id, companyId, rut, name, types, null);
+    }
+
+    public Partner(UUID id, CompanyId companyId, String rut, String name, Set<PartnerType> types, String email) {
         this.id = id;
         this.companyId = companyId;
         this.rut = rut;
         this.name = name;
         this.types = types != null ? new HashSet<>(types) : new HashSet<>();
+        this.email = email;
     }
 
     public static Partner create(CompanyId companyId, String rut, String name) {
@@ -26,6 +32,14 @@ public class Partner {
 
     public void addType(PartnerType type) {
         this.types.add(type);
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     public void updateName(String name) {

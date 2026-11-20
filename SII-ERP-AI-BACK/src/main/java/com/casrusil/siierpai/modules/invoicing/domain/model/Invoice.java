@@ -86,6 +86,7 @@ public class Invoice {
 
     private String dteStatus = DTE_STATUS_PENDING;
     private String siiTrackId;
+    private int siiStatusAttempts;
     private LocalDateTime sentAt;
 
     public Invoice(UUID id, CompanyId companyId, InvoiceType type, Long folio, String issuerRut, String receiverRut,
@@ -328,6 +329,28 @@ public class Invoice {
     /**
      * Restores the SII submission metadata when rehydrating from persistence.
      */
+    public int getSiiStatusAttempts() {
+        return siiStatusAttempts;
+    }
+
+    /**
+     * Incrementa el contador de consultas de estado al SII para esta factura.
+     *
+     * @return el número de intento actual
+     */
+    public int registerSiiStatusAttempt() {
+        return ++siiStatusAttempts;
+    }
+
+    /**
+     * Rehidrata el contador desde persistencia.
+     *
+     * @param attempts intentos ya consumidos
+     */
+    public void applySiiStatusAttempts(int attempts) {
+        this.siiStatusAttempts = attempts;
+    }
+
     public void applySiiStatus(String dteStatus, String siiTrackId, LocalDateTime sentAt) {
         this.dteStatus = dteStatus != null ? dteStatus : DTE_STATUS_PENDING;
         this.siiTrackId = siiTrackId;
