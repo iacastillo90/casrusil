@@ -39,7 +39,8 @@ jobs:
     name: Backend (JDK 21 + Testcontainers)
     needs: changes
     if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
+    # ubuntu-latest apunta a 26.04 (sin Docker disponible al 2026-11); 24.04 sí lo trae.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: SII-ERP-AI-BACK
@@ -56,6 +57,9 @@ jobs:
           cache-dependency-path: |
             SII-ERP-AI-BACK/**/*.gradle
             SII-ERP-AI-BACK/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Verificar Docker (Testcontainers)
+        run: docker info
 
       - name: Permisos de Gradle
         run: chmod +x gradlew
