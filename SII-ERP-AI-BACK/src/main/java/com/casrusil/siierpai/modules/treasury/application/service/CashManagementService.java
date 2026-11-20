@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.treasury.application.service;
 
+import com.casrusil.siierpai.modules.accounting.application.service.DefaultAccountResolver;
+import com.casrusil.siierpai.modules.accounting.application.service.DefaultAccountRole;
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntry;
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntryLine;
 import com.casrusil.siierpai.modules.accounting.domain.model.EntryType;
@@ -20,11 +22,14 @@ public class CashManagementService {
 
     private final AccountingEntryService accountingEntryService;
     private final CashTransactionJpaRepository cashTransactionRepository;
+    private final DefaultAccountResolver accountResolver;
 
     public CashManagementService(AccountingEntryService accountingEntryService,
-            CashTransactionJpaRepository cashTransactionRepository) {
+            CashTransactionJpaRepository cashTransactionRepository,
+            DefaultAccountResolver accountResolver) {
         this.accountingEntryService = accountingEntryService;
         this.cashTransactionRepository = cashTransactionRepository;
+        this.accountResolver = accountResolver;
     }
 
     /**
@@ -71,20 +76,21 @@ public class CashManagementService {
 
     private void createAccountingEntry(CashTransaction transaction) {
         List<AccountingEntryLine> lines = new ArrayList<>();
-        String cashAccount = "110101"; // Caja
+        String cashAccount = accountResolver.resolve(transaction.getCompanyId(), DefaultAccountRole.CASH);
 
         BigDecimal convertedAmount = transaction.getAmount().multiply(transaction.getExchangeRate());
 
         if (convertedAmount.compareTo(BigDecimal.ZERO) > 0) {
             // Cash IN (Debit Cash, Credit Category/Revenue)
             lines.add(AccountingEntryLine.debit(cashAccount, "Cash Deposit (" + transaction.getCurrency() + ")", convertedAmount));
-            // Determine credit account based on category
-            String creditAccount = determineAccountFromCategory(transaction.getCategory(), false);
+            String creditAccount = accountResolver.resolveCategory(
+                    transaction.getCompanyId(), transaction.getCategory(), false);
             lines.add(AccountingEntryLine.credit(creditAccount, "Revenue/Category", convertedAmount));
         } else {
             // Cash OUT (Debit Category/Expense, Credit Cash)
             BigDecimal absAmount = convertedAmount.abs();
-            String debitAccount = determineAccountFromCategory(transaction.getCategory(), true);
+            String debitAccount = accountResolver.resolveCategory(
+                    transaction.getCompanyId(), transaction.getCategory(), true);
             lines.add(AccountingEntryLine.debit(debitAccount, "Expense/Category", absAmount));
             lines.add(AccountingEntryLine.credit(cashAccount, "Cash Withdrawal (" + transaction.getCurrency() + ")", absAmount));
         }
@@ -103,16 +109,5 @@ public class CashManagementService {
                 EntryType.NORMAL);
 
         accountingEntryService.recordEntry(entry);
-    }
-
-    private String determineAccountFromCategory(String category, boolean isExpense) {
-        // Simple mapping logic
-        if ("SALES".equalsIgnoreCase(category))
-            return "310101"; // Ventas
-        if ("OFFICE_SUPPLIES".equalsIgnoreCase(category))
-            return "510102"; // Gastos de Oficina
-        if ("SERVICES".equalsIgnoreCase(category))
-            return "510103"; // Servicios
-        return isExpense ? "510199" : "310199"; // Other Expense / Other Revenue
     }
 }

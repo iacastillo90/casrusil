@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.casrusil.siierpai.modules.compliance.infrastructure.persistence.entity.TaxParameterEntity;
 import com.casrusil.siierpai.modules.compliance.infrastructure.persistence.repository.TaxParameterJpaRepository;
@@ -29,12 +30,11 @@ import java.math.RoundingMode;
 @Service
 public class F29CalculatorService {
 
-    // Chilean Account Codes (from ChileanChartOfAccountsSeeder)
-    private static final String IVA_DEBITO_FISCAL = "210401"; // VAT collected on sales
-    private static final String IVA_CREDITO_FISCAL = "110801"; // VAT paid on purchases
-    private static final String VENTAS_NACIONALES = "410101"; // Taxable sales
+    // Chilean Account Codes. Se aceptan ambos planes sembrados: el detallado
+    // (ChileanChartOfAccountsSeeder) y el canónico (1.1.01.001, etc.).
+    private static final Set<String> IVA_DEBITO_FISCAL_CODES = Set.of("210401", "2.1.04.001");
+    private static final Set<String> IVA_CREDITO_FISCAL_CODES = Set.of("110801", "1.1.08.001");
     private static final String VENTAS_EXENTAS = "410102"; // Exempt sales
-    private static final String COSTO_VENTAS = "510101"; // Cost of sales (matches Listener)
 
     private final AccountingEntryRepository accountingEntryRepository;
     private final FeeReceiptRepository feeReceiptRepository;
@@ -96,12 +96,12 @@ public class F29CalculatorService {
             for (AccountingEntryLine line : entry.getLines()) {
                 String accountCode = line.accountCode();
 
-                if (accountCode.equals(IVA_DEBITO_FISCAL)) {
+                if (IVA_DEBITO_FISCAL_CODES.contains(accountCode)) {
                     // VAT collected on sales (Liability: Credit + / Debit -)
                     // If IS_DEBIT (NC), subtract.
                     vatDebit = vatDebit.add(line.credit()).subtract(line.debit());
 
-                } else if (accountCode.equals(IVA_CREDITO_FISCAL)) {
+                } else if (IVA_CREDITO_FISCAL_CODES.contains(accountCode)) {
                     // VAT paid on purchases (Asset: Debit + / Credit -)
                     // If IS_CREDIT (NC), subtract.
                     vatCredit = vatCredit.add(line.debit()).subtract(line.credit());

@@ -15,6 +15,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -43,6 +44,7 @@ public class AnomalyDetectionService {
     private static final BigDecimal HIGH_PURCHASE_THRESHOLD = new BigDecimal("10000000"); // 10 Million
     private static final BigDecimal VAT_SPIKE_THRESHOLD_PERCENT = new BigDecimal("1.50"); // 50% increase
     private static final BigDecimal EXPENSE_SPIKE_THRESHOLD = new BigDecimal("2.0"); // 200% of average
+    private static final Set<String> VAT_DEBIT_ACCOUNT_CODES = Set.of("210401", "2.1.04.001");
 
     private final InvoiceRepository invoiceRepository;
     private final AccountingEntryRepository accountingEntryRepository;
@@ -66,7 +68,7 @@ public class AnomalyDetectionService {
                 var entries = accountingEntryRepository.findByCompanyIdAndEntryDateBetween(companyId, start, end);
                 java.math.BigDecimal monthVat = entries.stream()
                     .flatMap(e -> e.getLines().stream())
-                    .filter(l -> l.accountCode().equals("210401"))
+                    .filter(l -> VAT_DEBIT_ACCOUNT_CODES.contains(l.accountCode()))
                     .map(l -> l.credit().subtract(l.debit()))
                     .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
                 total = total.add(monthVat);

@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.treasury.application.service;
 
+import com.casrusil.siierpai.modules.accounting.application.service.DefaultAccountResolver;
+import com.casrusil.siierpai.modules.accounting.application.service.DefaultAccountRole;
 import com.casrusil.siierpai.modules.accounting.domain.model.AccountMovement;
 import com.casrusil.siierpai.modules.accounting.domain.service.AccountingEntryService;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
@@ -34,9 +36,6 @@ import java.util.List;
 @Service
 public class CashflowPredictorService {
 
-    /** Cuenta contable de Caja (plan de cuentas chileno del sistema). */
-    private static final String CASH_ACCOUNT = "110101";
-
     /** Probabilidad histórica de cobranza a tiempo aplicada a las cuentas por cobrar. */
     private static final BigDecimal COLLECTION_PROBABILITY = new BigDecimal("0.80");
 
@@ -45,11 +44,14 @@ public class CashflowPredictorService {
 
     private final InvoiceRepository invoiceRepository;
     private final AccountingEntryService accountingEntryService;
+    private final DefaultAccountResolver accountResolver;
 
     public CashflowPredictorService(InvoiceRepository invoiceRepository,
-            AccountingEntryService accountingEntryService) {
+            AccountingEntryService accountingEntryService,
+            DefaultAccountResolver accountResolver) {
         this.invoiceRepository = invoiceRepository;
         this.accountingEntryService = accountingEntryService;
+        this.accountResolver = accountResolver;
     }
 
     public CashFlowForecast generateProbabilisticForecast(CompanyId companyId) {
@@ -86,8 +88,9 @@ public class CashflowPredictorService {
 
     /** Saldo acumulado de la cuenta Caja a la fecha (último saldo del Libro Mayor del año en curso). */
     private BigDecimal currentCashBalance(CompanyId companyId, LocalDate today) {
+        String cashAccount = accountResolver.resolve(companyId, DefaultAccountRole.CASH);
         List<AccountMovement> ledger = accountingEntryService.getLedger(
-                companyId, CASH_ACCOUNT, today.withDayOfYear(1), today);
+                companyId, cashAccount, today.withDayOfYear(1), today);
         if (ledger.isEmpty()) {
             return BigDecimal.ZERO;
         }
@@ -100,7 +103,8 @@ public class CashflowPredictorService {
      */
     private BigDecimal estimateFixedMonthlyCosts(CompanyId companyId, LocalDate today) {
         LocalDate from = today.minusMonths(3);
-        List<AccountMovement> ledger = accountingEntryService.getLedger(companyId, CASH_ACCOUNT, from, today);
+        String cashAccount = accountResolver.resolve(companyId, DefaultAccountRole.CASH);
+        List<AccountMovement> ledger = accountingEntryService.getLedger(companyId, cashAccount, from, today);
         BigDecimal totalOutflow = ledger.stream()
                 .map(AccountMovement::credit)
                 .filter(java.util.Objects::nonNull)
