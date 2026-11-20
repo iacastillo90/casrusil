@@ -129,6 +129,11 @@ public class XaiManualTest {
             }
 
             @Override
+            public List<FeeReceipt> findByCompanyId(CompanyId companies) {
+                return Collections.emptyList();
+            }
+
+            @Override
             public List<FeeReceipt> findByCompanyIdAndIssueDateBetween(CompanyId companies,
                     java.time.LocalDate startDate,
                     java.time.LocalDate endDate) {
