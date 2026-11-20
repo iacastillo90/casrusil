@@ -84,4 +84,24 @@ class InventoryServiceImplTest {
         // Verificar que el evento StockMovedEvent se haya disparado para la contabilidad
         verify(eventPublisher, times(1)).publishEvent(any(StockMovedEvent.class));
     }
+
+    @Test
+    void testRegisterMovement_WithFrontPayloadWithoutUnitCost_DoesNotFail() {
+        // El front envía {productId, type: "ENTRADA", quantity} sin unitCost ni fecha.
+        StockMovementRequest request = new StockMovementRequest();
+        request.setProductId(1L);
+        request.setType(MovementType.fromJson("ENTRADA"));
+        request.setQuantity(new BigDecimal("2"));
+
+        when(productRepository.findByIdAndCompanyId(1L, "comp-1")).thenReturn(Optional.of(testProduct));
+        when(productRepository.save(any(Product.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(stockMovementRepository.save(any(StockMovement.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        var response = inventoryService.registerMovement(1L, request, "comp-1");
+
+        // Sin costo informado se usa el costo medio; sin fecha, la del registro.
+        assertEquals(new BigDecimal("1000.00"), response.getUnitCost());
+        assertEquals(0, new BigDecimal("12").compareTo(testProduct.getCurrentStock()));
+        verify(eventPublisher, times(1)).publishEvent(any(StockMovedEvent.class));
+    }
 }

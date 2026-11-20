@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
  *   <li>Se emiten exactamente 105 campos por trabajador.</li>
  *   <li>Los campos numéricos vacíos van en {@code 0}; los alfanuméricos vacíos en blanco.</li>
  *   <li>Los montos son enteros en pesos (sin separador de miles ni decimales).</li>
- *   <li>El archivo se codifica en ISO-8859-1 (Latin-1) y usa fin de línea CRLF.</li>
+ *   <li>El archivo se codifica en ANSI (Windows-1252) y usa fin de línea CRLF.</li>
  *   <li>El RUT va sin puntos, con dígito verificador en campo aparte.</li>
  *   <li>Incluye los campos de la Reforma de Pensiones: Rentabilidad Protegida (RP)
  *       y Rentabilidad Protegida Patronal (RPP).</li>

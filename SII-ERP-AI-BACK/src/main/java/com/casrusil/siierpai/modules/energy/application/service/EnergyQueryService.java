@@ -61,16 +61,65 @@ public class EnergyQueryService {
     }
 
     public double getTodayConsumptionByCompany() {
-        UUID companyId = CompanyContext.requireCompanyId().getValue();
-        List<ChargingStation> stations = stationRepository.findByCompanyId(companyId);
-        if (stations.isEmpty()) return 0.0;
-
-        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
-        LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-
-        return sessionRepository.findCompletedBetween(startOfDay, endOfDay).stream()
+        List<LocalDateTime> range = todayRange();
+        return completedTodayByCompany(range.get(0), range.get(1)).stream()
                 .mapToDouble(s -> s.getTotalEnergyConsumed().doubleValue())
                 .sum();
+    }
+
+    /**
+     * Potencia pico del día: la mayor potencia promedio de una sesión completada
+     * hoy (energía / duración). Devuelve {@code null} si no hay sesiones con
+     * duración medible, para no inventar un 0 que parezca un dato real.
+     */
+    public Double getPeakAveragePowerTodayByCompany() {
+        List<LocalDateTime> range = todayRange();
+        return completedTodayByCompany(range.get(0), range.get(1)).stream()
+                .map(this::averagePowerKw)
+                .filter(java.util.Objects::nonNull)
+                .max(Double::compareTo)
+                .map(value -> Math.round(value * 100.0) / 100.0)
+                .orElse(null);
+    }
+
+    /** Potencia promedio de la sesión (kWh / horas), o null si no es medible. */
+    private Double averagePowerKw(ChargingSession session) {
+        if (session.getStartedAt() == null || session.getEndedAt() == null) {
+            return null;
+        }
+        long minutes = java.time.Duration.between(session.getStartedAt(), session.getEndedAt()).toMinutes();
+        if (minutes <= 0) {
+            return null;
+        }
+        double hours = minutes / 60.0;
+        return session.getTotalEnergyConsumed().doubleValue() / hours;
+    }
+
+    private List<LocalDateTime> todayRange() {
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+        return List.of(startOfDay, endOfDay);
+    }
+
+    /**
+     * Sesiones completadas hoy de las estaciones de la empresa.
+     * Antes se usaba {@code findCompletedBetween} sin filtrar por empresa
+     * (fuga de datos entre tenants).
+     */
+    private List<ChargingSession> completedTodayByCompany(LocalDateTime start, LocalDateTime end) {
+        List<ChargingStation> stations = stationsOfCurrentCompany();
+        if (stations.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> stationIds = stations.stream()
+                .map(station -> station.getStationId().getValue())
+                .toList();
+        return sessionRepository.findCompletedByStationIds(stationIds, start, end);
+    }
+
+    private List<ChargingStation> stationsOfCurrentCompany() {
+        UUID companyId = CompanyContext.requireCompanyId().getValue();
+        return stationRepository.findByCompanyId(companyId);
     }
 
     public int getActiveSessionsByCompany() {
@@ -84,18 +133,14 @@ public class EnergyQueryService {
     }
 
     public List<ChargingSession> getRecentSessionsByCompany(int limit) {
-        UUID companyId = CompanyContext.requireCompanyId().getValue();
-        List<ChargingStation> stations = stationRepository.findByCompanyId(companyId);
+        List<ChargingStation> stations = stationsOfCurrentCompany();
         if (stations.isEmpty()) return List.of();
 
-        List<ChargingSession> allSessions = sessionRepository.findCompletedBetween(
-                LocalDateTime.now().minusDays(30),
-                LocalDateTime.now()
-        );
-
-        return allSessions.stream()
-                .limit(Math.min(limit, 50))
+        List<UUID> stationIds = stations.stream()
+                .map(station -> station.getStationId().getValue())
                 .toList();
+
+        return sessionRepository.findRecentByStationIds(stationIds, Math.min(limit, 50));
     }
 
     public List<Alert> getAlertsByCompany() {

@@ -67,41 +67,29 @@ public class ChargingSessionMapper {
             return null;
         }
 
-        ChargingSession session = ChargingSession.builder()
-                .sessionId(SessionId.of(entity.getId()))
-                .stationId(StationId.of(entity.getStationId()))
-                .chargerOcppId(OcppIdentifier.of(entity.getChargerOcppId()))
-                .connectorId(ConnectorId.of(entity.getConnectorNumber()))
-                .userId(entity.getUserId())
-                .startedAt(entity.getStartedAt())
-                .status(entity.getStatus())
-                .build();
+        EnergyMeasurement initialMeasurement = entity.getInitialEnergyKwh() != null
+                ? EnergyMeasurement.of(entity.getInitialEnergyKwh(), entity.getStartedAt())
+                : null;
+        EnergyMeasurement lastMeasurement = entity.getFinalEnergyKwh() != null && entity.getEndedAt() != null
+                ? EnergyMeasurement.of(entity.getFinalEnergyKwh(), entity.getEndedAt())
+                : null;
 
-        // Reconstruir mediciones inicial y final
-        if (entity.getInitialEnergyKwh() != null) {
-            EnergyMeasurement initialMeasurement = EnergyMeasurement.of(
-                    entity.getInitialEnergyKwh(),
-                    entity.getStartedAt());
-            session.startCharging(initialMeasurement);
-        }
+        // Rehidratación: no se re-ejecutan startCharging/complete (fallarían para
+        // sesiones ya iniciadas o completadas y pisarían endedAt con "ahora").
+        ChargingSession session = ChargingSession.restore(
+                SessionId.of(entity.getId()),
+                StationId.of(entity.getStationId()),
+                OcppIdentifier.of(entity.getChargerOcppId()),
+                ConnectorId.of(entity.getConnectorNumber()),
+                entity.getUserId(),
+                entity.getStartedAt(),
+                entity.getEndedAt(),
+                entity.getStatus(),
+                initialMeasurement,
+                lastMeasurement);
 
-        // Reconstruir mediciones intermedias
-        entity.getMeasurements().forEach(measurementEntity -> {
-            EnergyMeasurement measurement = toMeasurementDomain(measurementEntity);
-            if (session.getStatus().isActive()) {
-                session.recordEnergyMeasurement(measurement);
-            }
-        });
-
-        // Reconstruir medición final si existe
-        if (entity.getFinalEnergyKwh() != null && entity.getEndedAt() != null) {
-            EnergyMeasurement finalMeasurement = EnergyMeasurement.of(
-                    entity.getFinalEnergyKwh(),
-                    entity.getEndedAt());
-            if (session.getStatus() == ChargingSessionStatus.COMPLETED) {
-                session.complete(finalMeasurement, entity.getStopReason());
-            }
-        }
+        entity.getMeasurements().forEach(measurementEntity ->
+                session.addRestoredMeasurement(toMeasurementDomain(measurementEntity)));
 
         return session;
     }

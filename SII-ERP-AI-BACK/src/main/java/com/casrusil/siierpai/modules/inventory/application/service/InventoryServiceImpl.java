@@ -91,24 +91,33 @@ public class InventoryServiceImpl implements InventoryUseCase {
         Product product = productRepository.findByIdAndCompanyId(productId, companyId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
                 
-        BigDecimal totalMovementCost = request.getQuantity().multiply(request.getUnitCost());
-        
+        // `unitCost` y `movementDate` son opcionales en el contrato: sin costo se
+        // usa el costo medio del producto y sin fecha, el momento del registro.
+        BigDecimal unitCost = request.getUnitCost() != null
+                ? request.getUnitCost()
+                : (product.getAverageCost() != null ? product.getAverageCost() : BigDecimal.ZERO);
+        BigDecimal totalMovementCost = request.getQuantity().multiply(unitCost);
+
         StockMovement movement = StockMovement.builder()
                 .companyId(companyId)
                 .productId(productId)
                 .type(request.getType())
                 .quantity(request.getQuantity())
-                .unitCost(request.getUnitCost())
+                .unitCost(unitCost)
                 .totalCost(totalMovementCost)
-                .movementDate(request.getMovementDate())
+                .movementDate(request.getMovementDate() != null
+                        ? request.getMovementDate()
+                        : java.time.LocalDateTime.now())
                 .referenceDocument(request.getReferenceDocument())
                 .description(request.getDescription())
                 .build();
                 
         // PMP (Precio Medio Ponderado) Logic
         if (request.getType() == MovementType.IN) {
-            BigDecimal currentTotalValue = product.getCurrentStock().multiply(product.getAverageCost());
-            BigDecimal newTotalStock = product.getCurrentStock().add(request.getQuantity());
+            BigDecimal currentStock = product.getCurrentStock() != null ? product.getCurrentStock() : BigDecimal.ZERO;
+            BigDecimal currentAverageCost = product.getAverageCost() != null ? product.getAverageCost() : BigDecimal.ZERO;
+            BigDecimal currentTotalValue = currentStock.multiply(currentAverageCost);
+            BigDecimal newTotalStock = currentStock.add(request.getQuantity());
             BigDecimal newTotalValue = currentTotalValue.add(totalMovementCost);
             
             BigDecimal newAverageCost = newTotalStock.compareTo(BigDecimal.ZERO) == 0 ? 
@@ -117,10 +126,11 @@ public class InventoryServiceImpl implements InventoryUseCase {
             product.setCurrentStock(newTotalStock);
             product.setAverageCost(newAverageCost);
         } else if (request.getType() == MovementType.OUT) {
-            if (product.getCurrentStock().compareTo(request.getQuantity()) < 0) {
+            BigDecimal currentStock = product.getCurrentStock() != null ? product.getCurrentStock() : BigDecimal.ZERO;
+            if (currentStock.compareTo(request.getQuantity()) < 0) {
                 throw new RuntimeException("Insufficient stock");
             }
-            product.setCurrentStock(product.getCurrentStock().subtract(request.getQuantity()));
+            product.setCurrentStock(currentStock.subtract(request.getQuantity()));
             // Average cost remains the same on OUT movements for PMP
         }
         

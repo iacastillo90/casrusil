@@ -3,6 +3,8 @@ package com.casrusil.siierpai.modules.payroll.infrastructure.web;
 import jakarta.validation.Valid;
 
 import com.casrusil.siierpai.modules.payroll.application.service.PayrollUseCase;
+import com.casrusil.siierpai.modules.payroll.domain.dto.OpenPayrollPeriodRequest;
+import com.casrusil.siierpai.modules.payroll.domain.dto.PayrollPeriodResponse;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayrollProcessRequest;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayslipResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,17 @@ public class PayrollController {
     
     private static final String COMPANY_HEADER = "X-Company-Id";
 
+    /**
+     * Crea el período de remuneraciones o devuelve el existente (idempotente).
+     * Un período cerrado responde 409.
+     */
+    @PostMapping("/periods")
+    public ResponseEntity<PayrollPeriodResponse> openPeriod(
+            @RequestHeader(COMPANY_HEADER) String companyId,
+            @Valid @RequestBody OpenPayrollPeriodRequest request) {
+        return ResponseEntity.ok(payrollUseCase.openPeriod(request, companyId));
+    }
+
     @PostMapping("/calculate")
     public ResponseEntity<List<PayslipResponse>> calculatePayroll(
             @RequestHeader(COMPANY_HEADER) String companyId,
@@ -40,9 +53,13 @@ public class PayrollController {
         
         String filename = String.format("previred_%s_%s.txt", request.getYear(), request.getMonth());
         
+        // El archivo va en ANSI/Windows-1252 (requisito de carga de Previred) y
+        // CRLF; el Content-Type debe declarar ese charset, no el UTF-8 por defecto.
+        MediaType contentType = MediaType.parseMediaType("text/plain;charset=windows-1252");
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.TEXT_PLAIN)
+                .contentType(contentType)
                 .body(fileContent);
     }
 

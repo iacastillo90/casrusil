@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.payroll.application.service;
 
+import com.casrusil.siierpai.modules.payroll.domain.dto.OpenPayrollPeriodRequest;
+import com.casrusil.siierpai.modules.payroll.domain.dto.PayrollPeriodResponse;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayrollProcessRequest;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayslipResponse;
 import com.casrusil.siierpai.modules.payroll.domain.model.Employee;
@@ -8,6 +10,7 @@ import com.casrusil.siierpai.modules.payroll.domain.model.Payslip;
 import com.casrusil.siierpai.modules.payroll.domain.port.EmployeeRepositoryPort;
 import com.casrusil.siierpai.modules.payroll.domain.port.PayrollPeriodRepositoryPort;
 import com.casrusil.siierpai.modules.payroll.domain.port.PayslipRepositoryPort;
+import com.casrusil.siierpai.modules.payroll.domain.port.TaxParameterProviderPort;
 import com.casrusil.siierpai.modules.payroll.infrastructure.previred.PreviredFileGenerator;
 import com.casrusil.siierpai.shared.domain.event.PayrollCalculatedEvent;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +29,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -50,6 +55,9 @@ class PayrollServiceImplTest {
 
     @Mock
     private PreviredFileGenerator previredFileGenerator;
+
+    @Mock
+    private TaxParameterProviderPort taxParameterProvider;
 
     @InjectMocks
     private PayrollServiceImpl payrollService;
@@ -118,6 +126,140 @@ class PayrollServiceImplTest {
         verify(payslipRepository).findByEmployeeId(payslipKeyA.toString());
         verify(payslipRepository).findByEmployeeId(payslipKeyB.toString());
         verifyNoMoreInteractions(payslipRepository);
+    }
+
+    @Test
+    void openPeriod_createsWithProvidedUfAndUtm() {
+        when(periodRepository.findByPeriodAndCompanyId(YearMonth.of(2026, 11), "comp-1"))
+                .thenReturn(Optional.empty());
+        when(periodRepository.save(any(PayrollPeriod.class))).thenAnswer(invocation -> {
+            PayrollPeriod toSave = invocation.getArgument(0);
+            toSave.setId(99L);
+            return toSave;
+        });
+
+        PayrollPeriodResponse response = payrollService.openPeriod(
+                OpenPayrollPeriodRequest.builder()
+                        .year(2026).month(11)
+                        .ufValue(new BigDecimal("39731.79"))
+                        .utmValue(new BigDecimal("69751"))
+                        .build(),
+                "comp-1");
+
+        assertEquals(99L, response.id());
+        assertEquals("2026-11", response.period());
+        assertEquals(new BigDecimal("39731.79"), response.ufValue());
+        assertEquals(new BigDecimal("69751"), response.utmValue());
+        verify(periodRepository).save(any(PayrollPeriod.class));
+        verifyNoInteractions(taxParameterProvider);
+    }
+
+    @Test
+    void openPeriod_isIdempotentWhenPeriodAlreadyOpen() {
+        when(periodRepository.findByPeriodAndCompanyId(YearMonth.of(2026, 8), "comp-1"))
+                .thenReturn(Optional.of(testPeriod));
+
+        PayrollPeriodResponse response = payrollService.openPeriod(
+                OpenPayrollPeriodRequest.builder().year(2026).month(8).build(), "comp-1");
+
+        assertEquals("2026-08", response.period());
+        assertEquals(false, response.closed());
+        verify(periodRepository, never()).save(any());
+    }
+
+    @Test
+    void openPeriod_rejectsClosedPeriod() {
+        testPeriod.setClosed(true);
+        when(periodRepository.findByPeriodAndCompanyId(YearMonth.of(2026, 8), "comp-1"))
+                .thenReturn(Optional.of(testPeriod));
+
+        assertThrows(IllegalStateException.class, () -> payrollService.openPeriod(
+                OpenPayrollPeriodRequest.builder().year(2026).month(8).build(), "comp-1"));
+    }
+
+    @Test
+    void openPeriod_fallsBackToYearTaxParameters() {
+        when(periodRepository.findByPeriodAndCompanyId(YearMonth.of(2026, 11), "comp-1"))
+                .thenReturn(Optional.empty());
+        when(taxParameterProvider.findForYear(2026)).thenReturn(Optional.of(
+                new TaxParameterProviderPort.TaxParameters(
+                        new BigDecimal("39731.79"), new BigDecimal("69751"))));
+        when(periodRepository.save(any(PayrollPeriod.class))).thenAnswer(invocation -> {
+            PayrollPeriod toSave = invocation.getArgument(0);
+            toSave.setId(100L);
+            return toSave;
+        });
+
+        PayrollPeriodResponse response = payrollService.openPeriod(
+                OpenPayrollPeriodRequest.builder().year(2026).month(11).build(), "comp-1");
+
+        assertEquals(new BigDecimal("39731.79"), response.ufValue());
+        assertEquals(new BigDecimal("69751"), response.utmValue());
+    }
+
+    @Test
+    void openPeriod_failsWhenNoUfUtmAvailable() {
+        when(periodRepository.findByPeriodAndCompanyId(YearMonth.of(2030, 1), "comp-1"))
+                .thenReturn(Optional.empty());
+        when(taxParameterProvider.findForYear(2030)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> payrollService.openPeriod(
+                OpenPayrollPeriodRequest.builder().year(2030).month(1).build(), "comp-1"));
+    }
+
+    @Test
+    void calculatePayroll_fillsEmployeeNameRutAndPeriod() {
+        PayrollProcessRequest request = PayrollProcessRequest.builder().year(2026).month(8).build();
+        when(periodRepository.findByPeriodAndCompanyId(YearMonth.of(2026, 8), "comp-1"))
+                .thenReturn(Optional.of(testPeriod));
+        when(employeeRepository.findAllByCompanyId("comp-1")).thenReturn(List.of(testEmployee));
+        when(payslipRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
+
+        PayslipResponse response = payrollService.calculatePayrollForPeriod(request, "comp-1").get(0);
+
+        assertEquals("Test Employee", response.getEmployeeName());
+        assertEquals("12345678-9", response.getRut());
+        assertEquals("2026-08", response.getPeriod());
+    }
+
+    @Test
+    void getMyPayslips_fillsEmployeeAndPeriodFromStoredPayslip() {
+        UUID userId = UUID.randomUUID();
+        Employee employee = Employee.builder().id(3L).companyId("comp-1").userId(userId)
+                .fullName("Ana Pérez").rut("11111111-1").build();
+        UUID employeeKey = UUID.nameUUIDFromBytes("3".getBytes());
+        Payslip payslip = Payslip.builder().id(30L).companyId("comp-1").employeeId(employeeKey)
+                .periodId(7L).taxableIncome(new BigDecimal("1000")).nonTaxableIncome(BigDecimal.ZERO)
+                .totalDiscounts(BigDecimal.ZERO).netSalary(new BigDecimal("1000")).build();
+
+        when(employeeRepository.findByCompanyIdAndUserId("comp-1", userId)).thenReturn(Optional.of(employee));
+        when(payslipRepository.findByEmployeeId(employeeKey.toString())).thenReturn(List.of(payslip));
+        when(periodRepository.findByIdAndCompanyId(7L, "comp-1")).thenReturn(Optional.of(testPeriod));
+
+        PayslipResponse response = payrollService.getMyPayslips("comp-1", userId).get(0);
+
+        assertEquals("Ana Pérez", response.getEmployeeName());
+        assertEquals("11111111-1", response.getRut());
+        assertEquals("2026-08", response.getPeriod());
+    }
+
+    @Test
+    void getMyPayslips_toleratesMissingPeriod() {
+        UUID userId = UUID.randomUUID();
+        Employee employee = Employee.builder().id(4L).companyId("comp-1").userId(userId)
+                .fullName("Sin Período").rut("22222222-2").build();
+        UUID employeeKey = UUID.nameUUIDFromBytes("4".getBytes());
+        Payslip payslip = Payslip.builder().id(40L).companyId("comp-1").employeeId(employeeKey)
+                .periodId(404L).netSalary(new BigDecimal("500")).build();
+
+        when(employeeRepository.findByCompanyIdAndUserId("comp-1", userId)).thenReturn(Optional.of(employee));
+        when(payslipRepository.findByEmployeeId(employeeKey.toString())).thenReturn(List.of(payslip));
+        when(periodRepository.findByIdAndCompanyId(404L, "comp-1")).thenReturn(Optional.empty());
+
+        PayslipResponse response = payrollService.getMyPayslips("comp-1", userId).get(0);
+
+        assertEquals("Sin Período", response.getEmployeeName());
+        assertNull(response.getPeriod());
     }
 
     @Test

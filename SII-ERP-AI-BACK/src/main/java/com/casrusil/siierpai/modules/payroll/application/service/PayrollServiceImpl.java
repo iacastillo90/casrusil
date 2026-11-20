@@ -1,6 +1,8 @@
 package com.casrusil.siierpai.modules.payroll.application.service;
 
 import com.casrusil.siierpai.modules.payroll.domain.dto.EmployeeResponse;
+import com.casrusil.siierpai.modules.payroll.domain.dto.OpenPayrollPeriodRequest;
+import com.casrusil.siierpai.modules.payroll.domain.dto.PayrollPeriodResponse;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayrollProcessRequest;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayslipResponse;
 import com.casrusil.siierpai.modules.payroll.domain.model.Employee;
@@ -9,6 +11,7 @@ import com.casrusil.siierpai.modules.payroll.domain.model.Payslip;
 import com.casrusil.siierpai.modules.payroll.domain.port.EmployeeRepositoryPort;
 import com.casrusil.siierpai.modules.payroll.domain.port.PayrollPeriodRepositoryPort;
 import com.casrusil.siierpai.modules.payroll.domain.port.PayslipRepositoryPort;
+import com.casrusil.siierpai.modules.payroll.domain.port.TaxParameterProviderPort;
 import com.casrusil.siierpai.modules.payroll.infrastructure.previred.PreviredFileGenerator;
 import com.casrusil.siierpai.shared.domain.event.PayrollCalculatedEvent;
 import lombok.RequiredArgsConstructor;
@@ -33,10 +36,47 @@ public class PayrollServiceImpl implements PayrollUseCase {
     private final PayslipRepositoryPort payslipRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final PreviredFileGenerator previredFileGenerator;
+    private final TaxParameterProviderPort taxParameterProvider;
 
     private static final BigDecimal AFP_RATE = new BigDecimal("0.1144"); // Average AFP rate approx 11.44%
     private static final BigDecimal HEALTH_RATE = new BigDecimal("0.07"); // 7% Fonasa standard
     private static final BigDecimal UNEMPLOYMENT_RATE = new BigDecimal("0.006"); // 0.6% AFC for permanent contracts
+
+    @Override
+    @Transactional
+    public PayrollPeriodResponse openPeriod(OpenPayrollPeriodRequest request, String companyId) {
+        YearMonth ym = YearMonth.of(request.getYear(), request.getMonth());
+
+        java.util.Optional<PayrollPeriod> existing = periodRepository.findByPeriodAndCompanyId(ym, companyId);
+        if (existing.isPresent()) {
+            PayrollPeriod period = existing.get();
+            if (period.isClosed()) {
+                throw new IllegalStateException("El período " + ym + " ya está cerrado");
+            }
+            return PayrollPeriodResponse.from(period);
+        }
+
+        BigDecimal ufValue = request.getUfValue();
+        BigDecimal utmValue = request.getUtmValue();
+        if (ufValue == null || utmValue == null) {
+            TaxParameterProviderPort.TaxParameters params = taxParameterProvider.findForYear(ym.getYear())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "No hay parámetros tributarios (UF/UTM) para " + ym.getYear()
+                                    + ". Envía ufValue y utmValue o carga los parámetros del año."));
+            ufValue = ufValue != null ? ufValue : params.ufValue();
+            utmValue = utmValue != null ? utmValue : params.utmValue();
+        }
+
+        PayrollPeriod period = PayrollPeriod.builder()
+                .companyId(companyId)
+                .period(ym)
+                .ufValue(ufValue)
+                .utmValue(utmValue)
+                .isClosed(false)
+                .build();
+
+        return PayrollPeriodResponse.from(periodRepository.save(period));
+    }
 
     @Override
     @Transactional
@@ -58,7 +98,7 @@ public class PayrollServiceImpl implements PayrollUseCase {
                 .collect(Collectors.toList());
 
         List<PayslipResponse> responses = calculatedPayslips.stream()
-                .map(this::mapToResponse)
+                .map(payslip -> mapToResponse(payslip, findEmployee(employees, payslip), period))
                 .collect(Collectors.toList());
 
         // --- EVENT PUBLICATION ---
@@ -93,8 +133,24 @@ public class PayrollServiceImpl implements PayrollUseCase {
             sb.append("\r\n"); // PreviRed usa fin de línea CRLF.
         }
 
-        // PreviRed espera codificación ISO-8859-1 (Latin-1), no UTF-8.
-        return sb.toString().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+        // PreviRed publica el archivo en formato de texto plano y su carga histórica
+        // usa el juego de caracteres ANSI/Windows-1252 (compatible con ISO-8859-1
+        // para los nombres usados en Chile). Se deja configurable por si Previred
+        // cambia el requisito: payroll.previred.charset.
+        return sb.toString().getBytes(previredCharset());
+    }
+
+    private static final String DEFAULT_PREVIRED_CHARSET = "windows-1252";
+
+    @org.springframework.beans.factory.annotation.Value("${payroll.previred.charset:" + DEFAULT_PREVIRED_CHARSET + "}")
+    private String previredCharsetName;
+
+    private java.nio.charset.Charset previredCharset() {
+        try {
+            return java.nio.charset.Charset.forName(previredCharsetName);
+        } catch (Exception invalidCharset) {
+            return java.nio.charset.Charset.forName(DEFAULT_PREVIRED_CHARSET);
+        }
     }
 
     @Override
@@ -110,8 +166,14 @@ public class PayrollServiceImpl implements PayrollUseCase {
                 .findByCompanyIdAndUserId(companyId, userId)
                 .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException(
                         "No hay un empleado vinculado al usuario autenticado"));
+        java.util.Map<Long, PayrollPeriod> periodsById = new java.util.HashMap<>();
         return payslipRepository.findByEmployeeId(convertToUUID(employee.getId()).toString()).stream()
-                .map(this::mapToResponse)
+                .map(payslip -> {
+                    PayrollPeriod period = payslip.getPeriodId() == null ? null
+                            : periodsById.computeIfAbsent(payslip.getPeriodId(),
+                                    periodId -> periodRepository.findByIdAndCompanyId(periodId, companyId).orElse(null));
+                    return mapToResponse(payslip, employee, period);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -211,9 +273,20 @@ public class PayrollServiceImpl implements PayrollUseCase {
         return UUID.nameUUIDFromBytes(employeeId.toString().getBytes());
     }
 
-    private PayslipResponse mapToResponse(Payslip payslip) {
+    /** Empleado al que pertenece una liquidación (por id de nómina). */
+    private Employee findEmployee(List<Employee> employees, Payslip payslip) {
+        return employees.stream()
+                .filter(employee -> convertToUUID(employee.getId()).equals(payslip.getEmployeeId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private PayslipResponse mapToResponse(Payslip payslip, Employee employee, PayrollPeriod period) {
         return PayslipResponse.builder()
                 .id(payslip.getId())
+                .employeeName(employee != null ? employee.getFullName() : null)
+                .rut(employee != null ? employee.getRut() : null)
+                .period(period != null && period.getPeriod() != null ? period.getPeriod().toString() : null)
                 .taxableIncome(payslip.getTaxableIncome())
                 .nonTaxableIncome(payslip.getNonTaxableIncome())
                 .totalDiscounts(payslip.getTotalDiscounts())
