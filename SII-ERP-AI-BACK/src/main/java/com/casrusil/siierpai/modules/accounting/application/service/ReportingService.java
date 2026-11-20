@@ -86,8 +86,13 @@ public class ReportingService {
                 "Ingresos: %s, Costos: %s, Gastos: %s, Utilidad: %s. Periodo: %s - %s",
                 formatMoney(revenue), formatMoney(costs), formatMoney(expenses), formatMoney(netIncome), from, to);
 
-        // Llamada al módulo AI Assistant
-        String analysis = aiAnalyst.generateExecutiveSummary(financialContext);
+        // La IA es un valor agregado: si falla, el estado de resultados debe salir igual.
+        String analysis;
+        try {
+            analysis = aiAnalyst.generateExecutiveSummary(financialContext);
+        } catch (Exception ex) {
+            analysis = "Resumen de IA no disponible temporalmente: " + ex.getMessage();
+        }
 
         return new IncomeStatementReportDTO(
                 new IncomeStatementReportDTO.PeriodDTO(from, to),
