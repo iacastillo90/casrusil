@@ -1,416 +1,266 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-    Bot, CheckCircle2, XCircle, AlertTriangle, ChevronRight,
-    Lock, FileText, Building2, Calculator, Loader2, Sparkles,
-    TrendingDown, ShieldCheck, RefreshCw, ArrowRight, MessageSquare,
-    Clock, CheckCheck
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { formatCLP } from "@/lib/formatters";
-import { usePeriodClose } from "@/features/period_close/hooks/usePeriodClose";
+import { useState } from 'react';
+import { AlertTriangle, CheckCircle2, Lock, ShieldCheck, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/features/accounting/components/PageHeader';
+import { ErrorState, TableSkeleton } from '@/features/accounting/components/DataStates';
+import { usePeriodStatus } from '@/features/accounting/hooks/useAccounting';
+import { usePeriodClose } from '@/features/period_close/hooks/usePeriodClose';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-type StepStatus = "pending" | "running" | "done" | "warning" | "error";
+const currentPeriod = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
 
-interface AuditMessage {
-    type: "info" | "warning" | "success" | "error";
-    text: string;
-}
+const periodLabel = (period: string) => {
+    const [year, month] = period.split('-').map(Number);
+    if (!year || !month) return period;
+    return new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric' }).format(
+        new Date(year, month - 1, 1),
+    );
+};
 
-interface CloseStep {
-    id: string;
-    title: string;
-    description: string;
-    icon: React.ElementType;
-    status: StepStatus;
-    messages: AuditMessage[];
-    proposedEntries?: { label: string; debit: number; credit: number }[];
-}
-
-// ─── Mock AI Analysis Results ─────────────────────────────────────────────────
-const INITIAL_STEPS: CloseStep[] = [
-    {
-        id: "documents",
-        title: "Auditoría de Documentos SII",
-        description: "Verificar que todos los DTEs del período estén centralizados en el libro mayor.",
-        icon: FileText,
-        status: "pending",
-        messages: [],
-    },
-    {
-        id: "bank",
-        title: "Conciliación Bancaria",
-        description: "Confirmar que el saldo contable cuadre con los extractos bancarios del período.",
-        icon: Building2,
-        status: "pending",
-        messages: [],
-    },
-    {
-        id: "depreciation",
-        title: "Depreciación y Provisiones",
-        description: "La IA calcula y propone los asientos de depreciación de activos y provisiones de impuestos.",
-        icon: TrendingDown,
-        status: "pending",
-        messages: [],
-    },
-    {
-        id: "closing",
-        title: "Cierre y Refundición de Cuentas",
-        description: "Genera el asiento de cierre que salda las cuentas de resultado y bloquea el período.",
-        icon: Lock,
-        status: "pending",
-        messages: [],
-    },
-];
-
-// Removing Mock AI Analysis Results
-
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function PeriodClosePage() {
-    const [steps, setSteps] = useState<CloseStep[]>(INITIAL_STEPS);
-    const [currentStep, setCurrentStep] = useState<number>(-1);
-    const [isRunning, setIsRunning] = useState(false);
-    const [isClosed, setIsClosed] = useState(false);
-    const [aiChat, setAiChat] = useState<{ role: "ai" | "system"; text: string }[]>([
-        { role: "ai", text: "👋 Hola, soy tu Asistente de Cierre Contable. Cuando estés listo, inicia el análisis y revisaré el período punto por punto antes de proceder al cierre oficial." }
-    ]);
-    const [progress, setProgress] = useState(0);
+    const [period, setPeriod] = useState(currentPeriod);
+    const [year, month] = period.split('-').map(Number);
+    const [justClosed, setJustClosed] = useState(false);
 
-    const completedSteps = steps.filter(s => s.status === "done" || s.status === "warning").length;
-    const hasWarnings = steps.some(s => s.status === "warning");
-
+    const status = usePeriodStatus(period);
     const { auditPeriod, executeClose } = usePeriodClose();
 
-    const runAnalysis = async () => {
-        setIsRunning(true);
-        setCurrentStep(0);
-        setAiChat(prev => [...prev, { role: "system", text: "Iniciando auditoría de cierre del período Noviembre 2026..." }]);
+    const isClosed = status.data?.isClosed || justClosed;
+    const audit = auditPeriod.data;
 
-        // 1. Call Real Backend Endpoint
-        let aiRecommendation = "";
-        let backendIssues: string[] = [];
-        try {
-            const auditResult = await auditPeriod.mutateAsync({ year: 2026, month: 11 });
-            aiRecommendation = auditResult.aiRecommendation || "Auditoría finalizada.";
-            backendIssues = auditResult.issuesFound || [];
-            
-            // Mapeamos los issues reales al primer paso para mostrar todo centralizado, en un futuro se puede categorizar.
-            setSteps(INITIAL_STEPS.map((s, i) => {
-                if (i === 0 && backendIssues.length > 0) {
-                    return {
-                        ...s,
-                        status: "warning",
-                        messages: backendIssues.map(issue => ({ type: "warning", text: `⚠ ${issue}` }))
-                    };
-                }
-                return {
-                    ...s,
-                    status: "done",
-                    messages: [{ type: "success", text: "✓ Validado correctamente." }]
-                };
-            }));
-            
-            setProgress(100);
-            
-            if (backendIssues.length > 0) {
-                setAiChat(prev => [...prev, { role: "ai", text: "He encontrado observaciones en la auditoría. Revisa los pasos." }]);
-            }
-
-        } catch (error) {
-            console.error("Error fetching audit", error);
-            aiRecommendation = "Error al conectar con la IA o Backend.";
-            
-            setSteps(INITIAL_STEPS.map(s => ({
-                ...s,
-                status: "error",
-                messages: [{ type: "error", text: "Error de conexión." }]
-            })));
-        }
-
-        setCurrentStep(-1);
-        setIsRunning(false);
-        setAiChat(prev => [...prev, {
-            role: "ai",
-            text: aiRecommendation
-        }]);
+    const runAudit = () => {
+        auditPeriod.mutate(
+            { year, month },
+            {
+                onError: (error) =>
+                    toast.error('No se pudo auditar el período', {
+                        description: error instanceof Error ? error.message : undefined,
+                    }),
+            },
+        );
     };
 
-    const handleClose = async () => {
-        try {
-            await executeClose.mutateAsync({ year: 2026, month: 11 });
-            setIsClosed(true);
-            toast.success("¡Período Noviembre 2026 cerrado exitosamente!", {
-                description: "El asiento de cierre fue registrado y el período quedó bloqueado.",
-                duration: 5000,
-            });
-            setAiChat(prev => [...prev, {
-                role: "ai",
-                text: "🔒 Período oficialmente cerrado. Utilidad del ejercicio: $4.220.000. Los estados financieros finales del período ya están disponibles en el módulo de Reportes."
-            }]);
-        } catch (error) {
-            toast.error("Error al cerrar el período.");
-        }
-    };
+    const closePeriod = () => {
+        const confirmed = window.confirm(
+            `¿Cerrar ${periodLabel(period)}? El período quedará bloqueado y no podrás registrar asientos nuevos en él.`,
+        );
+        if (!confirmed) return;
 
-    const statusConfig: Record<StepStatus, { color: string; label: string; icon: React.ElementType }> = {
-        pending: { color: "text-slate-400 bg-slate-100", label: "Pendiente", icon: Clock },
-        running: { color: "text-blue-600 bg-blue-50 animate-pulse", label: "Analizando...", icon: Loader2 },
-        done: { color: "text-emerald-700 bg-emerald-50", label: "OK", icon: CheckCircle2 },
-        warning: { color: "text-amber-700 bg-amber-50", label: "Con observaciones", icon: AlertTriangle },
-        error: { color: "text-red-700 bg-red-50", label: "Error", icon: XCircle },
+        executeClose.mutate(
+            { year, month },
+            {
+                onSuccess: () => {
+                    setJustClosed(true);
+                    status.refetch();
+                    toast.success(`${periodLabel(period)} cerrado`);
+                },
+                onError: (error) =>
+                    toast.error('No se pudo cerrar el período', {
+                        description: error instanceof Error ? error.message : undefined,
+                    }),
+            },
+        );
     };
 
     return (
-        <div className="space-y-6 p-6 max-w-6xl mx-auto animate-in fade-in duration-500">
-            {/* Header */}
-            <div className="flex justify-between items-start">
-                <div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-indigo-100 rounded-xl">
-                            <Bot className="h-7 w-7 text-indigo-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Cierre de Período Asistido por IA</h1>
-                            <p className="text-muted-foreground text-sm">Período: <span className="font-semibold text-slate-700">Noviembre 2026</span></p>
-                        </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Cierre de período"
+                description="Auditoría previa y bloqueo del período contable. El cierre lo ejecuta el backend; la IA solo propone observaciones."
+                actions={
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="close-period" className="text-sm text-muted-foreground">
+                            Período
+                        </label>
+                        <Input
+                            id="close-period"
+                            type="month"
+                            className="w-44"
+                            value={period}
+                            onChange={(event) => {
+                                setPeriod(event.target.value);
+                                setJustClosed(false);
+                                auditPeriod.reset();
+                            }}
+                        />
                     </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    {isClosed ? (
-                        <Badge className="bg-emerald-100 text-emerald-800 border-0 text-sm px-3 py-1.5">
-                            <Lock className="w-3 h-3 mr-1.5" /> Período Cerrado
-                        </Badge>
+                }
+            />
+
+            <div className="flex flex-wrap items-center gap-3">
+                {status.isLoading ? (
+                    <Badge variant="outline">Consultando estado…</Badge>
+                ) : isClosed ? (
+                    <Badge
+                        variant="outline"
+                        className="border-success-subtle-foreground/25 bg-success-subtle text-success-subtle-foreground"
+                    >
+                        <Lock aria-hidden="true" className="mr-1 h-3.5 w-3.5" />
+                        Período cerrado
+                    </Badge>
+                ) : (
+                    <Badge variant="secondary">Período abierto</Badge>
+                )}
+                <span className="text-sm text-muted-foreground">{periodLabel(period)}</span>
+            </div>
+
+            {status.error ? (
+                <ErrorState
+                    title="No se pudo consultar el estado del período"
+                    message={
+                        status.error instanceof Error
+                            ? status.error.message
+                            : 'Error desconocido'
+                    }
+                    onRetry={() => status.refetch()}
+                    retrying={status.isFetching}
+                />
+            ) : null}
+
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between gap-4">
+                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                        <ShieldCheck aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
+                        Auditoría previa al cierre
+                    </CardTitle>
+                    <Button
+                        onClick={runAudit}
+                        loading={auditPeriod.isPending}
+                        disabled={isClosed}
+                    >
+                        {!auditPeriod.isPending && (
+                            <Sparkles aria-hidden="true" className="mr-2 h-4 w-4" />
+                        )}
+                        {audit ? 'Re-auditar' : 'Auditar período'}
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    {auditPeriod.isPending ? (
+                        <TableSkeleton rows={3} cols={2} />
+                    ) : auditPeriod.error ? (
+                        <ErrorState
+                            title="La auditoría del período falló"
+                            message={
+                                auditPeriod.error instanceof Error
+                                    ? auditPeriod.error.message
+                                    : 'Error desconocido'
+                            }
+                            onRetry={runAudit}
+                        />
+                    ) : !audit ? (
+                        <p className="text-sm text-muted-foreground">
+                            Ejecuta la auditoría para revisar documentos, conciliación, depreciación y
+                            cuentas de resultado antes de cerrar.
+                        </p>
                     ) : (
-                        <Badge variant="outline" className="text-slate-600 text-sm px-3 py-1.5">
-                            <RefreshCw className="w-3 h-3 mr-1.5" /> Período Abierto
-                        </Badge>
-                    )}
-                </div>
-            </div>
-
-            {/* Progress Bar */}
-            {(isRunning || completedSteps > 0) && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-                    <Card className="border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <CardContent className="pt-4 pb-4">
-                            <div className="flex justify-between text-sm font-medium text-indigo-800 mb-2">
-                                <span className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4" /> Auditoría en Progreso
+                        <div className="space-y-4">
+                            <div className="flex flex-wrap items-center gap-3">
+                                {audit.readyToClose ? (
+                                    <Badge
+                                        variant="outline"
+                                        className="border-success-subtle-foreground/25 bg-success-subtle text-success-subtle-foreground"
+                                    >
+                                        <CheckCircle2 aria-hidden="true" className="mr-1 h-3.5 w-3.5" />
+                                        Sin bloqueos
+                                    </Badge>
+                                ) : (
+                                    <Badge
+                                        variant="outline"
+                                        className="border-warning-subtle-foreground/30 bg-warning-subtle text-warning-subtle-foreground"
+                                    >
+                                        <AlertTriangle aria-hidden="true" className="mr-1 h-3.5 w-3.5" />
+                                        Requiere revisión
+                                    </Badge>
+                                )}
+                                <span className="text-sm text-muted-foreground">
+                                    {audit.issuesFound.length} observación
+                                    {audit.issuesFound.length === 1 ? '' : 'es'}
                                 </span>
-                                <span>{completedSteps}/{INITIAL_STEPS.length} pasos completados</span>
                             </div>
-                            <Progress value={progress} className="h-2 bg-indigo-100" />
-                        </CardContent>
-                    </Card>
-                </motion.div>
-            )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                {/* Steps Panel */}
-                <div className="lg:col-span-3 space-y-4">
-                    {steps.map((step, index) => {
-                        const config = statusConfig[step.status];
-                        const StepIcon = step.icon;
-                        const StatusIcon = config.icon;
+                            {audit.issuesFound.length > 0 ? (
+                                <ul className="space-y-2">
+                                    {audit.issuesFound.map((issue, index) => (
+                                        <li
+                                            key={`${index}-${issue.slice(0, 24)}`}
+                                            className="rounded-lg border border-warning-subtle-foreground/30 bg-warning-subtle px-4 py-2 text-sm text-warning-subtle-foreground"
+                                        >
+                                            {issue}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">
+                                    No se encontraron observaciones en el período.
+                                </p>
+                            )}
 
-                        return (
-                            <motion.div
-                                key={step.id}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.07 }}
-                            >
-                                <Card className={cn(
-                                    "border transition-all duration-300",
-                                    step.status === "running" && "border-blue-300 shadow-blue-100 shadow-md",
-                                    step.status === "warning" && "border-amber-200",
-                                    step.status === "done" && "border-emerald-200",
-                                )}>
-                                    <CardHeader className="pb-2 pt-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", config.color)}>
-                                                    {step.status === "running" ? (
-                                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                                    ) : (
-                                                        <StepIcon className="w-4 h-4" />
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <CardTitle className="text-base">{step.title}</CardTitle>
-                                                    <CardDescription className="text-xs mt-0.5">{step.description}</CardDescription>
-                                                </div>
-                                            </div>
-                                            <Badge variant="outline" className={cn("text-xs", config.color)}>
-                                                <StatusIcon className="w-3 h-3 mr-1" />
-                                                {config.label}
-                                            </Badge>
-                                        </div>
-                                    </CardHeader>
-
-                                    <AnimatePresence>
-                                        {step.messages.length > 0 && (
-                                            <motion.div
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: "auto" }}
-                                                exit={{ opacity: 0, height: 0 }}
-                                            >
-                                                <CardContent className="pt-0 pb-3">
-                                                    <div className="border-t border-slate-100 pt-3 space-y-1.5">
-                                                        {step.messages.map((msg, i) => (
-                                                            <p key={i} className={cn(
-                                                                "text-xs font-mono rounded px-2 py-1",
-                                                                msg.type === "success" && "text-emerald-700 bg-emerald-50",
-                                                                msg.type === "warning" && "text-amber-700 bg-amber-50",
-                                                                msg.type === "info" && "text-blue-700 bg-blue-50",
-                                                                msg.type === "error" && "text-red-700 bg-red-50",
-                                                            )}>
-                                                                {msg.text}
-                                                            </p>
-                                                        ))}
-                                                    </div>
-
-                                                    {/* Proposed Journal Entries */}
-                                                    {step.proposedEntries && (
-                                                        <div className="mt-3 border border-dashed border-indigo-200 rounded-lg p-3 bg-indigo-50/40">
-                                                            <p className="text-xs font-semibold text-indigo-700 mb-2 flex items-center gap-1.5">
-                                                                <Sparkles className="w-3 h-3" /> Asientos Propuestos por IA:
-                                                            </p>
-                                                            <table className="w-full text-xs">
-                                                                <thead>
-                                                                    <tr className="text-slate-500">
-                                                                        <th className="text-left font-medium pb-1">Cuenta</th>
-                                                                        <th className="text-right font-medium pb-1">Debe</th>
-                                                                        <th className="text-right font-medium pb-1">Haber</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {step.proposedEntries.map((entry, i) => (
-                                                                        <tr key={i} className="border-t border-indigo-100">
-                                                                            <td className="py-1 text-slate-700">{entry.label}</td>
-                                                                            <td className="text-right text-emerald-700 font-mono">
-                                                                                {entry.debit ? formatCLP(entry.debit) : "—"}
-                                                                            </td>
-                                                                            <td className="text-right text-red-600 font-mono">
-                                                                                {entry.credit ? formatCLP(entry.credit) : "—"}
-                                                                            </td>
-                                                                        </tr>
-                                                                    ))}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    )}
-                                                </CardContent>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </Card>
-                            </motion.div>
-                        );
-                    })}
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-2">
-                        {!isRunning && completedSteps === 0 && (
-                            <Button
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2"
-                                onClick={runAnalysis}
-                            >
-                                <Bot className="w-4 h-4" />
-                                Iniciar Auditoría con IA
-                                <ArrowRight className="w-4 h-4 ml-auto" />
-                            </Button>
-                        )}
-
-                        {isRunning && (
-                            <Button className="w-full bg-indigo-400 cursor-not-allowed gap-2" disabled>
-                                <Loader2 className="w-4 h-4 animate-spin" /> Analizando período...
-                            </Button>
-                        )}
-
-                        {!isRunning && completedSteps === INITIAL_STEPS.length && !isClosed && (
-                            <>
-                                <Button variant="outline" onClick={runAnalysis} className="gap-2">
-                                    <RefreshCw className="w-4 h-4" /> Re-analizar
-                                </Button>
-                                <Button
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 gap-2"
-                                    onClick={handleClose}
-                                >
-                                    <Lock className="w-4 h-4" />
-                                    Confirmar y Cerrar Período
-                                    <CheckCheck className="w-4 h-4 ml-auto" />
-                                </Button>
-                            </>
-                        )}
-
-                        {isClosed && (
-                            <div className="w-full flex items-center justify-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                                <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
-                                <div>
-                                    <p className="font-semibold text-emerald-800">Período Cerrado Oficialmente</p>
-                                    <p className="text-xs text-emerald-600">Noviembre 2026 — Bloqueado el {new Date().toLocaleDateString("es-CL")}</p>
+                            {audit.aiRecommendation ? (
+                                <div className="rounded-lg border bg-muted/40 p-4 text-sm">
+                                    <p className="mb-1 flex items-center gap-2 font-medium">
+                                        <Sparkles
+                                            aria-hidden="true"
+                                            className="h-4 w-4 text-muted-foreground"
+                                        />
+                                        Recomendación del asistente
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        {audit.aiRecommendation}
+                                    </p>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* AI Chat Panel */}
-                <div className="lg:col-span-2">
-                    <Card className="h-full flex flex-col border-slate-200 shadow-sm sticky top-6">
-                        <CardHeader className="border-b border-slate-100 bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-t-xl">
-                            <CardTitle className="text-base flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-indigo-200" />
-                                Asistente IA — Cierre Contable
-                            </CardTitle>
-                            <CardDescription className="text-indigo-200 text-xs">
-                                Análisis en tiempo real del período
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50 max-h-[550px]">
-                            {aiChat.map((msg, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className={cn(
-                                        "flex gap-2 max-w-full",
-                                        msg.role === "system" && "justify-center"
-                                    )}
-                                >
-                                    {msg.role === "ai" && (
-                                        <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 mt-0.5">
-                                            <Bot className="w-4 h-4 text-indigo-600" />
-                                        </div>
-                                    )}
-                                    <div className={cn(
-                                        "rounded-xl px-3 py-2 text-sm leading-relaxed",
-                                        msg.role === "ai" && "bg-white border border-slate-200 text-slate-700 shadow-sm",
-                                        msg.role === "system" && "bg-slate-200 text-slate-500 text-xs px-4 py-1.5 rounded-full"
-                                    )}>
-                                        {msg.text}
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </CardContent>
-                        <div className="p-3 border-t border-slate-100 bg-white rounded-b-xl">
-                            <div className="flex items-center gap-2 text-xs text-slate-400">
-                                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                                <span>IA con acceso de solo lectura al libro contable</span>
-                            </div>
+                            ) : null}
                         </div>
-                    </Card>
-                </div>
-            </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold">Cerrar el período</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {isClosed ? (
+                        <div className="flex items-center gap-3 rounded-lg border border-success-subtle-foreground/25 bg-success-subtle p-4 text-success-subtle-foreground">
+                            <CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0" />
+                            <p className="text-sm font-medium">
+                                {periodLabel(period)} está cerrado. No se pueden registrar asientos
+                                nuevos en este período.
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-sm text-muted-foreground">
+                                El cierre bloquea el período y genera el asiento de cierre. Revisa la
+                                auditoría antes de confirmar: la acción no se puede deshacer desde la
+                                interfaz.
+                            </p>
+                            <Button
+                                onClick={closePeriod}
+                                loading={executeClose.isPending}
+                                disabled={!audit?.readyToClose}
+                            >
+                                {!executeClose.isPending && (
+                                    <Lock aria-hidden="true" className="mr-2 h-4 w-4" />
+                                )}
+                                Confirmar y cerrar período
+                            </Button>
+                            {!audit?.readyToClose ? (
+                                <p className="text-xs text-muted-foreground">
+                                    Ejecuta una auditoría sin bloqueos para habilitar el cierre.
+                                </p>
+                            ) : null}
+                        </>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }
