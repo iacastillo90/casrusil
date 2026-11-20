@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { CheckCircle, Sparkles } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
 export function CelebrationOverlay({ show, onClose }: { show: boolean; onClose: () => void }) {
     const [isVisible, setIsVisible] = useState(false);

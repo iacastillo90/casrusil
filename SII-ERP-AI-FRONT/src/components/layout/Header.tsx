@@ -8,7 +8,6 @@ import { Sidebar } from "./Sidebar";
 import { useEffect, useState } from "react";
 import { useUiStore } from "@/stores/ui.store";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 import { EconomicIndicatorsWidget } from "./EconomicIndicatorsWidget";
 
 import { NotificationsMenu } from "./NotificationsMenu";
@@ -18,7 +17,6 @@ export function Header() {
     const { toggleOpen } = useChatStore();
     const { isSidebarCollapsed } = useUiStore();
     const [mounted, setMounted] = useState(false);
-    const router = useRouter();
 
     useEffect(() => {
         setMounted(true);
