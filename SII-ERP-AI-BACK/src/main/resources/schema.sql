@@ -931,6 +931,20 @@ ON CONFLICT (id) DO UPDATE
         uf_value = EXCLUDED.uf_value,
         bhe_retention_rate = EXCLUDED.bhe_retention_rate;
 
+CREATE TABLE IF NOT EXISTS accounting.f29_alerts (
+    id uuid NOT NULL,
+    company_id uuid NOT NULL,
+    period_year integer NOT NULL,
+    period_month integer NOT NULL,
+    invoice_folio bigint NOT NULL,
+    vat_difference numeric(38,2),
+    reason character varying(64) NOT NULL,
+    created_at timestamp(6) with time zone NOT NULL,
+    resolved boolean DEFAULT false NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_f29_alerts_company ON accounting.f29_alerts (company_id, created_at);
+
 CREATE TABLE IF NOT EXISTS public.tax_profiles (
     company_id character varying(255) NOT NULL,
     created_at timestamp(6) without time zone,
