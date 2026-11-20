@@ -1,72 +1,50 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Upload, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { RefreshCw, Info } from "lucide-react";
 import { toast } from "sonner";
+import { useSyncBankTransactions } from "@/features/banking/hooks/useBanking";
+
+const getErrorMessage = (error: unknown): string =>
+    error instanceof Error ? error.message : "Inténtalo nuevamente";
 
 export function BankStatementUpload() {
-    const [file, setFile] = useState<File | null>(null);
-    const [uploading, setUploading] = useState(false);
-    const [uploaded, setUploaded] = useState(false);
+    const syncTransactions = useSyncBankTransactions();
 
-    const handleUpload = async () => {
-        if (!file) return;
-        setUploading(true);
-        setUploaded(false);
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            // await api.post('/treasury/statements/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-            
-            setUploaded(true);
-            toast.success("Cartola cargada. El motor de conciliación la procesará.");
-        } catch {
-            toast.error("Error al cargar la cartola bancaria.");
-        } finally {
-            setUploading(false);
-        }
+    const handleSync = () => {
+        syncTransactions.mutate(undefined, {
+            onSuccess: () => toast.success("Movimientos bancarios sincronizados."),
+            onError: (error) =>
+                toast.error("No se pudieron sincronizar los movimientos bancarios.", {
+                    description: getErrorMessage(error),
+                }),
+        });
     };
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Upload className="h-5 w-5 text-indigo-600" />
-                    Cargar Cartola Bancaria
+                    <RefreshCw className="h-5 w-5 text-indigo-600" />
+                    Sincronización Bancaria
                 </CardTitle>
                 <CardDescription>
-                    Sube el archivo (CSV / Excel) de tu cartola para iniciar la conciliación automática.
+                    Sincroniza los movimientos de tus bancos conectados para conciliarlos.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="grid w-full max-w-md items-center gap-1.5">
-                    <Label htmlFor="statement-file">Archivo de cartola</Label>
-                    <Input
-                        id="statement-file"
-                        type="file"
-                        accept=".csv,.xls,.xlsx"
-                        onChange={(e) => {
-                            setFile(e.target.files?.[0] ?? null);
-                            setUploaded(false);
-                        }}
-                    />
+                <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                    <Info className="mt-0.5 h-4 w-4 shrink-0" />
+                    <p>
+                        La importación de cartolas CSV/Excel está pendiente de definición de formato.
+                        Por ahora puedes sincronizar los movimientos de los bancos que tengas conectados.
+                    </p>
                 </div>
 
-                {file && (
-                    <div className="flex items-center gap-2 rounded-md bg-muted p-3 text-sm">
-                        <FileText className="h-4 w-4 text-blue-500" />
-                        <span className="flex-1 truncate">{file.name}</span>
-                        {uploaded && <CheckCircle2 className="h-4 w-4 text-green-600" />}
-                    </div>
-                )}
-
-                <Button onClick={handleUpload} disabled={!file || uploading}>
-                    {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                    Cargar y Conciliar
+                <Button onClick={handleSync} disabled={syncTransactions.isPending}>
+                    <RefreshCw className={`mr-2 h-4 w-4 ${syncTransactions.isPending ? "animate-spin" : ""}`} />
+                    {syncTransactions.isPending ? "Sincronizando..." : "Sincronizar movimientos"}
                 </Button>
             </CardContent>
         </Card>

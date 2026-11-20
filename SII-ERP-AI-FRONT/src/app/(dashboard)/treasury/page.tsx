@@ -6,6 +6,7 @@ import { ReconciliationInterface } from "@/features/treasury/components/Reconcil
 import { CashFlowChart } from "@/features/treasury/components/CashFlowChart";
 import { LiquidityKPIs } from "@/features/treasury/components/LiquidityKPIs";
 import { CashEntryModal } from "@/features/treasury/components/CashEntryModal";
+import { CashEntriesList } from "@/features/treasury/components/CashEntriesList";
 import { AiPredictiveChart } from "@/features/treasury/components/AiPredictiveChart";
 import { MultiCurrencyPanel } from "@/features/treasury/components/MultiCurrencyPanel";
 
@@ -16,6 +17,8 @@ export default function TreasuryPage() {
                 <h1 className="text-3xl font-bold tracking-tight">Tesorería y Bancos</h1>
                 <CashEntryModal />
             </div>
+
+            <CashEntriesList />
 
             <Tabs defaultValue="ai-forecast" className="space-y-4">
                 <TabsList>
