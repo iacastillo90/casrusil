@@ -46,6 +46,7 @@ public class DteSenderService {
     private final com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.out.rest.SiiUploadClient siiUploadClient;
     private final com.casrusil.siierpai.modules.sso.domain.port.out.CompanyCertificateRepository certificateRepository;
     private final DteEmissionValidator dteEmissionValidator;
+    private final com.casrusil.siierpai.modules.sso.application.service.CompanyCertificateService companyCertificateService;
 
     public DteSenderService(
             XmlDsigSigner xmlDsigSigner,
@@ -57,7 +58,8 @@ public class DteSenderService {
             com.casrusil.siierpai.modules.integration_sii.infrastructure.xml.EnvioDteBuilder envioDteBuilder,
             com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.out.rest.SiiUploadClient siiUploadClient,
             com.casrusil.siierpai.modules.sso.domain.port.out.CompanyCertificateRepository certificateRepository,
-            DteEmissionValidator dteEmissionValidator) {
+            DteEmissionValidator dteEmissionValidator,
+            com.casrusil.siierpai.modules.sso.application.service.CompanyCertificateService companyCertificateService) {
         this.xmlDsigSigner = xmlDsigSigner;
         this.tokenRepository = tokenRepository;
         this.pkcs12Handler = pkcs12Handler;
@@ -68,6 +70,7 @@ public class DteSenderService {
         this.siiUploadClient = siiUploadClient;
         this.certificateRepository = certificateRepository;
         this.dteEmissionValidator = dteEmissionValidator;
+        this.companyCertificateService = companyCertificateService;
     }
 
     /**
@@ -148,16 +151,9 @@ public class DteSenderService {
      */
     private SiiCertificate loadCertificateForCompany(CompanyId companyId) {
         // 1. Try DB
-        java.util.Optional<com.casrusil.siierpai.modules.sso.domain.model.CompanyCertificate> certOpt = certificateRepository
-                .findByCompanyId(companyId.value());
-
-        if (certOpt.isPresent()) {
-            com.casrusil.siierpai.modules.sso.domain.model.CompanyCertificate cert = certOpt.get();
-            try (java.io.ByteArrayInputStream bis = new java.io.ByteArrayInputStream(cert.getCertificateData())) {
-                return pkcs12Handler.loadCertificate(bis, cert.getPassword());
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to load certificate from DB for company " + companyId, e);
-            }
+        java.util.Optional<SiiCertificate> stored = companyCertificateService.load(companyId);
+        if (stored.isPresent()) {
+            return stored.get();
         }
 
         // 2. Fallback to properties (MVP)

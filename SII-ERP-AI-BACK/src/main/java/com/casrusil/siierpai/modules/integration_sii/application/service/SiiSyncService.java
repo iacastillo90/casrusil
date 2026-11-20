@@ -58,6 +58,7 @@ public class SiiSyncService implements SiiSyncUseCase, SiiDteUseCase {
     private final InvoiceRepository invoiceRepository;
     private final CompanyRepository companyRepository;
     private final CompanyCertificateRepository certificateRepository;
+    private final com.casrusil.siierpai.modules.sso.application.service.CompanyCertificateService companyCertificateService;
     private final AuthenticateSiiUseCase authenticateSiiUseCase;
     private final DownloadRcvUseCase downloadRcvUseCase;
     private final Pkcs12Handler pkcs12Handler;
@@ -76,6 +77,7 @@ public class SiiSyncService implements SiiSyncUseCase, SiiDteUseCase {
             InvoiceRepository invoiceRepository,
             CompanyRepository companyRepository,
             CompanyCertificateRepository certificateRepository,
+            com.casrusil.siierpai.modules.sso.application.service.CompanyCertificateService companyCertificateService,
             AuthenticateSiiUseCase authenticateSiiUseCase,
             DownloadRcvUseCase downloadRcvUseCase,
             Pkcs12Handler pkcs12Handler,
@@ -86,6 +88,7 @@ public class SiiSyncService implements SiiSyncUseCase, SiiDteUseCase {
         this.invoiceRepository = invoiceRepository;
         this.companyRepository = companyRepository;
         this.certificateRepository = certificateRepository;
+        this.companyCertificateService = companyCertificateService;
         this.authenticateSiiUseCase = authenticateSiiUseCase;
         this.downloadRcvUseCase = downloadRcvUseCase;
         this.pkcs12Handler = pkcs12Handler;
@@ -188,15 +191,9 @@ public class SiiSyncService implements SiiSyncUseCase, SiiDteUseCase {
     }
 
     private SiiCertificate loadCertificate(CompanyId companyId) {
-        Optional<CompanyCertificate> storedCertificate = certificateRepository.findByCompanyId(companyId.value());
-        if (storedCertificate.isPresent()) {
-            CompanyCertificate certificate = storedCertificate.get();
-            try (ByteArrayInputStream input = new ByteArrayInputStream(certificate.getCertificateData())) {
-                return pkcs12Handler.loadCertificate(input, certificate.getPassword());
-            } catch (Exception ex) {
-                throw new IllegalStateException(
-                        "Failed to load certificate from DB for company " + companyId, ex);
-            }
+        Optional<SiiCertificate> stored = companyCertificateService.load(companyId);
+        if (stored.isPresent()) {
+            return stored.get();
         }
 
         if (defaultCertPath != null && !defaultCertPath.isBlank()) {
