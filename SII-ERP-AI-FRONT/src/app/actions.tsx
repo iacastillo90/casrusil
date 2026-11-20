@@ -38,7 +38,9 @@ export async function submitUserMessage(content: string): Promise<ClientMessage>
     let backendResponse = "Error de comunicación con el asistente (Backend)";
     
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+        // Server Action: necesita URL absoluta interna; el proxy relativo solo sirve en el navegador.
+        const internalHost = process.env.BACKEND_INTERNAL_URL || 'http://localhost:8092';
+        const baseUrl = `${internalHost}/api/v1`;
         
         // Asumiendo que primero creamos una conversación o usamos una genérica
         // Por simplicidad, enviaremos directo asumiendo un conversationId 'default' o iniciaremos una.
