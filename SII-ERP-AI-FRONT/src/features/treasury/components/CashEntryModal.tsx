@@ -16,16 +16,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useCreateCashEntry } from "../hooks/useTreasury";
 
 type MovementType = "INCOME" | "EXPENSE";
 
+const getErrorMessage = (error: unknown): string =>
+    error instanceof Error ? error.message : "Inténtalo nuevamente";
+
 export function CashEntryModal() {
     const [open, setOpen] = useState(false);
-    const [saving, setSaving] = useState(false);
     const [type, setType] = useState<MovementType>("INCOME");
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+    const createCashEntry = useCreateCashEntry();
 
     const reset = () => {
         setType("INCOME");
@@ -35,20 +39,33 @@ export function CashEntryModal() {
     };
 
     const handleSave = async () => {
-        if (!amount || !description) {
-            toast.error("Completa el monto y la descripción.");
+        const parsedAmount = Number(amount);
+        if (!Number.isFinite(parsedAmount) || parsedAmount <= 0 || !description.trim()) {
+            toast.error("Completa un monto mayor a 0 y una descripción.");
             return;
         }
-        setSaving(true);
+
+        // El backend guarda montos con signo: positivo = ingreso, negativo = egreso.
+        const signedAmount = type === "INCOME" ? parsedAmount : -parsedAmount;
+
         try {
-            // await api.post('/treasury/cash-entries', { type, amount, description, date });
+            await createCashEntry.mutateAsync({
+                date,
+                description: description.trim(),
+                amount: signedAmount,
+                reference: null,
+                // Categoría genérica: el backend la mapea a "Otros ingresos/gastos".
+                category: "OTHER",
+                currency: "CLP",
+                exchangeRate: 1,
+            });
             toast.success(`Movimiento de ${type === "INCOME" ? "ingreso" : "egreso"} registrado.`);
             reset();
             setOpen(false);
-        } catch {
-            toast.error("Error al registrar el movimiento de caja.");
-        } finally {
-            setSaving(false);
+        } catch (error) {
+            toast.error("No se pudo registrar el movimiento de caja.", {
+                description: getErrorMessage(error),
+            });
         }
     };
 
@@ -83,6 +100,7 @@ export function CashEntryModal() {
                         <Input
                             id="cash-amount"
                             type="number"
+                            min={1}
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
                             placeholder="0"
@@ -103,11 +121,11 @@ export function CashEntryModal() {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
+                    <Button variant="outline" onClick={() => setOpen(false)} disabled={createCashEntry.isPending}>
                         Cancelar
                     </Button>
-                    <Button onClick={handleSave} disabled={saving}>
-                        {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button onClick={handleSave} disabled={createCashEntry.isPending}>
+                        {createCashEntry.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Guardar
                     </Button>
                 </DialogFooter>
