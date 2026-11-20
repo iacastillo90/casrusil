@@ -35,5 +35,6 @@ public enum UserRole {
     SALES,
     OPERATIONS,
     AUDITOR,
-    USER
+    USER,
+    B2B_CLIENT
 }

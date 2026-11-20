@@ -29,6 +29,11 @@ public class EmployeeRepositoryAdapter implements EmployeeRepositoryPort {
     }
 
     @Override
+    public Optional<Employee> findByCompanyIdAndUserId(String companyId, java.util.UUID userId) {
+        return jpaRepository.findByCompanyIdAndUserId(companyId, userId).map(this::mapToDomain);
+    }
+
+    @Override
     public List<Employee> findAllByCompanyId(String companyId) {
         return jpaRepository.findAllByCompanyId(companyId).stream()
                 .map(this::mapToDomain)
@@ -40,6 +45,7 @@ public class EmployeeRepositoryAdapter implements EmployeeRepositoryPort {
         entity.setId(domain.getId());
         entity.setCompanyId(domain.getCompanyId());
         entity.setRut(domain.getRut());
+        entity.setUserId(domain.getUserId());
         entity.setFullName(domain.getFullName());
         entity.setBaseSalary(domain.getBaseSalary());
         entity.setAfp(domain.getAfp());
@@ -54,6 +60,7 @@ public class EmployeeRepositoryAdapter implements EmployeeRepositoryPort {
                 .id(entity.getId())
                 .companyId(entity.getCompanyId())
                 .rut(entity.getRut())
+                .userId(entity.getUserId())
                 .fullName(entity.getFullName())
                 .baseSalary(entity.getBaseSalary())
                 .afp(entity.getAfp())

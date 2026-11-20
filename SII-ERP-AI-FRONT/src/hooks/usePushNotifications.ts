@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/features/auth/stores/auth.store';
 
 export const usePushNotifications = () => {
     const [isConnected, setIsConnected] = useState(false);
+    const userId = useAuthStore((state) => state.user?.id);
 
     useEffect(() => {
         let eventSource: EventSource | null = null;
 
         const connect = () => {
+            if (!userId) return;
             try {
-                // Connect to real SSE endpoint. In a real app, pass the userId or token.
-                // For demo purposes, we pass userId=1
-                eventSource = new EventSource('http://localhost:8080/api/v1/notifications/subscribe?userId=1');
+                // Same-origin: el proxy de Next reenvía /api/v1 al backend.
+                eventSource = new EventSource(`/api/v1/notifications/subscribe?userId=${encodeURIComponent(userId)}`);
 
                 eventSource.onopen = () => {
                     setIsConnected(true);
@@ -45,7 +47,7 @@ export const usePushNotifications = () => {
             }
             setIsConnected(false);
         };
-    }, []);
+    }, [userId]);
 
     return { isConnected };
 };

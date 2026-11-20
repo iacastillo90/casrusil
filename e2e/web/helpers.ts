@@ -16,10 +16,6 @@ export function users(): E2eUsers {
 }
 
 export async function login(page: Page, email: string, password: string) {
-  // Workaround: el middleware de Next redirige /api/v1/** a /login porque el
-  // matcher no excluye /api (src/middleware.ts). Una cookie dummy hace que el
-  // middleware deje pasar la llamada de login; el backend la reemplaza.
-  await page.context().addCookies([{ name: 'token', value: 'e2e-bootstrap', domain: 'localhost', path: '/' }]);
   loginIp += 1;
   await page.setExtraHTTPHeaders({ 'X-Forwarded-For': `10.77.0.${loginIp}` });
   await page.goto('/login', { waitUntil: 'domcontentloaded', timeout: 180_000 });

@@ -76,7 +76,7 @@ async function login(email) {
 async function createRoleUsers(admin) {
   const created = {};
   const failures = [];
-  const roles = ['ACCOUNTANT', 'TREASURER', 'SALES', 'OPERATIONS', 'HR', 'AUDITOR', 'USER'];
+  const roles = ['ACCOUNTANT', 'TREASURER', 'SALES', 'OPERATIONS', 'HR', 'AUDITOR', 'USER', 'B2B_CLIENT'];
   for (const role of roles) {
     const email = `qa-${role.toLowerCase()}-${stamp}@example.com`;
     const response = await http('POST', '/sso/users', {
@@ -95,17 +95,10 @@ async function createRoleUsers(admin) {
     created[role] = { email, token: auth.token, userId: auth.userId };
   }
 
-  // B2B_CLIENT no existe en UserRole (backend): se intenta y se documenta.
-  const b2bEmail = `qa-b2b-${stamp}@example.com`;
-  const b2bAttempt = await http('POST', '/sso/users', {
-    token: admin.token,
-    json: { email: b2bEmail, fullName: 'QA B2B', password: PASSWORD, role: 'B2B_CLIENT' },
-  });
-
-  return { created, failures, b2bAttempt, b2bEmail };
+  return { created, failures };
 }
 
-const ALL_ROLES = ['ADMIN', 'ACCOUNTANT', 'TREASURER', 'SALES', 'OPERATIONS', 'HR', 'AUDITOR', 'USER'];
+const ALL_ROLES = ['ADMIN', 'ACCOUNTANT', 'TREASURER', 'SALES', 'OPERATIONS', 'HR', 'AUDITOR', 'USER', 'B2B_CLIENT'];
 
 const endpoints = [
   {
@@ -124,7 +117,7 @@ const endpoints = [
     label: 'GET /payroll/employee/payslips',
     method: 'GET',
     path: '/payroll/employee/payslips',
-    allow: ['ADMIN', 'HR'],
+    allow: ['ADMIN', 'HR', 'USER'],
     allowMeansNot403: true,
   },
   { key: 'actuator', label: 'GET /actuator/metrics', method: 'GET', path: '/actuator/metrics', root: true, allow: ['ADMIN'] },
@@ -167,6 +160,41 @@ function cell(endpoint, role, result) {
   return `${icon} ${result.status}`;
 }
 
+
+async function checkB2bIsolation(admin, created) {
+  const first = created.B2B_CLIENT;
+  const email2 = `qa-b2b2-${stamp}@example.com`;
+  if (!first) return { ok: false, detail: 'No se creó el usuario B2B_CLIENT' };
+
+  const create2 = await http('POST', '/sso/users', {
+    token: admin.token,
+    json: { email: email2, fullName: 'QA B2B 2', password: PASSWORD, role: 'B2B_CLIENT' },
+  });
+  if (create2.status !== 200) return { ok: false, detail: `alta B2B 2 → ${create2.status}` };
+  const login2 = await login(email2);
+  if (!login2.ok) return { ok: false, detail: `login B2B 2 → ${login2.status}` };
+
+  const item = { productName: 'Producto QA', quantity: 1, unitPrice: 1000 };
+  const order1 = await http('POST', '/b2b/orders', { token: first.token, json: { items: [item] } });
+  const order2 = await http('POST', '/b2b/orders', { token: login2.token, json: { items: [item] } });
+  if (order1.status !== 201 || order2.status !== 201) {
+    return { ok: false, detail: `crear órdenes → ${order1.status}/${order2.status}` };
+  }
+  const list1 = await http('GET', '/b2b/orders/my-orders', { token: first.token });
+  const list2 = await http('GET', '/b2b/orders/my-orders', { token: login2.token });
+  const ids1 = (list1.json ?? []).map((o) => o.id);
+  const ids2 = (list2.json ?? []).map((o) => o.id);
+  const ok = ids1.length === 1 && ids1[0] === order1.json.id
+    && ids2.length === 1 && ids2[0] === order2.json.id;
+  return {
+    ok,
+    orderA: order1.json.id,
+    orderB: order2.json.id,
+    seenByA: ids1,
+    seenByB: ids2,
+  };
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   await mkdir(GEN_DIR, { recursive: true });
@@ -175,22 +203,19 @@ async function main() {
   const admin = await registerCompany();
   console.log(`✅ Empresa/admin creados: ${admin.email} (${admin.companyId})`);
 
-  const { created, failures, b2bAttempt, b2bEmail } = await createRoleUsers(admin);
+  const { created, failures } = await createRoleUsers(admin);
   const tokens = { ADMIN: admin.token, ...Object.fromEntries(Object.entries(created).map(([r, v]) => [r, v.token])) };
 
   console.log(`✅ Roles creados: ${Object.keys(created).join(', ')}`);
   if (failures.length) console.log(`⚠️ Fallos creando roles: ${JSON.stringify(failures)}`);
-  console.log(`ℹ️ B2B_CLIENT: intento de alta → HTTP ${b2bAttempt.status}`);
+
+  const b2bIsolation = await checkB2bIsolation(admin, created);
 
   const endpointResults = [];
   for (const endpoint of endpoints) {
     const results = {};
-    for (const role of [...ALL_ROLES, 'B2B_CLIENT']) {
+    for (const role of ALL_ROLES) {
       const token = tokens[role];
-      if (role === 'B2B_CLIENT' && !token) {
-        results[role] = { status: 'N/A', note: 'rol no representable en UserRole' };
-        continue;
-      }
       if (!token) {
         results[role] = undefined;
         continue;
@@ -201,7 +226,7 @@ async function main() {
     endpointResults.push({ endpoint, results });
   }
 
-  const roles = [...ALL_ROLES, 'B2B_CLIENT'];
+  const roles = ALL_ROLES;
   const rows = [];
   const discrepancies = [];
   for (const entry of endpointResults) {
@@ -230,7 +255,7 @@ async function main() {
     `- Empresa E2E: \`QA E2E ${stamp}\` / RUT \`E2E-${stamp}\``,
     `- ADMIN: \`${admin.email}\``,
     ...Object.entries(created).map(([role, v]) => `- ${role}: \`${v.email}\``),
-    `- B2B_CLIENT: \`${b2bEmail}\` — alta vía \`POST /sso/users\` → HTTP ${b2bAttempt.status} (rol inexistente en el enum)`,
+    `- B2B_CLIENT: \`${created.B2B_CLIENT?.email ?? 'no creado'}\``,
   ];
 
   const report = `# Matriz de permisos por API — SII-ERP
@@ -245,29 +270,31 @@ ${setupLines.join('\n')}
 
 ## Matriz rol × endpoint
 
-Celdas: \`✅ status\` = coincide con lo esperado; \`❌ status\` = discrepancia; \`—\` = rol no creado; \`N/A\` = no representable.
+Celdas: ✅ status = coincide con lo esperado; ❌ status = discrepancia; — = rol no creado.
 
 | Endpoint | ${roles.join(' | ')} |
 | --- | ${roles.map(() => '---').join(' | ')} |
 ${rows.join('\n')}
 
-## Discrepancias
+## Resultado
 
-${discrepancies.length === 0 ? 'Sin discrepancias en los endpoints probados.' : discrepancies.map((d) => `- **${d.endpoint}** / ${d.role}: esperado ${d.expected}, obtenido ${d.obtained} — \`${d.body ?? ''}\``).join('\n')}
+${discrepancies.length === 0 ? 'Sin discrepancias en los endpoints probados.' : discrepancies.map((d) => `- **${d.endpoint}** / ${d.role}: esperado ${d.expected}, obtenido ${d.obtained} — ${d.body ?? ''}`).join('\n')}
 
-## Detalle de discrepancias
+## Notas de la matriz
 
-- **payroll / USER** — el método permite explícitamente al rol USER: \`SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/payroll/infrastructure/web/PayrollController.java:59\` (\`@PreAuthorize("hasAnyRole('ADMIN','HR','USER')")\`). La matriz de \`MAPA-FUNCIONAL.md\` dice que USER no tiene áreas propias. No se corrige: es código de E/C.
-- **actuator / ADMIN (500)** — \`SecurityConfig.java:66\` protege \`/actuator/**\` con ADMIN, pero \`application.properties:120\` solo expone \`health,info\`; \`/actuator/metrics\` no está mapeado y el \`GlobalExceptionHandler\` lo convierte en 500 (\`No static resource actuator/metrics\`). No se tocó el backend.
-- **invoices / ALLOW (400)** — el UUID aleatorio no existe; lo relevante es que no sea 403 (permiso concedido).
+- **B2B_CLIENT** ya existe en UserRole y se crea por POST /sso/users; el endpoint B2B se prueba con su token.
+- **payroll / USER**: el endpoint permite USER y ahora resuelve el empleado desde el usuario autenticado; solo devuelve sus liquidaciones (test backend PayrollPayslipIsolationTest). La fila USER de MAPA-FUNCIONAL.md estaba desactualizada.
+- **actuator / ADMIN**: metrics está expuesto en application.properties y protegido por ADMIN; responde 200.
+- **invoices / ALLOW (400)**: UUID inexistente; lo relevante es que no sea 403.
+- **B2B aislamiento**: ${b2bIsolation.ok ? 'OK: cada cliente ve solo su orden' : 'FALLO: ' + JSON.stringify(b2bIsolation)} (A=${b2bIsolation.orderA ?? '-'}, B=${b2bIsolation.orderB ?? '-'}).
 
 ## B2B_CLIENT
 
-\`UserRole\` no define \`B2B_CLIENT\` (\`SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/domain/model/UserRole.java:30\`), aunque \`CustomerOrderController\` lo exige (\`.../b2b/infrastructure/web/CustomerOrderController.java:30\`). No es posible crear un usuario con ese rol por la API; la fila B2B_CLIENT queda sin token y el endpoint solo se valida con ADMIN.
+UserRole incluye B2B_CLIENT. CustomerOrderService filtra por customerId y el test E2E crea dos clientes con una orden cada uno; cada GET /b2b/orders/my-orders devuelve solo la propia.
 `;
 
   await writeFile(path.join(OUT_DIR, 'report.md'), report);
-  await writeFile(path.join(OUT_DIR, 'results.json'), JSON.stringify({ admin, created, failures, b2bAttempt, endpointResults, discrepancies }, null, 2));
+  await writeFile(path.join(OUT_DIR, 'results.json'), JSON.stringify({ admin, created, failures, b2bIsolation, endpointResults, discrepancies }, null, 2));
   await writeFile(path.join(GEN_DIR, 'users.json'), JSON.stringify({
     admin: { email: admin.email, password: PASSWORD, role: 'ADMIN' },
     sales: { email: created.SALES?.email, password: PASSWORD, role: 'SALES' },
@@ -276,8 +303,8 @@ ${discrepancies.length === 0 ? 'Sin discrepancias en los endpoints probados.' : 
   }, null, 2));
 
   console.log(`\n${report}`);
-  if (discrepancies.length) {
-    fail(`${discrepancies.length} discrepancia(s); ver api/report.md`);
+  if (discrepancies.length || !b2bIsolation.ok) {
+    fail(`${discrepancies.length} discrepancia(s), aislamiento B2B=${b2bIsolation.ok}; ver api/report.md`);
   } else {
     console.log('✅ Matriz sin discrepancias');
   }
