@@ -2,7 +2,10 @@ package com.casrusil.siierpai.shared.infrastructure.crypto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
@@ -37,11 +40,20 @@ public class SecretCipher {
     private final SecretKeySpec key;
     private final SecureRandom random = new SecureRandom();
 
-    public SecretCipher(@Value("${app.crypto.key:" + DEV_DEFAULT_KEY + "}") String rawKey) {
+    @Autowired
+    public SecretCipher(@Value("${app.crypto.key:" + DEV_DEFAULT_KEY + "}") String rawKey, Environment environment) {
         if (DEV_DEFAULT_KEY.equals(rawKey)) {
+            if (environment != null && environment.acceptsProfiles(Profiles.of("prod"))) {
+                throw new IllegalStateException(
+                        "app.crypto.key no está configurada: en el perfil prod es obligatoria (APP_CRYPTO_KEY)");
+            }
             log.warn("app.crypto.key no configurada: se usa la clave de desarrollo. No usar en producción.");
         }
         this.key = new SecretKeySpec(sha256(rawKey), "AES");
+    }
+
+    public SecretCipher(String rawKey) {
+        this(rawKey, null);
     }
 
     public String encrypt(String plaintext) {

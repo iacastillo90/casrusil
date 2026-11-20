@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.payroll.application.service;
 
+import com.casrusil.siierpai.modules.payroll.domain.dto.EmployeeResponse;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayrollProcessRequest;
 import com.casrusil.siierpai.modules.payroll.domain.dto.PayslipResponse;
 import com.casrusil.siierpai.modules.payroll.domain.model.Employee;
@@ -94,6 +95,13 @@ public class PayrollServiceImpl implements PayrollUseCase {
 
         // PreviRed espera codificación ISO-8859-1 (Latin-1), no UTF-8.
         return sb.toString().getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+    }
+
+    @Override
+    public List<EmployeeResponse> getEmployees(String companyId) {
+        return employeeRepository.findAllByCompanyId(companyId).stream()
+                .map(EmployeeResponse::from)
+                .toList();
     }
 
     @Override

@@ -35,6 +35,11 @@ public class FixedAssetController {
         return ResponseEntity.ok(service.getAssets(CompanyContext.requireCompanyId()));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<FixedAsset> getAsset(@PathVariable java.util.UUID id) {
+        return ResponseEntity.ok(service.getAsset(CompanyContext.requireCompanyId(), id));
+    }
+
     @PostMapping("/run-depreciation")
     public ResponseEntity<Void> runDepreciation() {
         service.runMonthlyDepreciation(CompanyContext.requireCompanyId());

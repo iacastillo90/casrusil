@@ -5,6 +5,8 @@ import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntryLine
 import com.casrusil.siierpai.modules.accounting.domain.model.EntryType;
 import com.casrusil.siierpai.modules.accounting.domain.service.AccountingEntryService;
 import com.casrusil.siierpai.modules.treasury.domain.model.CashTransaction;
+import com.casrusil.siierpai.modules.treasury.infrastructure.persistence.entity.CashTransactionEntity;
+import com.casrusil.siierpai.modules.treasury.infrastructure.persistence.repository.CashTransactionJpaRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,16 +19,51 @@ import java.util.List;
 public class CashManagementService {
 
     private final AccountingEntryService accountingEntryService;
+    private final CashTransactionJpaRepository cashTransactionRepository;
 
-    public CashManagementService(AccountingEntryService accountingEntryService) {
+    public CashManagementService(AccountingEntryService accountingEntryService,
+            CashTransactionJpaRepository cashTransactionRepository) {
         this.accountingEntryService = accountingEntryService;
+        this.cashTransactionRepository = cashTransactionRepository;
+    }
+
+    /**
+     * Movimientos de caja de una empresa, más recientes primero.
+     *
+     * @param companyId empresa
+     * @return movimientos registrados
+     */
+    public List<CashTransaction> listCashTransactions(CompanyId companyId) {
+        return cashTransactionRepository.findByCompanyIdOrderByDateDesc(companyId.value()).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    private CashTransaction toDomain(CashTransactionEntity entity) {
+        return CashTransaction.create(
+                CompanyId.fromString(entity.getCompanyId().toString()),
+                entity.getDate(),
+                entity.getDescription(),
+                entity.getAmount(),
+                entity.getReference(),
+                entity.getCategory(),
+                entity.getCurrency(),
+                entity.getExchangeRate());
     }
 
     @Transactional
     public void recordCashTransaction(CashTransaction transaction) {
-        // 1. Save transaction (omitted for brevity, assuming repository exists or just
-        // handling accounting)
-        // Ideally we should have a CashTransactionRepository.
+        // 1. Persistir el movimiento de caja.
+        cashTransactionRepository.save(new CashTransactionEntity(
+                transaction.getId(),
+                transaction.getCompanyId().value(),
+                transaction.getDate(),
+                transaction.getDescription(),
+                transaction.getAmount(),
+                transaction.getReference(),
+                transaction.getCategory(),
+                transaction.getCurrency(),
+                transaction.getExchangeRate()));
 
         // 2. Create Accounting Entry
         createAccountingEntry(transaction);
