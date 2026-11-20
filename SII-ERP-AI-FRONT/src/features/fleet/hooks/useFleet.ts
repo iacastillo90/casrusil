@@ -10,7 +10,7 @@ export interface FleetMetrics {
 }
 
     export const useFleet = () => {
-    const { data: metrics, isLoading, error } = useQuery({
+    const { data: metrics, isLoading, isFetching, error, refetch } = useQuery({
         queryKey: ['fleet', 'metrics'],
         queryFn: async () => {
             const { data } = await api.get('/fleet/metrics');
@@ -21,6 +21,8 @@ export interface FleetMetrics {
     return {
         metrics,
         isLoading,
-        error
+        isFetching,
+        error,
+        refetch
     };
 };

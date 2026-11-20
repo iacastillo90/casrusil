@@ -1,138 +1,180 @@
 "use client";
 
-import React, { useState } from 'react';
-import { usePosTransactions, useRegisterSale, useSyncTransactions } from '@/features/pos/hooks/usePos';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { MonitorPlay, ShoppingBag, CreditCard, Banknote, RefreshCw } from 'lucide-react';
-import { PosTransactionItem } from '@/features/pos/services/pos.service';
+import { useState } from "react";
+import { Banknote, CreditCard, MonitorPlay, ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/features/accounting/components/PageHeader";
+import { EmptyState } from "@/features/accounting/components/DataStates";
+import { useAuthStore } from "@/features/auth/stores/auth.store";
+import { usePosTransactions, useRegisterSale } from "@/features/pos/hooks/usePos";
+import { posService, type PosTransactionItem } from "@/features/pos/services/pos.service";
+import { formatCLP } from "@/lib/formatters";
+
+const TERMINAL_ID = process.env.NEXT_PUBLIC_POS_TERMINAL_ID ?? "CAJA-01";
 
 export default function PosPage() {
-    const { data: transactions, isLoading } = usePosTransactions();
+    const { isError: transactionsError } = usePosTransactions();
     const registerSale = useRegisterSale();
-    const syncTransactions = useSyncTransactions();
+    const cashierName = useAuthStore((state) => state.user?.name ?? "");
 
     const [cart, setCart] = useState<PosTransactionItem[]>([]);
-    const [barcodeInput, setBarcodeInput] = useState('');
+    const [barcodeInput, setBarcodeInput] = useState("");
+    const [searching, setSearching] = useState(false);
 
-    const handleBarcodeSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!barcodeInput) return;
+    const handleBarcodeSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        const query = barcodeInput.trim();
+        if (!query) return;
 
+        setSearching(true);
         try {
-            // Real product lookup via POS API
-            const newItem = await import('@/features/pos/services/pos.service').then(m => m.posService.searchProduct(barcodeInput));
-            
-            // Si el backend aún no implementa /pos/products/search, podríamos tener un catch que avise, 
-            // pero ya estamos quitando los mocks.
-            setCart(prev => {
-                const existing = prev.find(i => i.productId === newItem.productId);
+            const product = await posService.searchProduct(query);
+            setCart((previous) => {
+                const existing = previous.find((item) => item.productId === product.productId);
                 if (existing) {
-                    return prev.map(i => i.productId === newItem.productId ? { ...i, quantity: i.quantity + 1 } : i);
+                    return previous.map((item) =>
+                        item.productId === product.productId
+                            ? { ...item, quantity: item.quantity + 1 }
+                            : item,
+                    );
                 }
-                return [...prev, newItem];
+                return [...previous, product];
             });
-            setBarcodeInput('');
+            setBarcodeInput("");
         } catch (error) {
-            console.error('Producto no encontrado:', error);
-            // Optionally add toast notification here
+            const status = (error as { response?: { status?: number } })?.response?.status;
+            toast.error(
+                status === 404
+                    ? `No existe un producto con el código "${query}"`
+                    : "No se pudo buscar el producto en el inventario",
+            );
+        } finally {
+            setSearching(false);
         }
     };
 
-    const cartTotal = cart.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
-
-    const handlePayment = (method: string) => {
+    const handlePayment = (method: "CASH" | "CARD") => {
         if (cart.length === 0) return;
-        
-        registerSale.mutate({
-            posTerminalId: 'CAJA-01',
-            cashierName: 'Cajero Principal',
-            paymentMethod: method,
-            items: cart
-        }, {
-            onSuccess: () => setCart([])
-        });
+        if (!cashierName) {
+            toast.error("No se pudo identificar al cajero autenticado");
+            return;
+        }
+
+        registerSale.mutate(
+            {
+                posTerminalId: TERMINAL_ID,
+                cashierName,
+                paymentMethod: method,
+                items: cart,
+            },
+            {
+                onSuccess: () => {
+                    toast.success(`Venta registrada en ${TERMINAL_ID}`);
+                    setCart([]);
+                },
+                onError: () => toast.error("No se pudo registrar la venta"),
+            },
+        );
     };
 
-    if (isLoading) {
-        return <div className="p-8 text-center text-gray-500">Cargando terminal POS...</div>;
-    }
+    const cartTotal = cart.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] gap-6">
-            {/* PRODUCT SCANNER & CATALOG */}
-            <div className="flex-1 flex flex-col space-y-4">
-                <Card className="flex-1 flex flex-col">
-                    <CardHeader className="bg-gray-50 border-b pb-4">
+        <div className="space-y-6">
+            <PageHeader
+                title="Punto de venta"
+                description={`Terminal ${TERMINAL_ID} · Cajero: ${cashierName || "sin sesión"}. La búsqueda usa el inventario real.`}
+            />
+
+            {transactionsError && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive-subtle px-4 py-3 text-sm text-destructive-subtle-foreground">
+                    No se pudieron cargar las ventas anteriores; el terminal sigue operativo.
+                </div>
+            )}
+
+            <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+                <Card>
+                    <CardHeader className="border-b pb-4">
                         <CardTitle className="flex items-center text-lg">
-                            <MonitorPlay className="mr-2 h-5 w-5 text-blue-600" />
-                            Terminal de Venta (CAJA-01)
+                            <MonitorPlay className="mr-2 h-5 w-5 text-primary" aria-hidden="true" />
+                            Escanear producto
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-1 flex flex-col pt-4">
-                        <form onSubmit={handleBarcodeSubmit} className="mb-6 flex gap-2">
-                            <Input 
-                                autoFocus
-                                placeholder="Escanear código de barras o ingresar SKU..."
+                    <CardContent className="space-y-4 pt-4">
+                        <form onSubmit={handleBarcodeSubmit} className="flex gap-2">
+                            <Input
+                                placeholder="Código de barras o SKU…"
                                 value={barcodeInput}
-                                onChange={e => setBarcodeInput(e.target.value)}
-                                className="text-lg"
+                                onChange={(event) => setBarcodeInput(event.target.value)}
+                                autoFocus
                             />
-                            <Button type="submit" size="lg">Agregar</Button>
+                            <Button type="submit" loading={searching}>
+                                Agregar
+                            </Button>
                         </form>
-                        
-                        <div className="grid grid-cols-3 gap-4">
-                            {/* TODO: Load Quick Items from Backend Category API */}
-                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            La búsqueda consulta <code>GET /pos/products/search</code> sobre los productos del inventario.
+                            Si el código no existe, se muestra el error (no se simula).
+                        </p>
                     </CardContent>
                 </Card>
-            </div>
 
-            {/* CART & PAYMENT */}
-            <div className="w-[400px] flex flex-col space-y-4">
-                <Card className="flex-1 flex flex-col">
-                    <CardHeader className="bg-gray-50 border-b pb-4">
-                        <CardTitle className="text-lg">Boleta Actual</CardTitle>
+                <Card className="flex flex-col">
+                    <CardHeader className="border-b pb-4">
+                        <CardTitle className="flex items-center text-lg">
+                            <ShoppingBag className="mr-2 h-5 w-5" aria-hidden="true" />
+                            Carrito ({cart.length})
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-1 overflow-y-auto p-4">
+                    <CardContent className="flex-1 space-y-3 pt-4">
                         {cart.length === 0 ? (
-                            <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-                                Carrito vacío
-                            </div>
+                            <EmptyState
+                                title="Carrito vacío"
+                                description="Escanea o ingresa un SKU para comenzar la venta."
+                                icon={ShoppingBag}
+                            />
                         ) : (
                             <ul className="space-y-3">
-                                {cart.map((item, idx) => (
-                                    <li key={idx} className="flex justify-between items-center text-sm">
+                                {cart.map((item) => (
+                                    <li key={item.productId} className="flex items-center justify-between text-sm">
                                         <div>
                                             <p className="font-medium">{item.productName}</p>
-                                            <p className="text-gray-500">{item.quantity} x ${item.unitPrice.toLocaleString('es-CL')}</p>
+                                            <p className="text-muted-foreground">
+                                                {item.quantity} × {formatCLP(item.unitPrice)}
+                                            </p>
                                         </div>
-                                        <p className="font-semibold text-gray-900">${(item.quantity * item.unitPrice).toLocaleString('es-CL')}</p>
+                                        <p className="font-semibold">{formatCLP(item.quantity * item.unitPrice)}</p>
                                     </li>
                                 ))}
                             </ul>
                         )}
                     </CardContent>
-                    <div className="bg-gray-100 p-4 border-t space-y-4">
-                        <div className="flex justify-between items-center text-xl font-bold">
+                    <div className="space-y-4 border-t bg-muted/30 p-4">
+                        <div className="flex items-center justify-between text-xl font-semibold">
                             <span>Total</span>
-                            <span>${cartTotal.toLocaleString('es-CL')}</span>
+                            <span>{formatCLP(cartTotal)}</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button 
-                                size="lg" 
-                                className="bg-green-600 hover:bg-green-700 h-16 text-lg"
+                            <Button
+                                size="lg"
+                                className="h-16 text-lg"
                                 disabled={cart.length === 0}
-                                onClick={() => handlePayment('CASH')}
+                                loading={registerSale.isPending}
+                                onClick={() => handlePayment("CASH")}
                             >
                                 <Banknote className="mr-2 h-5 w-5" /> Efectivo
                             </Button>
-                            <Button 
-                                size="lg" 
-                                className="bg-blue-600 hover:bg-blue-700 h-16 text-lg"
+                            <Button
+                                size="lg"
+                                variant="secondary"
+                                className="h-16 text-lg"
                                 disabled={cart.length === 0}
-                                onClick={() => handlePayment('CARD')}
+                                loading={registerSale.isPending}
+                                onClick={() => handlePayment("CARD")}
                             >
                                 <CreditCard className="mr-2 h-5 w-5" /> Tarjeta
                             </Button>
