@@ -10,9 +10,9 @@ export interface Product {
     stock: number;
     minStock: number;
     price: number;
+    /** Costo promedio (valorización contable). */
+    cost: number;
 }
-
-const DEFAULT_MIN_STOCK = 5;
 
 const fetchInventory = async (): Promise<Product[]> => {
     const { data } = await api.get('/inventory/products');
@@ -23,7 +23,8 @@ const fetchInventory = async (): Promise<Product[]> => {
         name: string;
         sku: string;
         currentStock: number;
-        minStock: number;
+        minStock: number | null;
+        averageCost: number | null;
         salePrice: number;
         category: string;
     }
@@ -32,8 +33,9 @@ const fetchInventory = async (): Promise<Product[]> => {
         name: item.name,
         sku: item.sku,
         stock: item.currentStock,
-        minStock: item.minStock ?? DEFAULT_MIN_STOCK, // Fallback to DEFAULT_MIN_STOCK if not provided
+        minStock: item.minStock ?? 0,
         price: item.salePrice,
+        cost: item.averageCost ?? 0,
         category: item.category,
     }));
 };

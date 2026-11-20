@@ -56,6 +56,7 @@ export default function OnboardingPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
+    const [loadingProfile, setLoadingProfile] = useState(true);
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
@@ -72,7 +73,8 @@ export default function OnboardingPage() {
             })
             .catch(() => {
                 // Sin perfil previo: el formulario arranca vacío.
-            });
+            })
+            .finally(() => setLoadingProfile(false));
     }, []);
 
     const missingByField = useMemo(() => {
@@ -260,7 +262,12 @@ export default function OnboardingPage() {
                                         </div>
                                     </CardContent>
                                     <CardFooter className="flex justify-end">
-                                        <Button onClick={handleSaveCompany} loading={saving}>
+                                        <Button
+                                            onClick={handleSaveCompany}
+                                            loading={saving}
+                                            disabled={loadingProfile}
+                                            title={loadingProfile ? "Cargando datos de la empresa…" : undefined}
+                                        >
                                             Siguiente <ArrowRight className="w-4 h-4 ml-2" />
                                         </Button>
                                     </CardFooter>
