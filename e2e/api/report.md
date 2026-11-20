@@ -1,49 +1,51 @@
 # Matriz de permisos por API — SII-ERP
 
-Generado: 2026-11-20T02:49:31.580Z
+Generado: 2026-11-20T03:32:59.596Z
 Backend: http://localhost:8092
-Empresa: 1866e3aa-d266-4df7-901c-b89bcb7c30dd
+Empresa: 1ed3ef26-d9cf-43f1-8873-a7845ae53d3c
 
 ## Setup
 
-- Empresa E2E: `QA E2E 1795142966892` / RUT `E2E-1795142966892`
-- ADMIN: `qa-admin-1795142966892@example.com`
-- ACCOUNTANT: `qa-accountant-1795142966892@example.com`
-- TREASURER: `qa-treasurer-1795142966892@example.com`
-- SALES: `qa-sales-1795142966892@example.com`
-- OPERATIONS: `qa-operations-1795142966892@example.com`
-- HR: `qa-hr-1795142966892@example.com`
-- AUDITOR: `qa-auditor-1795142966892@example.com`
-- USER: `qa-user-1795142966892@example.com`
-- B2B_CLIENT: `qa-b2b-1795142966892@example.com` — alta vía `POST /sso/users` → HTTP 400 (rol inexistente en el enum)
+- Empresa E2E: `QA E2E 1795145567062` / RUT `E2E-1795145567062`
+- ADMIN: `qa-admin-1795145567062@example.com`
+- ACCOUNTANT: `qa-accountant-1795145567062@example.com`
+- TREASURER: `qa-treasurer-1795145567062@example.com`
+- SALES: `qa-sales-1795145567062@example.com`
+- OPERATIONS: `qa-operations-1795145567062@example.com`
+- HR: `qa-hr-1795145567062@example.com`
+- AUDITOR: `qa-auditor-1795145567062@example.com`
+- USER: `qa-user-1795145567062@example.com`
+- B2B_CLIENT: `qa-b2b_client-1795145567062@example.com`
+- B2B_CLIENT: `qa-b2b_client-1795145567062@example.com`
 
 ## Matriz rol × endpoint
 
-Celdas: `✅ status` = coincide con lo esperado; `❌ status` = discrepancia; `—` = rol no creado; `N/A` = no representable.
+Celdas: ✅ status = coincide con lo esperado; ❌ status = discrepancia; — = rol no creado.
 
 | Endpoint | ADMIN | ACCOUNTANT | TREASURER | SALES | OPERATIONS | HR | AUDITOR | USER | B2B_CLIENT |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| GET /invoices/{id} (UUID aleatorio) | ✅ 400 | ✅ 400 | ✅ 403 | ✅ 400 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | N/A |
-| GET /sii/caf | ✅ 200 | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | N/A |
-| GET /sii/status | ✅ 200 | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | N/A |
-| GET /accounting/entries | ✅ 200 | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | N/A |
-| GET /payroll/employee/payslips | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 200 | ✅ 403 | ❌ 200 | N/A |
-| GET /actuator/metrics | ❌ 500 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | N/A |
-| POST /ai/conversations | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 200 | ✅ 403 | N/A |
-| GET /notifications/preferences | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | N/A |
-| GET /b2b/orders/my-orders | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | N/A |
+| GET /invoices/{id} (UUID aleatorio) | ✅ 400 | ✅ 400 | ✅ 403 | ✅ 400 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 |
+| GET /sii/caf | ✅ 200 | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 |
+| GET /sii/status | ✅ 200 | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 |
+| GET /accounting/entries | ✅ 200 | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 |
+| GET /payroll/employee/payslips | ✅ 404 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 404 | ✅ 403 | ✅ 404 | ✅ 403 |
+| GET /actuator/metrics | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 |
+| POST /ai/conversations | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 200 | ✅ 403 | ✅ 403 |
+| GET /notifications/preferences | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 | ✅ 200 |
+| GET /b2b/orders/my-orders | ✅ 200 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 403 | ✅ 200 |
 
-## Discrepancias
+## Resultado
 
-- **payroll** / USER: esperado DENY, obtenido 200 — `[]`
-- **actuator** / ADMIN: esperado ALLOW, obtenido 500 — `{"timestamp":"2026-11-20T02:49:31.182141118Z","status":500,"error":"Internal Server Error","message":"An unexpected error occurred. Please try again later.","path":"/actuator/metri`
+Sin discrepancias en los endpoints probados.
 
-## Detalle de discrepancias
+## Notas de la matriz
 
-- **payroll / USER** — el método permite explícitamente al rol USER: `SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/payroll/infrastructure/web/PayrollController.java:59` (`@PreAuthorize("hasAnyRole('ADMIN','HR','USER')")`). La matriz de `MAPA-FUNCIONAL.md` dice que USER no tiene áreas propias. No se corrige: es código de E/C.
-- **actuator / ADMIN (500)** — `SecurityConfig.java:66` protege `/actuator/**` con ADMIN, pero `application.properties:120` solo expone `health,info`; `/actuator/metrics` no está mapeado y el `GlobalExceptionHandler` lo convierte en 500 (`No static resource actuator/metrics`). No se tocó el backend.
-- **invoices / ALLOW (400)** — el UUID aleatorio no existe; lo relevante es que no sea 403 (permiso concedido).
+- **B2B_CLIENT** ya existe en UserRole y se crea por POST /sso/users; el endpoint B2B se prueba con su token.
+- **payroll / USER**: el endpoint permite USER y ahora resuelve el empleado desde el usuario autenticado; solo devuelve sus liquidaciones (test backend PayrollPayslipIsolationTest). La fila USER de MAPA-FUNCIONAL.md estaba desactualizada.
+- **actuator / ADMIN**: metrics está expuesto en application.properties y protegido por ADMIN; responde 200.
+- **invoices / ALLOW (400)**: UUID inexistente; lo relevante es que no sea 403.
+- **B2B aislamiento**: OK: cada cliente ve solo su orden (A=4e0fb212-d874-47c4-82ea-4ecb41c67dba, B=0874946b-9468-43f2-83ad-7e330cc659bd).
 
 ## B2B_CLIENT
 
-`UserRole` no define `B2B_CLIENT` (`SII-ERP-AI-BACK/src/main/java/com/casrusil/siierpai/modules/sso/domain/model/UserRole.java:30`), aunque `CustomerOrderController` lo exige (`.../b2b/infrastructure/web/CustomerOrderController.java:30`). No es posible crear un usuario con ese rol por la API; la fila B2B_CLIENT queda sin token y el endpoint solo se valida con ADMIN.
+UserRole incluye B2B_CLIENT. CustomerOrderService filtra por customerId y el test E2E crea dos clientes con una orden cada uno; cada GET /b2b/orders/my-orders devuelve solo la propia.
