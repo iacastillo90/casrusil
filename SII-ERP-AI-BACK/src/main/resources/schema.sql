@@ -945,6 +945,20 @@ CREATE TABLE IF NOT EXISTS accounting.f29_alerts (
 
 CREATE INDEX IF NOT EXISTS idx_f29_alerts_company ON accounting.f29_alerts (company_id, created_at);
 
+CREATE TABLE IF NOT EXISTS public.treasury_cash_transactions (
+    id uuid NOT NULL,
+    company_id uuid NOT NULL,
+    date date NOT NULL,
+    description character varying(255) NOT NULL,
+    amount numeric(38,2) NOT NULL,
+    reference character varying(255),
+    category character varying(64),
+    currency character varying(3) NOT NULL,
+    exchange_rate numeric(38,4) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_treasury_cash_company ON public.treasury_cash_transactions (company_id, date);
+
 CREATE TABLE IF NOT EXISTS public.tax_profiles (
     company_id character varying(255) NOT NULL,
     created_at timestamp(6) without time zone,

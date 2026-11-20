@@ -8,6 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class SecretCipherTest {
 
@@ -38,5 +42,23 @@ class SecretCipherTest {
     void shouldKeepNullAsNull() {
         assertNull(cipher.encrypt(null));
         assertNull(cipher.decrypt(null));
+    }
+
+    @Test
+    void shouldFailFastInProdWithDevelopmentKey() {
+        org.springframework.core.env.Environment prod = mock(org.springframework.core.env.Environment.class);
+        when(prod.acceptsProfiles(any(org.springframework.core.env.Profiles.class))).thenReturn(true);
+
+        assertThrows(IllegalStateException.class, () -> new SecretCipher("dev-only-insecure-key-change-me", prod));
+    }
+
+    @Test
+    void shouldAcceptConfiguredKeyInProd() {
+        org.springframework.core.env.Environment prod = mock(org.springframework.core.env.Environment.class);
+        when(prod.acceptsProfiles(any(org.springframework.core.env.Profiles.class))).thenReturn(true);
+
+        SecretCipher configured = new SecretCipher("clave-real-de-produccion", prod);
+
+        assertEquals("x", configured.decrypt(configured.encrypt("x")));
     }
 }

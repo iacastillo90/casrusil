@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/treasury")
@@ -69,14 +70,39 @@ public class TreasuryController {
 
     @PostMapping("/cash-entry")
     public ResponseEntity<Void> recordCashEntry(@Valid @RequestBody CashEntryRequest request) {
-        CompanyId companyId = CompanyContext.requireCompanyId();
-        CashTransaction transaction = CashTransaction.create(
-                companyId, request.date(), request.description(),
+        cashManagementService.recordCashTransaction(toCashTransaction(request));
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Lista los movimientos de caja de la empresa.
+     *
+     * @return movimientos ordenados por fecha descendente
+     */
+    @GetMapping("/cash-entries")
+    public ResponseEntity<List<CashTransaction>> listCashEntries() {
+        return ResponseEntity.ok(cashManagementService.listCashTransactions(CompanyContext.requireCompanyId()));
+    }
+
+    /**
+     * Registra un movimiento de caja. Alias plural del endpoint histórico
+     * {@code /cash-entry}; ambos comparten la misma lógica.
+     *
+     * @param request movimiento a registrar
+     * @return 204
+     */
+    @PostMapping("/cash-entries")
+    public ResponseEntity<Void> recordCashEntryPlural(@Valid @RequestBody CashEntryRequest request) {
+        cashManagementService.recordCashTransaction(toCashTransaction(request));
+        return ResponseEntity.ok().build();
+    }
+
+    private CashTransaction toCashTransaction(CashEntryRequest request) {
+        return CashTransaction.create(
+                CompanyContext.requireCompanyId(), request.date(), request.description(),
                 request.amount(), request.reference(), request.category(),
                 request.currency() != null ? request.currency() : "CLP",
                 request.exchangeRate() != null ? request.exchangeRate() : BigDecimal.ONE);
-        cashManagementService.recordCashTransaction(transaction);
-        return ResponseEntity.ok().build();
     }
 
     public record CashEntryRequest(LocalDate date, String description, BigDecimal amount, String reference,

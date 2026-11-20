@@ -37,6 +37,14 @@ public class FixedAssetServiceImpl {
         return toDomain(e);
     }
 
+    public FixedAsset getAsset(CompanyId companyId, UUID id) {
+        return faRepo.findById(id)
+                .filter(e -> companyId.value().toString().equals(e.getCompanyId()))
+                .map(this::toDomain)
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException(
+                        "Activo fijo no encontrado: " + id));
+    }
+
     public List<FixedAsset> getAssets(CompanyId companyId) {
         return faRepo.findByCompanyId(companyId.value().toString()).stream().map(this::toDomain).collect(Collectors.toList());
     }

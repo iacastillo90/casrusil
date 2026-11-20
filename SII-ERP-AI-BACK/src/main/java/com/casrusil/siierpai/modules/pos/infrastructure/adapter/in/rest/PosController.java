@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 
 import com.casrusil.siierpai.modules.pos.domain.model.PosTransaction;
 import com.casrusil.siierpai.modules.pos.domain.model.PosTransactionItem;
+import com.casrusil.siierpai.modules.inventory.domain.model.Product;
+import com.casrusil.siierpai.modules.inventory.domain.port.ProductRepositoryPort;
 import com.casrusil.siierpai.modules.pos.domain.port.in.PosUseCase;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
@@ -22,9 +24,44 @@ import java.util.stream.Collectors;
 public class PosController {
 
     private final PosUseCase posUseCase;
+    private final ProductRepositoryPort productRepository;
 
-    public PosController(PosUseCase posUseCase) {
+    public PosController(PosUseCase posUseCase, ProductRepositoryPort productRepository) {
         this.posUseCase = posUseCase;
+        this.productRepository = productRepository;
+    }
+
+    /**
+     * Busca un producto del inventario por código de barras/SKU o nombre.
+     *
+     * @param query SKU exacto o parte del nombre
+     * @return ítem listo para agregar al carro del POS
+     */
+    @GetMapping("/products/search")
+    public ResponseEntity<ProductSearchResponse> searchProduct(@RequestParam String query) {
+        CompanyId companyId = CompanyContext.requireCompanyId();
+        List<Product> products = productRepository.findAllByCompanyId(companyId.value().toString());
+
+        return products.stream()
+                .filter(p -> query.equalsIgnoreCase(p.getSku())
+                        || (p.getName() != null && p.getName().toLowerCase().contains(query.toLowerCase())))
+                .findFirst()
+                .map(p -> ResponseEntity.ok(ProductSearchResponse.from(p)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    public record ProductSearchResponse(String productId, String productName, BigDecimal quantity,
+            BigDecimal unitPrice, BigDecimal subtotal) {
+
+        static ProductSearchResponse from(Product product) {
+            BigDecimal price = product.getSalePrice() != null ? product.getSalePrice() : BigDecimal.ZERO;
+            return new ProductSearchResponse(
+                    String.valueOf(product.getId()),
+                    product.getName(),
+                    BigDecimal.ONE,
+                    price,
+                    price);
+        }
     }
 
     @GetMapping("/transactions")

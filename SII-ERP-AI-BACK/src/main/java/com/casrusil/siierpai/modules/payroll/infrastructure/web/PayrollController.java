@@ -47,6 +47,17 @@ public class PayrollController {
     }
 
     /**
+     * Lista los empleados de la empresa actual.
+     *
+     * @return empleados con id, nombre, RUT, sueldo base, AFP e Isapre
+     */
+    @GetMapping("/employees")
+    public ResponseEntity<List<com.casrusil.siierpai.modules.payroll.domain.dto.EmployeeResponse>> getEmployees() {
+        var companyId = com.casrusil.siierpai.shared.infrastructure.context.CompanyContext.requireCompanyId();
+        return ResponseEntity.ok(payrollUseCase.getEmployees(companyId.value().toString()));
+    }
+
+    /**
      * Obtiene las liquidaciones del empleado indicado.
      *
      * <p>
