@@ -93,7 +93,7 @@ public class DteSenderService {
 
             // 4. Sign DTE (Individual Signature)
             SiiCertificate certificate = loadCertificateForCompany(companyId);
-            String dteId = "DTE_" + invoice.getFolio(); // Must match ID in DteXmlBuilder
+            String dteId = com.casrusil.siierpai.modules.integration_sii.infrastructure.xml.DteXmlBuilder.documentId(invoice); // Debe coincidir con el ID del XML
             String signedDteXml = xmlDsigSigner.signXml(dteXml, dteId, certificate);
 
             // 5. Wrap in EnvioDTE

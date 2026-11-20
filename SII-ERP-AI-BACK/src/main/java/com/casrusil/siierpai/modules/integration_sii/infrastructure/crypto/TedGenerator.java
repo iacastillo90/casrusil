@@ -74,7 +74,7 @@ public class TedGenerator {
         sb.append(cafBlock);
 
         // Timestamp
-        sb.append("<TSTED>").append(java.time.LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+        sb.append("<TSTED>").append(java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")))
                 .append("</TSTED>");
 
         return sb.toString();
