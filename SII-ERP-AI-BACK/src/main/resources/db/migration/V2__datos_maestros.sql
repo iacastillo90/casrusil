@@ -31,11 +31,11 @@ ON CONFLICT (id) DO NOTHING;
 -- SSO SCHEMA: SSO Users (System Operators)
 -- ============================================================================
 -- password_hash should be bcrypt in production
-INSERT INTO sso.users (id, email, full_name, password_hash, role, company_id, is_active, created_at, preferences)
+INSERT INTO sso.users (id, email, full_name, password_hash, role, company_id, is_active, created_at)
 VALUES
-    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid, 'admin@demo.cl', 'Administrador Demo', '$2a$10$dummyhash', 'ADMIN', '00000000-0000-0000-0000-000000000001'::uuid, true, now(), '{}'::jsonb),
-    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid, 'contador@demo.cl', 'Contador Demo', '$2a$10$dummyhash', 'ACCOUNTANT', '00000000-0000-0000-0000-000000000001'::uuid, true, now(), '{}'::jsonb),
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc'::uuid, 'admin@losandes.cl', 'Admin Los Andes', '$2a$10$dummyhash', 'ADMIN', '00000000-0000-0000-0000-000000000002'::uuid, true, now(), '{}'::jsonb)
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid, 'admin@demo.cl', 'Administrador Demo', '$2a$10$dummyhash', 'ADMIN', '00000000-0000-0000-0000-000000000001'::uuid, true, now()),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid, 'contador@demo.cl', 'Contador Demo', '$2a$10$dummyhash', 'ACCOUNTANT', '00000000-0000-0000-0000-000000000001'::uuid, true, now()),
+    ('cccccccc-cccc-cccc-cccc-cccccccccccc'::uuid, 'admin@losandes.cl', 'Admin Los Andes', '$2a$10$dummyhash', 'ADMIN', '00000000-0000-0000-0000-000000000002'::uuid, true, now())
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -78,15 +78,15 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 -- PUBLIC SCHEMA: User-Role Assignments
 -- ============================================================================
-INSERT INTO user_roles (user_id, role_id, assigned_at, assigned_by)
+INSERT INTO user_roles (user_id, role_id)
 VALUES
-    ('30000000-0000-0000-0000-000000000001'::uuid, '20000000-0000-0000-0000-000000000002'::uuid, now(), '30000000-0000-0000-0000-000000000001'::uuid),
-    ('30000000-0000-0000-0000-000000000001'::uuid, '20000000-0000-0000-0000-000000000011'::uuid, now(), '30000000-0000-0000-0000-000000000001'::uuid),
-    ('30000000-0000-0000-0000-000000000002'::uuid, '20000000-0000-0000-0000-000000000003'::uuid, now(), '30000000-0000-0000-0000-000000000001'::uuid),
-    ('30000000-0000-0000-0000-000000000003'::uuid, '20000000-0000-0000-0000-000000000004'::uuid, now(), '30000000-0000-0000-0000-000000000001'::uuid),
-    ('30000000-0000-0000-0000-000000000003'::uuid, '20000000-0000-0000-0000-000000000012'::uuid, now(), '30000000-0000-0000-0000-000000000001'::uuid),
-    ('30000000-0000-0000-0000-000000000004'::uuid, '20000000-0000-0000-0000-000000000002'::uuid, now(), '30000000-0000-0000-0000-000000000001'::uuid),
-    ('30000000-0000-0000-0000-000000000004'::uuid, '20000000-0000-0000-0000-000000000021'::uuid, now(), '30000000-0000-0000-0000-000000000001'::uuid)
+    ('30000000-0000-0000-0000-000000000001'::uuid, '20000000-0000-0000-0000-000000000002'::uuid),
+    ('30000000-0000-0000-0000-000000000001'::uuid, '20000000-0000-0000-0000-000000000011'::uuid),
+    ('30000000-0000-0000-0000-000000000002'::uuid, '20000000-0000-0000-0000-000000000003'::uuid),
+    ('30000000-0000-0000-0000-000000000003'::uuid, '20000000-0000-0000-0000-000000000004'::uuid),
+    ('30000000-0000-0000-0000-000000000003'::uuid, '20000000-0000-0000-0000-000000000012'::uuid),
+    ('30000000-0000-0000-0000-000000000004'::uuid, '20000000-0000-0000-0000-000000000002'::uuid),
+    ('30000000-0000-0000-0000-000000000004'::uuid, '20000000-0000-0000-0000-000000000021'::uuid)
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
 -- ============================================================================
