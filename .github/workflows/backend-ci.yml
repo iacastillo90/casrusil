@@ -6,12 +6,9 @@ on:
     paths:
       - 'SII-ERP-AI-BACK/**'
       - 'SII-ERP-B2B-SERVICE/**'
-  pull_request:
-    branches: [ "main" ]
-
 jobs:
   build-monolith:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 21
@@ -38,7 +35,7 @@ jobs:
       run: docker build -t siierp-backend:latest .
 
   build-b2b:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 21
