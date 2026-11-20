@@ -115,6 +115,7 @@ export const INVOICE_TYPES = {
 
 export const DTE_STATUS = {
     DRAFT: 'DRAFT',
+    PENDING: 'PENDING',
     SIGNED: 'SIGNED',
     SENT: 'SENT',
     ACCEPTED: 'ACCEPTED',

@@ -213,6 +213,10 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
                         <Text style={styles.sectionTitle}>Emisor</Text>
                         <View style={styles.invoiceMeta}>
                             <View>
+                                <Text style={styles.metaLabel}>Razón Social:</Text>
+                                <Text style={styles.metaValue}>{invoice.issuerName || 'N/A'}</Text>
+                            </View>
+                            <View style={{ marginTop: 5 }}>
                                 <Text style={styles.metaLabel}>RUT Emisor:</Text>
                                 <Text style={styles.metaValue}>{invoice.issuerRut || 'N/A'}</Text>
                             </View>

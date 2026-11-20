@@ -24,6 +24,13 @@ const statusConfig = {
         variant: 'secondary' as const,
         color: '#6B7280',
     },
+    [DTE_STATUS.PENDING]: {
+        label: 'Pendiente de envío',
+        description: 'Documento emitido y con folio asignado, pendiente de envío al SII',
+        icon: Clock,
+        variant: 'secondary' as const,
+        color: '#F59E0B',
+    },
     [DTE_STATUS.SIGNED]: {
         label: 'Firmado',
         description: 'Documento firmado digitalmente',
@@ -45,12 +52,26 @@ const statusConfig = {
         variant: 'success' as const,
         color: '#10B981',
     },
+    [DTE_STATUS.ACCEPTED_WITH_OBJECTIONS]: {
+        label: 'Aceptado con objeciones',
+        description: 'Documento aceptado por el SII con observaciones',
+        icon: CheckCircle,
+        variant: 'default' as const,
+        color: '#0EA5E9',
+    },
     [DTE_STATUS.REJECTED]: {
         label: 'Rechazado',
         description: 'Documento rechazado por el SII',
         icon: XCircle,
         variant: 'destructive' as const,
         color: '#EF4444',
+    },
+    [DTE_STATUS.CANCELLED]: {
+        label: 'Anulado',
+        description: 'Documento anulado',
+        icon: XCircle,
+        variant: 'secondary' as const,
+        color: '#6B7280',
     },
 };
 

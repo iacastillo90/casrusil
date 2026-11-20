@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useInvoice } from "@/features/invoicing/hooks/useInvoices";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,18 +16,24 @@ import { InvoicePDF } from "@/features/invoicing/components/InvoicePDF";
 import { DTEStatusTracker } from "@/features/invoicing/components/DTEStatusTracker";
 import type { InvoiceLine } from "@/features/invoicing/types/invoice.types";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Leaf, History, Calculator } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { AlertCircle, Calculator, Download, FileText, History, Leaf, Send } from "lucide-react";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountingEntryCard } from "@/features/accounting/components/AccountingEntryCard";
 import { SustainabilityCard } from "@/features/sustainability/components/SustainabilityCard";
 import { InvoiceAuditTrail } from "@/features/invoicing/components/InvoiceAuditTrail";
 import { accountingService } from "@/features/accounting/services/accounting.service";
-import { useQuery } from "@tanstack/react-query";
+import { siiService } from "@/features/sii/services/sii.service";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function InvoiceDetailPage() {
     const params = useParams();
     const id = params.id as string;
-    const { data: invoice, isLoading } = useInvoice(id);
+    const { data: invoice, isLoading, isError } = useInvoice(id);
+    const queryClient = useQueryClient();
+    const [isSendingToSii, setIsSendingToSii] = useState(false);
 
     // Fetch accounting entry for this invoice
     const { data: accountingEntry, isLoading: isLoadingEntry } = useQuery({
@@ -54,26 +61,69 @@ export default function InvoiceDetailPage() {
     }
 
     if (!invoice) {
+        const isRealError = isError;
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                    <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                    <h2 className="text-2xl font-bold mb-2">Factura no encontrada</h2>
-                    <p className="text-muted-foreground">La factura solicitada no existe o no tienes permisos para verla.</p>
+                <div className="text-center space-y-2">
+                    {isRealError ? (
+                        <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4 opacity-60" />
+                    ) : (
+                        <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                    )}
+                    <h2 className="text-2xl font-bold">
+                        {isRealError ? "No se pudo cargar la factura" : "Factura no encontrada"}
+                    </h2>
+                    <p className="text-muted-foreground">
+                        {isRealError
+                            ? "Ocurrió un error al consultar el documento. Revisa tu conexión e inténtalo de nuevo."
+                            : "La factura solicitada no existe o no tienes permisos para verla."}
+                    </p>
                 </div>
             </div>
         );
     }
 
+    const canSendToSii = !["SENT", "ACCEPTED", "ACCEPTED_WITH_OBJECTIONS", "REJECTED", "CANCELLED"].includes(
+        invoice.status,
+    );
+
+    const handleSendToSii = async () => {
+        setIsSendingToSii(true);
+        try {
+            const result = await siiService.sendDte(invoice.id);
+            if (result.success) {
+                toast.success("Documento enviado al SII", {
+                    description: result.message ?? "El DTE quedó en estado enviado.",
+                });
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ["invoices", id] }),
+                    queryClient.invalidateQueries({ queryKey: ["invoice-audit-trail", id] }),
+                ]);
+            } else {
+                toast.error("El SII no aceptó el envío", {
+                    description: result.message ?? "Revisa el certificado y el CAF antes de reintentar.",
+                });
+            }
+        } catch (error: unknown) {
+            const message =
+                (error as { response?: { data?: { message?: string } } } | null)?.response?.data?.message ??
+                (error instanceof Error ? error.message : "Inténtalo nuevamente");
+            toast.error("No se pudo enviar al SII", { description: message });
+        } finally {
+            setIsSendingToSii(false);
+        }
+    };
+
     return (
         <div className="space-y-6 max-w-6xl mx-auto">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Factura #{invoice.folio}</h1>
-                    <p className="text-muted-foreground mt-1">
-                        Vista 360° con trazabilidad completa
-                    </p>
+                <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-3xl font-bold tracking-tight">Factura #{invoice.folio}</h1>
+                        <StatusBadge status={invoice.status} />
+                    </div>
+                    <p className="text-muted-foreground">Vista 360° con trazabilidad completa</p>
                 </div>
                 <div className="flex gap-2">
                     <PDFDownloadButton
@@ -87,8 +137,25 @@ export default function InvoiceDetailPage() {
                             </Button>
                         )}
                     </PDFDownloadButton>
+                    {canSendToSii && (
+                        <Button onClick={handleSendToSii} loading={isSendingToSii}>
+                            {!isSendingToSii && <Send className="mr-2 h-4 w-4" />}
+                            Enviar al SII
+                        </Button>
+                    )}
                 </div>
             </div>
+
+            {["ACCEPTED", "ACCEPTED_WITH_OBJECTIONS"].includes(invoice.status) && (
+                <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Documento aceptado por el SII</AlertTitle>
+                    <AlertDescription>
+                        El asiento contable se genera automáticamente y queda disponible en la pestaña
+                        Contabilidad.
+                    </AlertDescription>
+                </Alert>
+            )}
 
             <DTEStatusTracker invoiceId={id} status={invoice.status} />
 
@@ -122,6 +189,8 @@ export default function InvoiceDetailPage() {
                             </CardHeader>
                             <CardContent>
                                 <dl className="grid grid-cols-3 gap-2 text-sm">
+                                    <dt className="font-medium text-muted-foreground">Razón Social:</dt>
+                                    <dd className="col-span-2">{invoice.issuerName || '—'}</dd>
                                     <dt className="font-medium text-muted-foreground">RUT:</dt>
                                     <dd className="col-span-2">{formatRut(invoice.issuerRut)}</dd>
                                 </dl>
@@ -133,8 +202,12 @@ export default function InvoiceDetailPage() {
                             </CardHeader>
                             <CardContent>
                                 <dl className="grid grid-cols-3 gap-2 text-sm">
-                                    <dt className="font-medium text-muted-foreground">Razón Social:</dt>
-                                    <dd className="col-span-2">{invoice.recipientName}</dd>
+                                    {invoice.recipientName && (
+                                        <>
+                                            <dt className="font-medium text-muted-foreground">Razón Social:</dt>
+                                            <dd className="col-span-2">{invoice.recipientName}</dd>
+                                        </>
+                                    )}
                                     <dt className="font-medium text-muted-foreground">RUT:</dt>
                                     <dd className="col-span-2">{formatRut(invoice.recipientRut)}</dd>
                                 </dl>
