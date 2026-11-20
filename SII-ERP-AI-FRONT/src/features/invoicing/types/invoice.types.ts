@@ -13,6 +13,13 @@ export interface Invoice {
     folio: number;
     status: string;
     issuerRut: string;
+    /** Razón social del emisor (`businessName` en el backend). */
+    issuerName?: string;
+    /**
+     * El backend todavía no persiste la razón social del receptor: la columna
+     * `business_name` guarda la del emisor. Se mantiene vacío y la UI usa
+     * `issuerName` para el emisor.
+     */
     recipientName: string;
     recipientRut: string;
     lines: InvoiceLine[];
