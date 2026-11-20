@@ -5,7 +5,8 @@ import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntry;
 import com.casrusil.siierpai.modules.accounting.domain.model.EntryType;
 import com.casrusil.siierpai.modules.accounting.domain.service.AccountingEntryBuilder;
 import com.casrusil.siierpai.modules.accounting.domain.service.AccountingEntryService;
-import com.casrusil.siierpai.modules.invoicing.domain.event.InvoiceCreatedEvent;
+import com.casrusil.siierpai.modules.accounting.domain.port.out.AccountingEntryRepository;
+import com.casrusil.siierpai.modules.invoicing.domain.event.InvoiceSiiAcceptedEvent;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
 import com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository;
 import org.springframework.context.event.EventListener;
@@ -24,17 +25,32 @@ import java.util.Optional;
 @Component
 public class InvoiceAccountingListener {
 
+    private static final java.util.List<String> REFERENCE_TYPES =
+            java.util.List.of("INVOICE", "FACTURA_AI");
+
     private final AccountingEntryService accountingEntryService;
     private final InvoiceRepository invoiceRepository;
+    private final AccountingEntryRepository accountingEntryRepository;
 
     public InvoiceAccountingListener(AccountingEntryService accountingEntryService,
-            InvoiceRepository invoiceRepository) {
+            InvoiceRepository invoiceRepository,
+            AccountingEntryRepository accountingEntryRepository) {
         this.accountingEntryService = accountingEntryService;
         this.invoiceRepository = invoiceRepository;
+        this.accountingEntryRepository = accountingEntryRepository;
     }
 
+    /**
+     * El asiento se crea cuando el SII ACEPTA el DTE, no al emitirlo.
+     *
+     * <p>
+     * Fecha contable = fecha de emisión de la factura. Es idempotente por
+     * factura: si ya existe un asiento con referencia al folio, no se duplica
+     * (el estado puede consultarse varias veces).
+     * </p>
+     */
     @EventListener
-    public void handle(InvoiceCreatedEvent event) {
+    public void handle(InvoiceSiiAcceptedEvent event) {
         // Obtenemos la factura completa
         Optional<Invoice> invoiceOpt = invoiceRepository.findById(event.invoice().getId());
         if (invoiceOpt.isEmpty())
@@ -42,12 +58,21 @@ public class InvoiceAccountingListener {
 
         Invoice invoice = invoiceOpt.get();
 
+        if (alreadyAccounted(invoice)) {
+            return;
+        }
+
         // Solo procesamos COMPRAS aquí para la lógica de Activo vs Gasto
         if (isPurchase(invoice)) {
             createPurchaseEntry(invoice);
         } else {
             createSaleEntry(invoice);
         }
+    }
+
+    private boolean alreadyAccounted(Invoice invoice) {
+        return !accountingEntryRepository.findByCompanyIdAndReferenceTypeInAndReferenceId(
+                invoice.getCompanyId(), REFERENCE_TYPES, invoice.getFolio().toString()).isEmpty();
     }
 
     private boolean isPurchase(Invoice invoice) {

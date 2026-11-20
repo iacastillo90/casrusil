@@ -2,6 +2,8 @@ package com.casrusil.siierpai.modules.integration_sii.infrastructure.xml;
 
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
 import com.casrusil.siierpai.modules.invoicing.domain.model.InvoiceLine;
+import com.casrusil.siierpai.modules.sso.domain.model.Company;
+import com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -61,6 +63,12 @@ public class DteXmlBuilder {
     @Value("${sii.receptor.comuna:}")
     private String receptorComuna;
 
+    private final CompanyRepository companyRepository;
+
+    public DteXmlBuilder(CompanyRepository companyRepository) {
+        this.companyRepository = companyRepository;
+    }
+
     /**
      * Identificador XML del documento. Debe coincidir con la referencia que se
      * firma ({@link XmlDsigSigner}) y con el {@code ID} del elemento
@@ -74,6 +82,7 @@ public class DteXmlBuilder {
     }
 
     public String buildDte(Invoice invoice, String tedXml) {
+        Company company = companyRepository.findById(invoice.getCompanyId()).orElse(null);
         StringBuilder sb = new StringBuilder();
 
         // Sin declaración XML: el DTE se embebe dentro de <EnvioDTE>, que ya la
@@ -83,8 +92,8 @@ public class DteXmlBuilder {
 
         sb.append("<Encabezado>");
         appendIdDoc(sb, invoice);
-        appendEmisor(sb, invoice);
-        appendReceptor(sb, invoice);
+        appendEmisor(sb, invoice, company);
+        appendReceptor(sb, invoice, company);
         appendTotales(sb, invoice);
         sb.append("</Encabezado>");
 
@@ -111,24 +120,30 @@ public class DteXmlBuilder {
         sb.append("</IdDoc>");
     }
 
-    private void appendEmisor(StringBuilder sb, Invoice invoice) {
+    private void appendEmisor(StringBuilder sb, Invoice invoice, Company company) {
         sb.append("<Emisor>");
         sb.append("<RUTEmisor>").append(escape(invoice.getIssuerRut())).append("</RUTEmisor>");
-        // RznSoc es obligatoria en el esquema; el agregado la guarda como
-        // businessName (razón social del emisor).
-        if (notBlank(invoice.getBusinessName())) {
-            sb.append("<RznSoc>").append(escape(invoice.getBusinessName())).append("</RznSoc>");
+
+        // Prioridad: perfil de empresa; fallback a sii.emisor.* en properties.
+        String razonSocial = firstNonBlank(
+                company != null ? company.getRazonSocial() : null,
+                invoice.getBusinessName());
+        if (notBlank(razonSocial)) {
+            sb.append("<RznSoc>").append(escape(razonSocial)).append("</RznSoc>");
         }
-        appendIfPresent(sb, "GiroEmis", emisorGiro);
-        appendIfPresent(sb, "Acteco", emisorActeco);
-        appendIfPresent(sb, "DirOrigen", emisorDireccion);
-        appendIfPresent(sb, "CmnaOrigen", emisorComuna);
+        appendIfPresent(sb, "GiroEmis", firstNonBlank(company != null ? company.getGiro() : null, emisorGiro));
+        appendIfPresent(sb, "Acteco", firstNonBlank(company != null ? company.getActeco() : null, emisorActeco));
+        appendIfPresent(sb, "DirOrigen",
+                firstNonBlank(company != null ? company.getCommercialAddress() : null, emisorDireccion));
+        appendIfPresent(sb, "CmnaOrigen", firstNonBlank(company != null ? company.getComuna() : null, emisorComuna));
         sb.append("</Emisor>");
     }
 
-    private void appendReceptor(StringBuilder sb, Invoice invoice) {
+    private void appendReceptor(StringBuilder sb, Invoice invoice, Company company) {
         sb.append("<Receptor>");
         sb.append("<RUTRecep>").append(escape(invoice.getReceiverRut())).append("</RUTRecep>");
+        // RznSocRecep es obligatoria en el esquema.
+        appendIfPresent(sb, "RznSocRecep", invoice.getReceiverName());
         appendIfPresent(sb, "DirRecep", receptorDireccion);
         appendIfPresent(sb, "CmnaRecep", receptorComuna);
         sb.append("</Receptor>");
@@ -195,6 +210,10 @@ public class DteXmlBuilder {
         if (notBlank(value)) {
             sb.append("<").append(tag).append(">").append(escape(value)).append("</").append(tag).append(">");
         }
+    }
+
+    private static String firstNonBlank(String preferred, String fallback) {
+        return notBlank(preferred) ? preferred : fallback;
     }
 
     private static boolean notBlank(String value) {

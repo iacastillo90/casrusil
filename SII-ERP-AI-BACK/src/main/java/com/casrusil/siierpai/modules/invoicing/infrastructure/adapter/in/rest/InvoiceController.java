@@ -93,6 +93,10 @@ public class InvoiceController {
                                                                                                            // Sale?
                                 mapLines(request.lines()));
 
+                if (request.razonSocialReceptor() != null && !request.razonSocialReceptor().isBlank()) {
+                        invoice = invoice.withReceiverName(request.razonSocialReceptor().trim());
+                }
+
                 return ResponseEntity.ok(createInvoiceUseCase.createInvoice(invoice));
         }
 
@@ -212,7 +216,10 @@ public class InvoiceController {
 
                         @NotNull(message = "Las líneas de la factura son obligatorias")
                         @Size(min = 1, message = "Debe incluir al menos una línea de detalle")
-                        List<InvoiceLineRequest> lines) {
+                        List<InvoiceLineRequest> lines,
+
+                        @Size(max = 100, message = "Razón social del receptor máxima de 100 caracteres")
+                        String razonSocialReceptor) {
         }
 
         public record InvoiceLineRequest(

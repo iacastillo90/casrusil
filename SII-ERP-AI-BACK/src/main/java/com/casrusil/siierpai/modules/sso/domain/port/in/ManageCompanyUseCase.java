@@ -74,7 +74,7 @@ public interface ManageCompanyUseCase {
      * @throws IllegalArgumentException si la empresa no existe
      */
     Company updateCompany(CompanyId id, String razonSocial, String email, String commercialAddress, String website,
-            String phoneNumber, String logoUrl);
+            String phoneNumber, String logoUrl, String giro, String acteco, String comuna);
 
     /**
      * Obtiene una empresa por su ID.

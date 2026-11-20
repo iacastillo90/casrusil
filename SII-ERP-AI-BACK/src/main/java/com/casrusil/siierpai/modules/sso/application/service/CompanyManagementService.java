@@ -57,11 +57,12 @@ public class CompanyManagementService implements ManageCompanyUseCase {
     @Override
     @Transactional
     public Company updateCompany(CompanyId id, String razonSocial, String email, String commercialAddress,
-            String website, String phoneNumber, String logoUrl) {
+            String website, String phoneNumber, String logoUrl, String giro, String acteco, String comuna) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new DomainException("Company not found") {
                 });
-        company.updateProfile(razonSocial, email, commercialAddress, website, phoneNumber, logoUrl);
+        company.updateProfile(razonSocial, email, commercialAddress, website, phoneNumber, logoUrl, giro, acteco,
+                comuna);
         return companyRepository.save(company);
     }
 

@@ -218,6 +218,7 @@ CREATE TABLE IF NOT EXISTS fleet.vehicles (
 CREATE TABLE IF NOT EXISTS invoicing.invoices (
     id uuid NOT NULL,
     business_name character varying(255),
+    receiver_name character varying(255),
     common_use_vat_amount numeric(38,2),
     company_id uuid NOT NULL,
     date date NOT NULL,
@@ -876,6 +877,8 @@ ALTER TABLE public.sii_cafs ALTER COLUMN xml_content TYPE text;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_caf_company_type_range
     ON public.sii_cafs (company_id, tipo_dte, initial_folio, final_folio);
 
+ALTER TABLE invoicing.invoices ADD COLUMN IF NOT EXISTS receiver_name character varying(255);
+
 CREATE UNIQUE INDEX IF NOT EXISTS uk_invoices_company_type_folio
     ON invoicing.invoices (company_id, type_code, folio);
 
@@ -915,12 +918,14 @@ CREATE TABLE IF NOT EXISTS public.tax_parameters (
 -- Parámetros tributarios 2026.
 -- UTM enero 2026 = 69.751 y UF 01-01-2026 = 39.731,79: SII "Valores y fechas"
 -- (utm/utm2026.htm y uf/uf2026.htm).
--- PENDIENTE: bhe_retention_rate 2026 no se pudo confirmar en fuente oficial; se
--- deja NULL a propósito. F29CalculatorService falla con mensaje explícito si un
--- período 2026 tiene retenciones BHE y falta la tasa.
+-- Retención BHE 2026 = 15,25% (SII, noticia del 26-12-2025).
 INSERT INTO public.tax_parameters (id, utm_value, uf_value, bhe_retention_rate)
-VALUES ('YEAR_2026', 69751, 39731.79, NULL)
-ON CONFLICT (id) DO NOTHING;
+VALUES ('YEAR_2026', 69751, 39731.79, 15.25),
+       ('YEAR_2025', 67429, 38419.17, 14.50)
+ON CONFLICT (id) DO UPDATE
+    SET utm_value = EXCLUDED.utm_value,
+        uf_value = EXCLUDED.uf_value,
+        bhe_retention_rate = EXCLUDED.bhe_retention_rate;
 
 CREATE TABLE IF NOT EXISTS public.tax_profiles (
     company_id character varying(255) NOT NULL,
@@ -985,8 +990,15 @@ CREATE TABLE IF NOT EXISTS sso.companies (
     phone_number character varying(255),
     razon_social character varying(255) NOT NULL,
     rut character varying(255) NOT NULL,
-    website character varying(255)
+    website character varying(255),
+    giro character varying(255),
+    acteco character varying(255),
+    comuna character varying(255)
 );
+
+ALTER TABLE sso.companies ADD COLUMN IF NOT EXISTS giro character varying(255);
+ALTER TABLE sso.companies ADD COLUMN IF NOT EXISTS acteco character varying(255);
+ALTER TABLE sso.companies ADD COLUMN IF NOT EXISTS comuna character varying(255);
 
 CREATE TABLE IF NOT EXISTS sso.company_certificates (
     id uuid NOT NULL,

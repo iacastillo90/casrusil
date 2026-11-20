@@ -84,7 +84,10 @@ public class SsoIntegrationTest extends com.casrusil.siierpai.shared.test.BaseIn
                                 null,
                                 null,
                                 null,
-                                null);
+                                null,
+                                "Servicios",
+                                "620100",
+                                "Santiago");
 
                 mockMvc.perform(put("/api/v1/company/profile")
                                 .header("Authorization", "Bearer " + token)

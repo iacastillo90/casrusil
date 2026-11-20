@@ -112,6 +112,15 @@ public interface InvoiceRepository {
         Optional<Invoice> findFirstByCompanyIdAndTypeCodeAndFolio(CompanyId companyId, Integer typeCode, Long folio);
 
         /**
+         * Facturas con un estado de envío al SII dado (por ejemplo ENVIADO),
+         * para consultar su resultado.
+         *
+         * @param dteStatus estado DTE (PENDIENTE, ENVIADO, ACEPTADO, ...)
+         * @return facturas en ese estado
+         */
+        List<Invoice> findByDteStatus(String dteStatus);
+
+        /**
          * Encuentra el folio máximo usado por una empresa para un tipo de documento
          * dentro de un rango de folios (ventana de un CAF).
          *

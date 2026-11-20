@@ -39,6 +39,8 @@ public interface InvoiceJpaRepository extends JpaRepository<InvoiceEntity, UUID>
 
         void deleteByCompanyIdAndDateBetween(UUID companyId, java.time.LocalDate start, java.time.LocalDate end);
 
+        List<InvoiceEntity> findByDteStatus(String dteStatus);
+
         @Query("select max(i.folio) from InvoiceEntity i where i.companyId = :companyId and i.typeCode = :typeCode and i.folio between :fromFolio and :toFolio")
         Long findMaxFolioInRange(@Param("companyId") UUID companyId, @Param("typeCode") Integer typeCode,
                         @Param("fromFolio") Long fromFolio, @Param("toFolio") Long toFolio);

@@ -65,7 +65,10 @@ public class CompanyJpaAdapter implements CompanyRepository {
                 company.getWebsite(),
                 company.getPhoneNumber(),
                 company.getLogoUrl(),
-                company.isProfileComplete());
+                company.isProfileComplete(),
+                company.getGiro(),
+                company.getActeco(),
+                company.getComuna());
     }
 
     private Company toDomain(CompanyEntity entity) {
@@ -80,6 +83,9 @@ public class CompanyJpaAdapter implements CompanyRepository {
                 entity.getWebsite(),
                 entity.getPhoneNumber(),
                 entity.getLogoUrl(),
-                entity.isProfileComplete());
+                entity.isProfileComplete(),
+                entity.getGiro(),
+                entity.getActeco(),
+                entity.getComuna());
     }
 }

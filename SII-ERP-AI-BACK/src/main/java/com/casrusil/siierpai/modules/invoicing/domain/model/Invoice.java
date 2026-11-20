@@ -80,6 +80,7 @@ public class Invoice {
     private final TransactionType transactionType;
     private final List<InvoiceLine> items;
     private final String currency;
+    private final String receiverName;
 
     private PaymentStatus status;
 
@@ -92,6 +93,17 @@ public class Invoice {
             BigDecimal totalAmount,
             BigDecimal fixedAssetAmount, BigDecimal commonUseVatAmount, String origin,
             TransactionType transactionType, PaymentStatus status, List<InvoiceLine> items, String currency) {
+        this(id, companyId, type, folio, issuerRut, receiverRut, businessName, date, dueDate, netAmount, taxAmount,
+                totalAmount, fixedAssetAmount, commonUseVatAmount, origin, transactionType, status, items, currency,
+                null);
+    }
+
+    public Invoice(UUID id, CompanyId companyId, InvoiceType type, Long folio, String issuerRut, String receiverRut,
+            String businessName, LocalDate date, LocalDate dueDate, BigDecimal netAmount, BigDecimal taxAmount,
+            BigDecimal totalAmount,
+            BigDecimal fixedAssetAmount, BigDecimal commonUseVatAmount, String origin,
+            TransactionType transactionType, PaymentStatus status, List<InvoiceLine> items, String currency,
+            String receiverName) {
         this.id = id;
         this.companyId = companyId;
         this.type = type;
@@ -111,6 +123,7 @@ public class Invoice {
         this.status = status != null ? status : PaymentStatus.PENDING;
         this.items = items != null ? List.copyOf(items) : Collections.emptyList();
         this.currency = currency != null ? currency : "CLP";
+        this.receiverName = receiverName;
     }
 
     /**
@@ -204,7 +217,21 @@ public class Invoice {
     public Invoice withFolio(Long folio) {
         Invoice copy = new Invoice(id, companyId, type, folio, issuerRut, receiverRut, businessName, date, dueDate,
                 netAmount, taxAmount, totalAmount, fixedAssetAmount, commonUseVatAmount, origin, transactionType,
-                status, items, currency);
+                status, items, currency, receiverName);
+        copy.applySiiStatus(dteStatus, siiTrackId, sentAt);
+        return copy;
+    }
+
+    /**
+     * Devuelve una copia de esta factura con la razón social del receptor.
+     *
+     * @param receiverName razón social del receptor (obligatoria para emitir)
+     * @return nueva instancia con el receptor informado
+     */
+    public Invoice withReceiverName(String receiverName) {
+        Invoice copy = new Invoice(id, companyId, type, folio, issuerRut, receiverRut, businessName, date, dueDate,
+                netAmount, taxAmount, totalAmount, fixedAssetAmount, commonUseVatAmount, origin, transactionType,
+                status, items, currency, receiverName);
         copy.applySiiStatus(dteStatus, siiTrackId, sentAt);
         return copy;
     }
@@ -251,6 +278,10 @@ public class Invoice {
 
     public BigDecimal getTotalAmount() {
         return totalAmount;
+    }
+
+    public String getReceiverName() {
+        return receiverName;
     }
 
     public String getBusinessName() {

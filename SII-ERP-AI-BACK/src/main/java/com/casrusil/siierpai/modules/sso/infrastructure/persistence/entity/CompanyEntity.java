@@ -56,11 +56,45 @@ public class CompanyEntity {
     @Column(name = "is_profile_complete", nullable = false, columnDefinition = "boolean default false")
     private boolean isProfileComplete;
 
+    @Column(name = "giro")
+    private String giro;
+
+    @Column(name = "acteco")
+    private String acteco;
+
+    @Column(name = "comuna")
+    private String comuna;
+
+    public String getGiro() {
+        return giro;
+    }
+
+    public void setGiro(String giro) {
+        this.giro = giro;
+    }
+
+    public String getActeco() {
+        return acteco;
+    }
+
+    public void setActeco(String acteco) {
+        this.acteco = acteco;
+    }
+
+    public String getComuna() {
+        return comuna;
+    }
+
+    public void setComuna(String comuna) {
+        this.comuna = comuna;
+    }
+
     public CompanyEntity() {
     }
 
     public CompanyEntity(UUID id, String rut, String razonSocial, String email, boolean isActive, Instant createdAt,
-            String commercialAddress, String website, String phoneNumber, String logoUrl, boolean isProfileComplete) {
+            String commercialAddress, String website, String phoneNumber, String logoUrl, boolean isProfileComplete,
+            String giro, String acteco, String comuna) {
         this.id = id;
         this.rut = rut;
         this.razonSocial = razonSocial;
@@ -72,6 +106,9 @@ public class CompanyEntity {
         this.phoneNumber = phoneNumber;
         this.logoUrl = logoUrl;
         this.isProfileComplete = isProfileComplete;
+        this.giro = giro;
+        this.acteco = acteco;
+        this.comuna = comuna;
     }
 
     public UUID getId() {
