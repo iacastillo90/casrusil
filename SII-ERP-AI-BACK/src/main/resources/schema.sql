@@ -918,9 +918,14 @@ CREATE TABLE IF NOT EXISTS public.tax_parameters (
 -- PENDIENTE: bhe_retention_rate 2026 no se pudo confirmar en fuente oficial; se
 -- deja NULL a propósito. F29CalculatorService falla con mensaje explícito si un
 -- período 2026 tiene retenciones BHE y falta la tasa.
+-- Retención BHE 2026 = 15,25% (SII, noticia del 26-12-2025); 2025 = 14,5%.
 INSERT INTO public.tax_parameters (id, utm_value, uf_value, bhe_retention_rate)
-VALUES ('YEAR_2026', 69751, 39731.79, NULL)
-ON CONFLICT (id) DO NOTHING;
+VALUES ('YEAR_2026', 69751, 39731.79, 15.25),
+       ('YEAR_2025', 67429, 38419.17, 14.50)
+ON CONFLICT (id) DO UPDATE
+    SET utm_value = EXCLUDED.utm_value,
+        uf_value = EXCLUDED.uf_value,
+        bhe_retention_rate = EXCLUDED.bhe_retention_rate;
 
 CREATE TABLE IF NOT EXISTS public.tax_profiles (
     company_id character varying(255) NOT NULL,

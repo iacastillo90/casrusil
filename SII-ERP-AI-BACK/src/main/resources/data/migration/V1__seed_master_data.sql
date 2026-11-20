@@ -336,7 +336,14 @@ END $$;
 INSERT INTO tax_parameters (id, utm_value, uf_value, bhe_retention_rate)
 VALUES
     ('YEAR_2024', 64793, 36900, 13.75),
-    ('YEAR_2025', 66000, 37500, 13.75)
+    -- 2025: UTM enero 2025 = 67.429 y UF 01-01-2025 = 38.419,17
+    -- (SII "Valores y fechas": utm/utm2025.htm, uf/uf2025.htm).
+    -- Retención BHE 2025 = 14,5% (SII, boletas de honorarios).
+    ('YEAR_2025', 67429, 38419.17, 14.50),
+    -- 2026: UTM enero 2026 = 69.751 y UF 01-01-2026 = 39.731,79
+    -- (SII "Valores y fechas": utm/utm2026.htm, uf/uf2026.htm).
+    -- Retención BHE 2026 = 15,25% (SII, noticia 26-12-2025).
+    ('YEAR_2026', 69751, 39731.79, 15.25)
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
