@@ -127,7 +127,8 @@ public class ComplianceController {
                     totalTxns, reconciledCount, pendingCount, reconRate, 0.88);
 
             List<AnomalyWarning> acuseAlerts = acuseScheduler.getPendingAlerts(companyId);
-            TaxParameterEntity taxParams = taxRepo.findById("YEAR_2024").orElse(null);
+            // Los parámetros dependen del período consultado, no de un año fijo.
+            TaxParameterEntity taxParams = taxRepo.findById("YEAR_" + selectedPeriod.getYear()).orElse(null);
 
             return ResponseEntity.ok(new ComplianceDashboardDTO(
                     siiReport,

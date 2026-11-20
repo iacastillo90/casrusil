@@ -912,6 +912,16 @@ CREATE TABLE IF NOT EXISTS public.tax_parameters (
     utm_value numeric(38,2)
 );
 
+-- Parámetros tributarios 2026.
+-- UTM enero 2026 = 69.751 y UF 01-01-2026 = 39.731,79: SII "Valores y fechas"
+-- (utm/utm2026.htm y uf/uf2026.htm).
+-- PENDIENTE: bhe_retention_rate 2026 no se pudo confirmar en fuente oficial; se
+-- deja NULL a propósito. F29CalculatorService falla con mensaje explícito si un
+-- período 2026 tiene retenciones BHE y falta la tasa.
+INSERT INTO public.tax_parameters (id, utm_value, uf_value, bhe_retention_rate)
+VALUES ('YEAR_2026', 69751, 39731.79, NULL)
+ON CONFLICT (id) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS public.tax_profiles (
     company_id character varying(255) NOT NULL,
     created_at timestamp(6) without time zone,
