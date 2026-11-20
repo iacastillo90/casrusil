@@ -27,14 +27,17 @@ import java.util.Map;
 public class SiiSyncController {
 
     private final SiiSyncUseCase siiSyncUseCase;
+    private final String environment;
 
-    public SiiSyncController(SiiSyncUseCase siiSyncUseCase) {
+    public SiiSyncController(SiiSyncUseCase siiSyncUseCase,
+            @org.springframework.beans.factory.annotation.Value("${sii.environment:certificacion}") String environment) {
         this.siiSyncUseCase = siiSyncUseCase;
+        this.environment = environment;
     }
 
     @GetMapping("/status")
     public ResponseEntity<SiiSyncStatusDto> status() {
-        return ResponseEntity.ok(SiiSyncStatusDto.from(siiSyncUseCase.getStatus(CompanyContext.requireCompanyId())));
+        return ResponseEntity.ok(SiiSyncStatusDto.from(siiSyncUseCase.getStatus(CompanyContext.requireCompanyId()), environment));
     }
 
     @ExceptionHandler(DteEmissionValidationException.class)
