@@ -20,13 +20,12 @@ import java.util.List;
 public class DepreciationService {
 
     private final AccountingEntryService accountingEntryService;
+    private final DefaultAccountResolver accountResolver;
 
-    // Códigos de cuenta estándar chilenos
-    private static final String DEPRECIATION_EXPENSE_ACCOUNT = "520101"; // Gasto por Depreciación
-    private static final String ACCUMULATED_DEPRECIATION_ACCOUNT = "110901"; // Depreciación Acumulada
-
-    public DepreciationService(AccountingEntryService accountingEntryService) {
+    public DepreciationService(AccountingEntryService accountingEntryService,
+            DefaultAccountResolver accountResolver) {
         this.accountingEntryService = accountingEntryService;
+        this.accountResolver = accountResolver;
     }
 
     /**
@@ -97,8 +96,12 @@ public class DepreciationService {
 
         // Crear asiento contable
         List<AccountingEntryLine> lines = new ArrayList<>();
-        lines.add(AccountingEntryLine.debit(DEPRECIATION_EXPENSE_ACCOUNT, "Depreciation Expense", monthlyDepreciation));
-        lines.add(AccountingEntryLine.credit(ACCUMULATED_DEPRECIATION_ACCOUNT, "Accumulated Depreciation",
+        String expenseAccount = accountResolver.resolve(asset.getCompanyId(),
+                DefaultAccountRole.DEPRECIATION_EXPENSE);
+        String accumulatedAccount = accountResolver.resolve(asset.getCompanyId(),
+                DefaultAccountRole.ACCUMULATED_DEPRECIATION);
+        lines.add(AccountingEntryLine.debit(expenseAccount, "Depreciation Expense", monthlyDepreciation));
+        lines.add(AccountingEntryLine.credit(accumulatedAccount, "Accumulated Depreciation",
                 monthlyDepreciation));
 
         AccountingEntry entry = new AccountingEntry(

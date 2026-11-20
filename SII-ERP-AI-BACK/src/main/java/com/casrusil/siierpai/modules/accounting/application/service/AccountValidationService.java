@@ -16,26 +16,26 @@ import java.util.Set;
 @Service
 public class AccountValidationService {
 
-    // Cuentas que NO deben usarse en empresas de servicios
+    // Cuentas que NO deben usarse en empresas de servicios.
+    // Se usa el prefijo del plan canónico (1.1.03) porque el plan detallado no
+    // define cuentas de inventario.
     private static final Set<String> INVENTORY_ACCOUNTS = Set.of(
-            "1103", // Existencias
-            "110301", // Mercaderías
-            "110302", // Materias Primas
-            "110303" // Productos Terminados
+            "1.1.03" // Existencias
     );
 
-    // Cuentas que requieren documentación especial
+    // Cuentas que requieren documentación especial (provisiones del plan detallado).
     private static final Set<String> SPECIAL_ACCOUNTS = Set.of(
-            "2104", // Provisiones
-            "210402", // Provisión Vacaciones
-            "210403" // Provisión Gratificaciones
+            "2106", // Provisiones
+            "210601", // Provisión Vacaciones
+            "2.1.06" // Provisión (plan canónico, si se agrega)
     );
 
-    // Cuentas que no deben tener saldo negativo
+    // Cuentas que no deben tener saldo negativo.
     private static final Set<String> POSITIVE_ONLY_ACCOUNTS = Set.of(
-            "1101", // Caja
-            "1102", // Bancos
-            "1103" // Existencias
+            "1101", // Caja (plan detallado)
+            "1102", // Bancos (plan detallado)
+            "1.1.01", // Caja (plan canónico)
+            "1.1.03" // Existencias (plan canónico)
     );
 
     /**
@@ -79,8 +79,9 @@ public class AccountValidationService {
             return false;
         }
 
-        // Validar formato: debe ser numérico y tener entre 4 y 6 dígitos
-        if (!accountCode.matches("\\d{4,6}")) {
+        // Validar formato: plan detallado (4-6 dígitos) o plan canónico
+        // (segmentos separados por punto, ej. 1.1.01.001).
+        if (!accountCode.matches("^(\\d{4,6}|\\d{1,2}(\\.\\d{1,3}){1,4})$")) {
             return false;
         }
 
