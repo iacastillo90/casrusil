@@ -19,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Filtro de Seguridad para autenticación JWT.
@@ -46,6 +47,17 @@ public class SecurityFilter extends OncePerRequestFilter {
     /** Nombre de la cookie httpOnly que transporta el JWT (flujo basado en cookie). */
     public static final String ACCESS_TOKEN_COOKIE = "access_token";
 
+    /**
+     * Rutas de autenticación públicas. {@code /me} no está acá: requiere JWT.
+     */
+    private static final Set<String> PUBLIC_AUTH_PATHS = Set.of(
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+            "/api/v1/auth/logout",
+            "/auth/login",
+            "/auth/register",
+            "/auth/logout");
+
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistService tokenBlacklistService;
 
@@ -65,8 +77,9 @@ public class SecurityFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Rutas públicas de autenticación no requieren token
-        if (request.getRequestURI().startsWith("/api/v1/auth/")) {
+        // Rutas públicas de autenticación no requieren token.
+        // /api/v1/auth/me sí requiere JWT, por eso no se incluye acá.
+        if (PUBLIC_AUTH_PATHS.contains(request.getRequestURI())) {
             filterChain.doFilter(request, response);
             return;
         }
