@@ -26,7 +26,8 @@ export interface CreatePurchaseOrderRequest {
     supplierName: string;
     expectedDeliveryDate: string;
     lines: {
-        productId: string;
+        /** null = línea libre sin producto de inventario (el backend lo acepta). */
+        productId: string | null;
         description: string;
         quantity: number;
         unitPrice: number;
