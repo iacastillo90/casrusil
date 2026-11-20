@@ -1,0 +1,13 @@
+{
+  "name": "sii-erp-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "api": "node api/matrix.mjs",
+    "web": "playwright test",
+    "web:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}
