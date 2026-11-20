@@ -44,7 +44,8 @@ class PayrollPayslipIsolationTest {
             mock(PayrollPeriodRepositoryPort.class),
             payslipRepository,
             mock(ApplicationEventPublisher.class),
-            mock(com.casrusil.siierpai.modules.payroll.infrastructure.previred.PreviredFileGenerator.class));
+            mock(com.casrusil.siierpai.modules.payroll.infrastructure.previred.PreviredFileGenerator.class),
+            mock(com.casrusil.siierpai.modules.payroll.domain.port.TaxParameterProviderPort.class));
 
     @AfterEach
     void clearSecurity() {
