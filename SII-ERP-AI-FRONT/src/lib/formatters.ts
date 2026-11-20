@@ -1,4 +1,3 @@
-import Decimal from 'decimal.js';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 

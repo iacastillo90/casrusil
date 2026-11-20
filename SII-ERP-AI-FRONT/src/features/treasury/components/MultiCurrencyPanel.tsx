@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ArrowRightLeft, DollarSign } from 'lucide-react';
+import { ArrowRightLeft } from 'lucide-react';
 import { treasuryService } from '../services/treasury.service';
 
 export const MultiCurrencyPanel = () => {

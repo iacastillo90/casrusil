@@ -6,7 +6,6 @@ import { TrendingUp, DollarSign, Coins, AlertCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 export function EconomicIndicatorsWidget() {
     const [indicators, setIndicators] = useState<EconomicIndicators | null>(null);
@@ -18,7 +17,7 @@ export function EconomicIndicatorsWidget() {
             try {
                 const data = await indicatorsService.getTodayIndicators();
                 setIndicators(data);
-            } catch (err) {
+            } catch {
                 setError(true);
             } finally {
                 setLoading(false);

@@ -48,10 +48,8 @@ api.interceptors.response.use(
         }
 
         // Format error message
-        const message =
-            (error.response?.data as any)?.message ||
-            error.message ||
-            'Ocurrió un error inesperado';
+        const payload = error.response?.data as { message?: string } | undefined;
+        const message = payload?.message || error.message || 'Ocurrió un error inesperado';
 
         return Promise.reject(new Error(message));
     }
@@ -60,7 +58,7 @@ api.interceptors.response.use(
 export default api;
 
 // Helper types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
     data: T;
     message?: string;
     success: boolean;
@@ -69,5 +67,5 @@ export interface ApiResponse<T = any> {
 export interface ApiError {
     message: string;
     code?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
 }

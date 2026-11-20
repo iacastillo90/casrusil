@@ -38,14 +38,14 @@ export default function FixedAssetsPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {isLoading ? <p>Cargando activos...</p> : assets?.length === 0 ? <p>No hay activos registrados.</p> : assets?.map((asset: any) => (
+                {isLoading ? <p>Cargando activos...</p> : assets?.length === 0 ? <p>No hay activos registrados.</p> : assets?.map((asset) => (
                     <Card key={asset.id} className="overflow-hidden">
                         <div className="bg-slate-50 border-b p-3 flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                                {getIcon(asset.category)}
-                                <span className="font-semibold text-sm">{asset.category}</span>
+                                {getIcon(asset.depreciationMethod)}
+                                <span className="font-semibold text-sm">{asset.depreciationMethod}</span>
                             </div>
-                            <Badge variant="outline">{asset.purchaseDate}</Badge>
+                            <Badge variant="outline">{asset.acquisitionDate}</Badge>
                         </div>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-lg">{asset.name}</CardTitle>
@@ -54,21 +54,21 @@ export default function FixedAssetsPage() {
                             <div className="space-y-3 mt-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Valor de Compra:</span>
-                                    <span className="font-medium">{formatCLP(asset.purchaseValue)}</span>
+                                    <span className="font-medium">{formatCLP(asset.initialValue)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm border-t pt-2">
                                     <span className="text-muted-foreground">Valor Residual Actual:</span>
-                                    <span className="font-bold text-primary">{formatCLP(asset.currentResidualValue)}</span>
+                                    <span className="font-bold text-primary">{formatCLP(asset.currentValue)}</span>
                                 </div>
                                 
                                 {/* Progress Bar for Depreciation */}
                                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                                     <div 
                                         className="bg-primary h-2 rounded-full transition-all" 
-                                        style={{ width: `${(asset.currentResidualValue / asset.purchaseValue) * 100}%` }}
+                                        style={{ width: `${(asset.currentValue / asset.initialValue) * 100}%` }}
                                     ></div>
                                 </div>
-                                <p className="text-xs text-right text-muted-foreground">Vida Útil Restante: {Math.round((asset.currentResidualValue / asset.purchaseValue) * 100)}%</p>
+                                <p className="text-xs text-right text-muted-foreground">Vida Útil Restante: {Math.round((asset.currentValue / asset.initialValue) * 100)}%</p>
                             </div>
                         </CardContent>
                     </Card>

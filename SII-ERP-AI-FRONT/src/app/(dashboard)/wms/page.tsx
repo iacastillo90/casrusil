@@ -36,7 +36,7 @@ export default function WmsPage() {
 
                 <TabsContent value="picking" className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {loadingTasks ? <p>Cargando tareas...</p> : tasks?.length === 0 ? <p>No hay tareas de picking activas.</p> : tasks?.map((task: any) => (
+                        {loadingTasks ? <p>Cargando tareas...</p> : tasks?.length === 0 ? <p>No hay tareas de picking activas.</p> : tasks?.map((task) => (
                             <Card key={task.id} className={task.status === 'COMPLETED' ? 'opacity-60' : ''}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Pedido: {task.orderId}</CardTitle>
@@ -44,7 +44,7 @@ export default function WmsPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-3 mt-2">
-                                        {task.items.map((item:any, idx:number) => (
+                                        {task.items.map((item, idx) => (
                                             <div key={idx} className="flex items-center justify-between border-b pb-2">
                                                 <div>
                                                     <p className="text-sm font-medium">{item.productId}</p>
@@ -72,7 +72,7 @@ export default function WmsPage() {
 
                 <TabsContent value="locations" className="space-y-4">
                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        {loadingLocations ? <p>Cargando ubicaciones...</p> : locations?.length === 0 ? <p>No hay ubicaciones registradas.</p> : locations?.map((loc: any) => (
+                        {loadingLocations ? <p>Cargando ubicaciones...</p> : locations?.length === 0 ? <p>No hay ubicaciones registradas.</p> : locations?.map((loc) => (
                             <Card key={loc.id}>
                                 <CardHeader className="pb-2 bg-slate-50 border-b">
                                     <CardTitle className="text-lg flex justify-between">

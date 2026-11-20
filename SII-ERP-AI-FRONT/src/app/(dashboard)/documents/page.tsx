@@ -31,7 +31,7 @@ export default function DmsPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {isLoading ? <p>Cargando documentos...</p> : documents?.length === 0 ? <p>No hay documentos subidos.</p> : documents?.map((doc: any) => (
+                {isLoading ? <p>Cargando documentos...</p> : documents?.length === 0 ? <p>No hay documentos subidos.</p> : documents?.map((doc) => (
                     <Card key={doc.id} className="shadow-sm">
                         <CardHeader className="flex flex-row items-start justify-between pb-2">
                             <div className="flex items-center gap-3">

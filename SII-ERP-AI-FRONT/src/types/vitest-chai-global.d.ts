@@ -6,6 +6,7 @@
 //
 // Esta referencia explícita fuerza la carga del namespace global `Chai`
 // para que `expect` sea invocable en los tests.
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- necesario para el namespace global Chai en tests
 /// <reference path="../../node_modules/@vitest/expect/dist/chai.d.cts" />
 
 export {};

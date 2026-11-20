@@ -77,7 +77,7 @@ export function InviteUserModal({ children }: InviteUserModalProps) {
 
                     <div className="space-y-2">
                         <Label htmlFor="role">Rol</Label>
-                        <Select onValueChange={(val) => setValue('role', val as any)} defaultValue="VIEWER">
+                        <Select onValueChange={(val) => setValue('role', val as UserInvitation['role'])} defaultValue="VIEWER">
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecciona un rol" />
                             </SelectTrigger>
