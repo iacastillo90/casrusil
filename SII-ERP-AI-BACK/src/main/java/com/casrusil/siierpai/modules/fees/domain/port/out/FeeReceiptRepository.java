@@ -11,6 +11,8 @@ public interface FeeReceiptRepository {
 
     void saveAll(List<FeeReceipt> feeReceipts);
 
+    List<FeeReceipt> findByCompanyId(CompanyId companyId);
+
     List<FeeReceipt> findByCompanyIdAndIssueDateBetween(CompanyId companyId, LocalDate startDate, LocalDate endDate);
 
     List<FeeReceipt> findByCompanyIdAndYear(CompanyId companyId, int year);

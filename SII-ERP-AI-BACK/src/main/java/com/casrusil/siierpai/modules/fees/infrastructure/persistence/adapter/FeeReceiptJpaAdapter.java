@@ -32,6 +32,12 @@ public class FeeReceiptJpaAdapter implements FeeReceiptRepository {
     }
 
     @Override
+    public List<FeeReceipt> findByCompanyId(CompanyId companyId) {
+        return jpaRepository.findByCompanyId(companyId.getValue())
+                .stream().map(this::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     public List<FeeReceipt> findByCompanyIdAndIssueDateBetween(CompanyId companyId, LocalDate startDate,
             LocalDate endDate) {
         return jpaRepository.findByCompanyIdAndIssueDateBetween(companyId.getValue(), startDate, endDate)

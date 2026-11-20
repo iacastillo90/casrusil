@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Year;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.casrusil.siierpai.modules.fees.domain.util.RetentionRateCalculator;
@@ -33,6 +34,31 @@ public class FeeReceiptService {
         this.feeReceiptRepository = feeReceiptRepository;
         this.feeReceiptParser = feeReceiptParser;
         this.companyRepository = companyRepository;
+    }
+
+    /**
+     * Lista las boletas de honorarios de la empresa, opcionalmente filtradas por
+     * año de emisión. Resultado ordenado por fecha de emisión descendente y folio
+     * descendente.
+     *
+     * @param companyId empresa (tenant) resuelta desde el JWT, nunca desde el request
+     * @param year      año de emisión; {@code null} devuelve todos los registros
+     * @return boletas de la empresa
+     */
+    @Transactional(readOnly = true)
+    public List<FeeReceipt> listFees(CompanyId companyId, Integer year) {
+        List<FeeReceipt> receipts = (year == null)
+                ? feeReceiptRepository.findByCompanyId(companyId)
+                : feeReceiptRepository.findByCompanyIdAndYear(companyId, year);
+
+        Comparator<FeeReceipt> byIssueDateDesc = Comparator.comparing(
+                FeeReceipt::getIssueDate, Comparator.nullsLast(Comparator.reverseOrder()));
+        Comparator<FeeReceipt> byFolioDesc = Comparator.comparing(
+                FeeReceipt::getFolio, Comparator.nullsLast(Comparator.reverseOrder()));
+
+        return receipts.stream()
+                .sorted(byIssueDateDesc.thenComparing(byFolioDesc))
+                .toList();
     }
 
     @Transactional
