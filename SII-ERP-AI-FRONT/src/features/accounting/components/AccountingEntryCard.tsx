@@ -18,8 +18,11 @@ export function AccountingEntryCard({ entry, isLoading }: AccountingEntryCardPro
     if (!entry) {
         return (
             <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                    No hay asiento contable asociado a este documento.
+                <CardContent className="py-12 text-center">
+                    <Calculator className="mx-auto mb-3 h-8 w-8 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">
+                        El asiento contable se genera automáticamente cuando el SII acepta el documento.
+                    </p>
                 </CardContent>
             </Card>
         );

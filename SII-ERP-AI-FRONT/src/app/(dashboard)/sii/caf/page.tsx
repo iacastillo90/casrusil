@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileUp, FileText, CheckCircle, AlertTriangle, Loader2, Eye, AlertCircle } from "lucide-react";
-import { siiService } from "@/features/sii/services/sii.service";
+import { FileUp, FileText, CheckCircle, AlertTriangle, AlertCircle } from "lucide-react";
+import { siiService, type CafListEntry } from "@/features/sii/services/sii.service";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -17,17 +17,7 @@ export default function CAFPage() {
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [lastUploadResult, setLastUploadResult] = useState<{ start: number; end: number } | null>(null);
-    const [cafs, setCafs] = useState<Array<{
-        id: string;
-        tipoDte: string;
-        folioDesde: number;
-        folioHasta: number;
-        folioActual: number;
-        disponibles: number;
-        fechaAutorizacion: string;
-        fechaVencimiento: string | null;
-        estado: 'VIGENTE' | 'POR_AGOTARSE' | 'AGOTADO' | 'VENCIDO';
-    }>>([]);
+    const [cafs, setCafs] = useState<CafListEntry[]>([]);
     const [loadingCafs, setLoadingCafs] = useState(true);
     const [errorCafs, setErrorCafs] = useState<string | null>(null);
 
@@ -48,9 +38,10 @@ export default function CAFPage() {
             setFile(null);
             // Recargar lista de CAFs
             await loadCafs();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            if (error?.response?.status === 409) {
+            const status = (error as { response?: { status?: number } } | null)?.response?.status;
+            if (status === 409) {
                 toast.error("No hay folios disponibles. Verifique los CAFs cargados.");
             } else {
                 toast.error("Error al subir archivo CAF");
