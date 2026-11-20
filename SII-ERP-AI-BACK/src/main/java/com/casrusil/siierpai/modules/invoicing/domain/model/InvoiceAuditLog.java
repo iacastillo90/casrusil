@@ -17,6 +17,7 @@ public record InvoiceAuditLog(
     public static final String ACTION_CREATED = "CREATED";
     public static final String ACTION_UPDATED = "UPDATED";
     public static final String ACTION_SENT = "SENT";
+    public static final String ACTION_STATUS_UPDATED = "STATUS_UPDATED";
     public static final String SYSTEM_USER = "Sistema";
 
     public static InvoiceAuditLog record(CompanyId companyId, UUID invoiceId, String action, String username,

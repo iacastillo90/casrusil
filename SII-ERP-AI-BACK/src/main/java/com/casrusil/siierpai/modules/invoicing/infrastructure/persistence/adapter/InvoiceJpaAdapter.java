@@ -92,6 +92,13 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
                 toFolio));
     }
 
+    @Override
+    public java.util.List<Invoice> findByDteStatus(String dteStatus) {
+        return invoiceJpaRepository.findByDteStatus(dteStatus).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private InvoiceEntity toEntity(Invoice invoice) {
         InvoiceEntity entity = new InvoiceEntity(
                 invoice.getId(),

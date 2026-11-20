@@ -177,6 +177,11 @@ class InvoiceManagementServiceTest {
         }
 
         @Override
+        public java.util.List<Invoice> findByDteStatus(String dteStatus) {
+            return java.util.Collections.emptyList();
+        }
+
+        @Override
         public Optional<Long> findMaxFolioInRange(CompanyId companies, int typeCode, long fromFolio, long toFolio) {
             return Optional.empty();
         }
