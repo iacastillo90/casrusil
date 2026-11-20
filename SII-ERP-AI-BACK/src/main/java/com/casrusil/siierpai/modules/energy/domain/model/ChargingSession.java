@@ -151,6 +151,51 @@ public class ChargingSession {
         return status == ChargingSessionStatus.COMPLETED;
     }
 
+    /**
+     * Rehidrata una sesión desde persistencia sin re-ejecutar las transiciones
+     * de dominio (que fallarían para sesiones ya iniciadas o completadas).
+     *
+     * @param startedAt    inicio real
+     * @param endedAt      fin real (null si sigue activa)
+     * @param status       estado persistido
+     * @param initial      medición inicial (puede ser null)
+     * @param last         medición final o última conocida (puede ser null)
+     * @return sesión reconstruida
+     */
+    public static ChargingSession restore(
+            SessionId sessionId,
+            StationId stationId,
+            OcppIdentifier chargerOcppId,
+            ConnectorId connectorId,
+            UUID userId,
+            LocalDateTime startedAt,
+            LocalDateTime endedAt,
+            ChargingSessionStatus status,
+            EnergyMeasurement initial,
+            EnergyMeasurement last) {
+        ChargingSession session = new ChargingSession(builder()
+                .sessionId(sessionId)
+                .stationId(stationId)
+                .chargerOcppId(chargerOcppId)
+                .connectorId(connectorId)
+                .userId(userId)
+                .startedAt(startedAt)
+                .status(status != null ? status : ChargingSessionStatus.INITIATED));
+        session.endedAt = endedAt;
+        session.initialMeasurement = initial;
+        if (status == ChargingSessionStatus.COMPLETED) {
+            session.finalMeasurement = last;
+        }
+        return session;
+    }
+
+    /** Agrega una medición histórica al rehidratar desde persistencia. */
+    public void addRestoredMeasurement(EnergyMeasurement measurement) {
+        if (measurement != null) {
+            intermediateMeasurements.add(measurement);
+        }
+    }
+
     // ========== GETTERS ==========
 
     public SessionId getSessionId() {

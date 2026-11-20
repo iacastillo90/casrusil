@@ -64,9 +64,11 @@ public class EnergyController {
         int activeStations = energyQueryService.getActiveStationsByCompany();
         double totalConsumption = energyQueryService.getTodayConsumptionByCompany();
         int activeSessions = energyQueryService.getActiveSessionsByCompany();
+        Double peakConsumption = energyQueryService.getPeakAveragePowerTodayByCompany();
 
         EnergyMetricsDto metrics = EnergyMetricsDto.from(
                 totalConsumption,
+                peakConsumption,
                 totalStations,
                 activeStations,
                 activeSessions
