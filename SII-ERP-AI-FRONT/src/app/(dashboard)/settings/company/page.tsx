@@ -10,9 +10,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
+type CompanyFormValues = {
+    name: string;
+    rut: string;
+    address: string;
+    email: string;
+    phone: string;
+};
+
 export default function CompanySettingsPage() {
     const [loading, setLoading] = useState(false);
-    const form = useForm({
+    const form = useForm<CompanyFormValues>({
         defaultValues: {
             name: "",
             rut: "",
@@ -22,7 +30,7 @@ export default function CompanySettingsPage() {
         }
     });
 
-    const onSubmit = async (values: any) => {
+    const onSubmit = async (values: CompanyFormValues) => {
         setLoading(true);
         try {
             const formData = new FormData();

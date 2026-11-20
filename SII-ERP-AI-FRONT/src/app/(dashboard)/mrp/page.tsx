@@ -35,7 +35,7 @@ export default function MrpPage() {
 
                 <TabsContent value="orders" className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {loadingOrders ? <p>Cargando órdenes...</p> : orders?.length === 0 ? <p>No hay órdenes activas.</p> : orders?.map((order: any) => (
+                        {loadingOrders ? <p>Cargando órdenes...</p> : orders?.length === 0 ? <p>No hay órdenes activas.</p> : orders?.map((order) => (
                             <Card key={order.id}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">OT: {order.id.split('-')[0]}</CardTitle>
@@ -43,7 +43,7 @@ export default function MrpPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">{order.targetQuantity} unid.</div>
-                                    <p className="text-xs text-muted-foreground mb-4">Producto: {boms?.find((b:any)=>b.id===order.bomId)?.name || 'Desconocido'}</p>
+                                    <p className="text-xs text-muted-foreground mb-4">Producto: {boms?.find((b)=>b.id===order.bomId)?.name || 'Desconocido'}</p>
                                     
                                     <div className="flex justify-between items-center">
                                         <Badge variant={order.status === 'COMPLETED' ? 'default' : 'outline'}>
@@ -64,7 +64,7 @@ export default function MrpPage() {
 
                 <TabsContent value="boms" className="space-y-4">
                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {loadingBoms ? <p>Cargando recetas...</p> : boms?.length === 0 ? <p>No hay recetas creadas.</p> : boms?.map((bom: any) => (
+                        {loadingBoms ? <p>Cargando recetas...</p> : boms?.length === 0 ? <p>No hay recetas creadas.</p> : boms?.map((bom) => (
                             <Card key={bom.id}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">{bom.name}</CardTitle>
@@ -74,7 +74,7 @@ export default function MrpPage() {
                                     <div className="mt-2 space-y-2">
                                         <p className="text-xs font-semibold uppercase text-gray-500">Componentes:</p>
                                         <ul className="text-sm space-y-1">
-                                            {bom.items.map((item:any, idx:number) => (
+                                            {bom.items.map((item, idx) => (
                                                 <li key={idx} className="flex justify-between border-b pb-1">
                                                     <span>{item.componentProductId}</span>
                                                     <span className="font-medium">{item.quantity}</span>
