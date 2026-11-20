@@ -3,6 +3,7 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { EnvironmentBanner } from "@/components/shared/EnvironmentBanner";
+import { SessionGuard } from "@/components/layout/SessionGuard";
 import { AiDrawer } from "@/features/ai-assistant/components/AiDrawer";
 import { useUiStore } from "@/stores/ui.store";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ export default function DashboardLayout({
 
     return (
         <div className="min-h-screen w-full">
+            <SessionGuard />
             <Sidebar />
             <div className={cn("transition-all duration-300", isSidebarCollapsed ? "pl-16" : "pl-64")}>
                 <EnvironmentBanner />

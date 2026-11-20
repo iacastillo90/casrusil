@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,6 +25,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { authService } from "../services/auth.service";
 import Link from "next/link";
 import { LoginCredentials } from "../types/auth.types";
+import { useAuthStore } from '@/features/auth/stores/auth.store';
 
 const loginSchema = z.object({
     email: z.string().email("Email inválido"),
@@ -32,6 +35,15 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
+    const sessionExpired = useAuthStore((state) => state.sessionExpired);
+    const clearSessionExpired = useAuthStore((state) => state.clearSessionExpired);
+
+    useEffect(() => {
+        if (!sessionExpired) return;
+        toast.error("Tu sesión expiró. Vuelve a iniciar sesión.");
+        clearSessionExpired();
+    }, [sessionExpired, clearSessionExpired]);
+
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
 

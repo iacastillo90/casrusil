@@ -17,7 +17,6 @@ import { Upload, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import { useAuthStore } from "@/features/auth/stores/auth.store";
 
 interface FeeImportResult {
     successCount: number;
@@ -32,26 +31,18 @@ export function FeeImportModal() {
     const [open, setOpen] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
-    const companyId = useAuthStore((state) => state.companyId);
     const queryClient = useQueryClient();
 
     const handleImport = async () => {
         if (!file) return;
-
-        if (!companyId) {
-            toast.error("No se pudo identificar la empresa. Vuelve a iniciar sesión.");
-            return;
-        }
 
         setImporting(true);
         try {
             const formData = new FormData();
             formData.append("file", file);
 
-            // El backend actual exige companyId como request param en POST /fees/import.
-            const { data } = await api.post<FeeImportResult>("/fees/import", formData, {
-                params: { companyId },
-            });
+            // La empresa la resuelve el backend desde el JWT.
+            const { data } = await api.post<FeeImportResult>("/fees/import", formData);
 
             if (data.successCount > 0) {
                 toast.success(`Se importaron ${data.successCount} boletas.`, {

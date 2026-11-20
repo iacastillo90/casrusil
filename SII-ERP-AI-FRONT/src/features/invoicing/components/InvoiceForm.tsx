@@ -68,6 +68,7 @@ const invoiceFormSchema = z.object({
         .string()
         .min(1, "Ingresa el RUT del receptor")
         .refine((value) => isValidRutFormat(value), "Formato de RUT inválido (ej: 12.345.678-9)"),
+    razonSocialReceptor: z.string().trim().max(100, "Máximo 100 caracteres").optional(),
     fechaEmision: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Selecciona una fecha válida"),
     lines: z.array(lineSchema).min(1, "Agrega al menos una línea"),
 });
@@ -134,6 +135,7 @@ export function InvoiceForm({ invoice, onClose }: InvoiceFormProps) {
         defaultValues: {
             tipoDte: 33,
             rutReceptor: invoice?.recipientRut ?? "",
+            razonSocialReceptor: invoice?.recipientName ?? "",
             fechaEmision: invoice?.issueDate?.slice(0, 10) ?? todayIso(),
             lines: invoice?.lines?.length
                 ? invoice.lines.map((line) => ({
@@ -197,6 +199,7 @@ export function InvoiceForm({ invoice, onClose }: InvoiceFormProps) {
             rutEmisor: company.rut,
             razonSocialEmisor: company.name,
             rutReceptor: values.rutReceptor,
+            razonSocialReceptor: values.razonSocialReceptor ?? "",
             fechaEmision: values.fechaEmision,
             lines: values.lines.map((line) => ({
                 description: line.description,
@@ -382,6 +385,23 @@ export function InvoiceForm({ invoice, onClose }: InvoiceFormProps) {
                                 <p className="text-xs text-muted-foreground">
                                     Se enviará al SII como {cleanRut(watch("rutReceptor")) || "—"}.
                                 </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="razonSocialReceptor">Razón social del receptor</Label>
+                            <Input
+                                id="razonSocialReceptor"
+                                placeholder="Cliente SpA"
+                                disabled={isSubmitting}
+                                aria-invalid={Boolean(errors.razonSocialReceptor)}
+                                {...register("razonSocialReceptor")}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Obligatoria para que el SII acepte el DTE. Si falta, la emisión falla con 422.
+                            </p>
+                            {errors.razonSocialReceptor && (
+                                <p className="text-sm text-destructive">{errors.razonSocialReceptor.message}</p>
                             )}
                         </div>
 

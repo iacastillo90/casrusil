@@ -50,6 +50,7 @@ export interface InvoiceFormModel {
     rutEmisor: string;
     razonSocialEmisor: string;
     rutReceptor: string;
+    razonSocialReceptor: string;
     /** Fecha en formato yyyy-MM-dd. */
     fechaEmision: string;
     lines: InvoiceFormLine[];
@@ -66,6 +67,8 @@ export interface CreateInvoiceRequest {
     tipoDte: number;
     rutEmisor: string;
     rutReceptor: string;
+    /** Razón social del receptor (requerida por el SII). */
+    razonSocialReceptor?: string;
     razonSocialEmisor: string;
     fechaEmision: string;
     montoNeto: number;
@@ -135,6 +138,7 @@ export const toCreateInvoiceRequest = (form: InvoiceFormModel): CreateInvoiceReq
         tipoDte: form.tipoDte,
         rutEmisor: cleanRut(form.rutEmisor),
         rutReceptor: cleanRut(form.rutReceptor),
+        razonSocialReceptor: form.razonSocialReceptor?.trim() || undefined,
         razonSocialEmisor: form.razonSocialEmisor.trim(),
         fechaEmision: form.fechaEmision,
         montoNeto: totals.neto,

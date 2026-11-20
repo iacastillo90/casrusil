@@ -25,10 +25,11 @@ export function EnvironmentBanner() {
     const [ambiente, setAmbiente] = useState<"certificacion" | "produccion">(configured);
 
     useEffect(() => {
-        api.get<{ ambiente?: string }>("/sii/status")
+        api.get<{ environment?: string; ambiente?: string }>("/sii/status")
             .then(({ data }) => {
-                if (data?.ambiente) {
-                    setAmbiente(normalize(data.ambiente));
+                const backendValue = data?.environment ?? data?.ambiente;
+                if (backendValue) {
+                    setAmbiente(normalize(backendValue));
                 }
             })
             .catch(() => {
