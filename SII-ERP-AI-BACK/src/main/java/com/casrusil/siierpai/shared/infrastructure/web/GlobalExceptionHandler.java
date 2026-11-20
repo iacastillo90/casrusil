@@ -2,6 +2,7 @@ package com.casrusil.siierpai.shared.infrastructure.web;
 
 import com.casrusil.siierpai.shared.domain.exception.DomainException;
 import com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException;
+import com.casrusil.siierpai.shared.domain.exception.UnprocessableEntityException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,22 @@ public class GlobalExceptionHandler {
                                 "DOMAIN_ERROR");
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
+        @ExceptionHandler(UnprocessableEntityException.class)
+        public ResponseEntity<ErrorResponse> handleUnprocessableEntityException(
+                        UnprocessableEntityException ex,
+                        HttpServletRequest request) {
+                log.warn("Unprocessable entity: {} at {}", ex.getMessage(), request.getRequestURI());
+
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                                "Unprocessable Entity",
+                                ex.getMessage(),
+                                request.getRequestURI(),
+                                "UNPROCESSABLE_ENTITY");
+
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
         }
 
         @ExceptionHandler(IllegalArgumentException.class)

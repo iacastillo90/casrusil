@@ -3,7 +3,7 @@ package com.casrusil.siierpai.modules.integration_sii.application.scheduler;
 import com.casrusil.siierpai.modules.integration_sii.application.service.DteStatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -11,13 +11,13 @@ import org.springframework.stereotype.Component;
  * Job periódico que consulta el estado de los DTE enviados.
  *
  * <p>
- * Configurable: {@code sii.status.poll-enabled} (default true),
+ * Configurable: {@code sii.status.job.enabled} (default true) y {@code sii.status.poll-enabled} (default true),
  * {@code sii.status.poll-interval-ms} (default 30 min) y
  * {@code sii.status.poll-initial-delay-ms} (default 1 min).
  * </p>
  */
 @Component
-@ConditionalOnProperty(prefix = "sii.status", name = "poll-enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnExpression("${sii.status.job.enabled:true} and ${sii.status.poll-enabled:true}")
 public class DteStatusScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(DteStatusScheduler.class);

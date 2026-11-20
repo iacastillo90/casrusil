@@ -28,7 +28,9 @@ public class F22DraftService implements AnnualCloseUseCase {
     @Override
     public AnnualCloseResponse calculateAnnualTaxes(int fiscalYear, String companyId) {
         CompanyTaxProfile profile = taxProfileRepository.findByCompanyId(companyId)
-                .orElseThrow(() -> new RuntimeException("Tax profile not found for company"));
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.UnprocessableEntityException(
+                        "No existe perfil tributario para la empresa " + companyId
+                                + ". Créalo en Configuración > Empresa > Perfil tributario (régimen y tasa PPM) antes de calcular el F22."));
                 
         // Real financial result from BalanceSheetService
         BalanceSheetReport balanceSheet = balanceSheetService.generateBalanceSheet(

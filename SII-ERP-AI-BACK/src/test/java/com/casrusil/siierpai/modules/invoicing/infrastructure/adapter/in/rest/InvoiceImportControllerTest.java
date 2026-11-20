@@ -66,6 +66,7 @@ class InvoiceImportControllerTest {
 
         assertEquals(1, createInvoiceUseCase.createdInvoices.size());
         assertEquals(Invoice.ORIGIN_MANUAL, createInvoiceUseCase.createdInvoices.get(0).getOrigin());
+        assertEquals("Cliente Test SpA", createInvoiceUseCase.createdInvoices.get(0).getReceiverName());
     }
 
     static class StubCreateInvoiceUseCase implements CreateInvoiceUseCase {

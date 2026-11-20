@@ -160,8 +160,15 @@ public class InvoiceImportController {
                             transactionType,
                             Collections.emptyList());
 
+                    // En ventas, la razón social del receptor es el nombre del cliente
+                    // (columna "Razon Social" del CSV). En compras el receptor es la empresa.
+                    if (isSale && businessName != null && !businessName.isBlank()) {
+                        invoice = invoice.withReceiverName(businessName.trim());
+                    }
+
+                    final Invoice invoiceToCreate = invoice;
                     CompanyContext.runInCompanyContext(new CompanyId(companyId), () -> {
-                        createInvoiceUseCase.createInvoice(invoice);
+                        createInvoiceUseCase.createInvoice(invoiceToCreate);
                     });
                     successCount++;
                 } catch (Exception e) {

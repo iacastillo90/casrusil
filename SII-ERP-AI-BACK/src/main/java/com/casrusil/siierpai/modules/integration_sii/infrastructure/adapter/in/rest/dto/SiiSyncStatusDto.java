@@ -15,16 +15,18 @@ import java.util.Map;
  * @param nextSync ISO-8601 timestamp of the next suggested synchronization
  * @param modules  per-module health, always containing {@code sii}, {@code caf} and {@code dte}
  * @param lastError last failure message, or {@code null}
+ * @param environment ambiente SII activo: {@code certificacion} o {@code produccion}
  */
 public record SiiSyncStatusDto(
         String lastSync,
         String nextSync,
         Map<String, String> modules,
-        String lastError) {
+        String lastError,
+        String environment) {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
-    public static SiiSyncStatusDto from(SiiSyncState state) {
+    public static SiiSyncStatusDto from(SiiSyncState state, String environment) {
         Map<String, String> modules = new LinkedHashMap<>();
         modules.put("sii", name(state.siiStatus()));
         modules.put("caf", name(state.cafStatus()));
@@ -34,7 +36,8 @@ public record SiiSyncStatusDto(
                 format(state.lastSyncAt()),
                 format(state.nextSyncAt()),
                 modules,
-                state.lastError());
+                state.lastError(),
+                environment);
     }
 
     private static String format(LocalDateTime value) {
