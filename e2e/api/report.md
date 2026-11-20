@@ -1,22 +1,22 @@
 # Matriz de permisos por API — SII-ERP
 
-Generado: 2026-11-20T03:32:59.596Z
+Generado: 2026-11-20T05:10:12.889Z
 Backend: http://localhost:8092
-Empresa: 1ed3ef26-d9cf-43f1-8873-a7845ae53d3c
+Empresa: f01bb884-c811-453f-9bef-e3bc77a6a9f5
 
 ## Setup
 
-- Empresa E2E: `QA E2E 1795145567062` / RUT `E2E-1795145567062`
-- ADMIN: `qa-admin-1795145567062@example.com`
-- ACCOUNTANT: `qa-accountant-1795145567062@example.com`
-- TREASURER: `qa-treasurer-1795145567062@example.com`
-- SALES: `qa-sales-1795145567062@example.com`
-- OPERATIONS: `qa-operations-1795145567062@example.com`
-- HR: `qa-hr-1795145567062@example.com`
-- AUDITOR: `qa-auditor-1795145567062@example.com`
-- USER: `qa-user-1795145567062@example.com`
-- B2B_CLIENT: `qa-b2b_client-1795145567062@example.com`
-- B2B_CLIENT: `qa-b2b_client-1795145567062@example.com`
+- Empresa E2E: `QA E2E 1795151387828` / RUT `E2E-1795151387828`
+- ADMIN: `qa-admin-1795151387828@example.com`
+- ACCOUNTANT: `qa-accountant-1795151387828@example.com`
+- TREASURER: `qa-treasurer-1795151387828@example.com`
+- SALES: `qa-sales-1795151387828@example.com`
+- OPERATIONS: `qa-operations-1795151387828@example.com`
+- HR: `qa-hr-1795151387828@example.com`
+- AUDITOR: `qa-auditor-1795151387828@example.com`
+- USER: `qa-user-1795151387828@example.com`
+- B2B_CLIENT: `qa-b2b_client-1795151387828@example.com`
+- B2B_CLIENT: `qa-b2b_client-1795151387828@example.com`
 
 ## Matriz rol × endpoint
 
@@ -44,7 +44,7 @@ Sin discrepancias en los endpoints probados.
 - **payroll / USER**: el endpoint permite USER y ahora resuelve el empleado desde el usuario autenticado; solo devuelve sus liquidaciones (test backend PayrollPayslipIsolationTest). La fila USER de MAPA-FUNCIONAL.md estaba desactualizada.
 - **actuator / ADMIN**: metrics está expuesto en application.properties y protegido por ADMIN; responde 200.
 - **invoices / ALLOW (400)**: UUID inexistente; lo relevante es que no sea 403.
-- **B2B aislamiento**: OK: cada cliente ve solo su orden (A=4e0fb212-d874-47c4-82ea-4ecb41c67dba, B=0874946b-9468-43f2-83ad-7e330cc659bd).
+- **B2B aislamiento**: OK: cada cliente ve solo su orden (A=ca5507f0-6fd6-4fb8-afa9-5fcc9f25143e, B=bfaf851b-fdee-429f-94f4-ee9eb9d5aae2).
 
 ## B2B_CLIENT
 
