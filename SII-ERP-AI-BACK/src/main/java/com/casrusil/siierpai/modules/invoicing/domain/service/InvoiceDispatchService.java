@@ -11,7 +11,11 @@ import com.casrusil.siierpai.modules.invoicing.application.service.InvoiceAuditT
 import com.casrusil.siierpai.modules.invoicing.infrastructure.mail.InvoiceEmailSender;
 import com.casrusil.siierpai.modules.invoicing.infrastructure.pdf.InvoicePdfGenerator;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
+import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+
+import java.util.regex.Pattern;
 
 import java.util.UUID;
 
@@ -43,34 +47,50 @@ public class InvoiceDispatchService {
         this.auditTrailService = auditTrailService;
     }
 
+    private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
     public void dispatchInvoice(UUID invoiceId, String recipientEmail) {
         // 1. Fetch Invoice
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new IllegalArgumentException("Invoice not found: " + invoiceId));
 
-        // 2. Get CAF
+        // 2. La factura debe pertenecer a la empresa del usuario autenticado.
+        CompanyId companyId = CompanyContext.requireCompanyId();
+        if (!invoice.getCompanyId().equals(companyId)) {
+            throw new AccessDeniedException("Invoice " + invoiceId + " does not belong to the current company");
+        }
+
+        // 3. Destinatario explícito validado. Invoice no modela el email del
+        // receptor (sólo RUT), por lo que no es posible comparar contra un dato
+        // registrado; queda documentado como pendiente del maestro de partners.
+        String recipient = recipientEmail != null ? recipientEmail.trim() : "";
+        if (!EMAIL.matcher(recipient).matches()) {
+            throw new IllegalArgumentException("Invalid recipient email: " + recipientEmail);
+        }
+
+        // 4. Get CAF
         String tipoDteStr = String.valueOf(invoice.getType().getCode());
         Caf caf = cafRepository.findActiveForFolio(invoice.getCompanyId(), tipoDteStr, invoice.getFolio())
                 .orElseThrow(() -> new IllegalStateException("No active CAF found for invoice " + invoice.getFolio()));
 
-        // 3. Generate TED XML
+        // 5. Generate TED XML
         String tedXml = tedGenerator.generateTedXml(invoice, caf);
 
-        // 4. Generate TED Image (PDF417)
+        // 6. Generate TED Image (PDF417)
         byte[] tedImage = pdf417Generator.generatePdf417(tedXml);
 
-        // 5. Generate PDF
+        // 7. Generate PDF
         byte[] pdfContent = invoicePdfGenerator.generatePdf(invoice, tedImage);
 
-        // 6. Send Email
+        // 8. Send Email
         String subject = "Documento Tributario Electrónico N° " + invoice.getFolio();
         String body = "Estimado cliente,\n\nAdjunto encontrará su Factura Electrónica N° " + invoice.getFolio()
                 + ".\n\nAtentamente,\n" + invoice.getIssuerRut();
         String filename = "DTE_" + invoice.getFolio() + ".pdf";
 
-        invoiceEmailSender.sendInvoiceEmail(recipientEmail, subject, body, pdfContent, filename);
+        invoiceEmailSender.sendInvoiceEmail(recipient, subject, body, pdfContent, filename);
 
         auditTrailService.record(invoice.getCompanyId(), invoice.getId(), InvoiceAuditLog.ACTION_SENT,
-                "Invoice folio " + invoice.getFolio() + " sent to " + recipientEmail);
+                "Invoice folio " + invoice.getFolio() + " sent to " + recipient);
     }
 }
