@@ -24,9 +24,32 @@ public class DmsController {
         this.dmsService = dmsService;
     }
 
-    @PostMapping
+    /**
+     * Registro por metadatos (compatibilidad): el archivo ya está en una URL.
+     */
+    @PostMapping(consumes = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CorporateDocument> uploadDocument(@Valid @RequestBody UploadReq req) {
         return ResponseEntity.ok(dmsService.uploadDocument(CompanyContext.requireCompanyId(), req.title(), req.documentType(), req.storageUrl()));
+    }
+
+    /**
+     * Registro con archivo (multipart). El archivo se guarda en el almacenamiento
+     * del sistema (MinIO/S3) y se valida tamaño y tipo MIME.
+     *
+     * @param file         archivo (máx. 10 MB por defecto; PDF, PNG, JPEG, TXT, DOCX, XLSX)
+     * @param title        título visible (opcional, por defecto el nombre del archivo)
+     * @param documentType tipo lógico del documento (CONTRATO, FACTURA, …)
+     */
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CorporateDocument> uploadDocumentFile(
+            @RequestPart("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestParam(value = "title", required = false) String title,
+            @RequestParam("documentType") String documentType) {
+        if (documentType == null || documentType.isBlank()) {
+            throw new IllegalArgumentException("El tipo de documento es obligatorio");
+        }
+        return ResponseEntity.ok(dmsService.uploadDocumentWithFile(
+                CompanyContext.requireCompanyId(), title, documentType.trim(), file));
     }
 
     @GetMapping
