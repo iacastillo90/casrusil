@@ -2,6 +2,7 @@ package com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.out
 
 import com.casrusil.siierpai.modules.integration_sii.domain.model.SiiDteQueryResult;
 import com.casrusil.siierpai.modules.integration_sii.domain.port.out.SiiDteStatusClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
@@ -40,6 +41,7 @@ public class SiiDteStatusSoapClient implements SiiDteStatusClient {
     private final String queryEstUpUrl;
     private final String queryEstDteUrl;
 
+    @Autowired
     public SiiDteStatusSoapClient(
             @Value("${sii.url.query-est-up:https://maullin.sii.cl/DTEWS/QueryEstUp.jws}") String queryEstUpUrl,
             @Value("${sii.url.query-est-dte:https://maullin.sii.cl/DTEWS/QueryEstDte.jws}") String queryEstDteUrl) {
