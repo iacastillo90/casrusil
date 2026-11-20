@@ -77,6 +77,9 @@ public class InvoiceEntity {
     @Column(name = "business_name")
     private String businessName;
 
+    @Column(name = "sii_status_attempts")
+    private Integer siiStatusAttempts;
+
     @Column(name = "receiver_name")
     private String receiverName;
 
@@ -191,6 +194,14 @@ public class InvoiceEntity {
     public void setTransactionType(
             com.casrusil.siierpai.modules.invoicing.domain.model.TransactionType transactionType) {
         this.transactionType = transactionType;
+    }
+
+    public Integer getSiiStatusAttempts() {
+        return siiStatusAttempts;
+    }
+
+    public void setSiiStatusAttempts(Integer siiStatusAttempts) {
+        this.siiStatusAttempts = siiStatusAttempts;
     }
 
     public String getReceiverName() {

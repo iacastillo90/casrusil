@@ -10,6 +10,8 @@ import com.casrusil.siierpai.modules.invoicing.domain.port.out.InvoiceRepository
 import com.casrusil.siierpai.modules.invoicing.application.service.InvoiceAuditTrailService;
 import com.casrusil.siierpai.modules.invoicing.infrastructure.mail.InvoiceEmailSender;
 import com.casrusil.siierpai.modules.invoicing.infrastructure.pdf.InvoicePdfGenerator;
+import com.casrusil.siierpai.modules.partners.domain.model.Partner;
+import com.casrusil.siierpai.modules.partners.domain.port.out.PartnerRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.springframework.security.access.AccessDeniedException;
@@ -29,6 +31,7 @@ public class InvoiceDispatchService {
     private final InvoicePdfGenerator invoicePdfGenerator;
     private final InvoiceEmailSender invoiceEmailSender;
     private final InvoiceAuditTrailService auditTrailService;
+    private final PartnerRepository partnerRepository;
 
     public InvoiceDispatchService(
             InvoiceRepository invoiceRepository,
@@ -37,7 +40,8 @@ public class InvoiceDispatchService {
             Pdf417Generator pdf417Generator,
             InvoicePdfGenerator invoicePdfGenerator,
             InvoiceEmailSender invoiceEmailSender,
-            InvoiceAuditTrailService auditTrailService) {
+            InvoiceAuditTrailService auditTrailService,
+            PartnerRepository partnerRepository) {
         this.invoiceRepository = invoiceRepository;
         this.cafRepository = cafRepository;
         this.tedGenerator = tedGenerator;
@@ -45,6 +49,7 @@ public class InvoiceDispatchService {
         this.invoicePdfGenerator = invoicePdfGenerator;
         this.invoiceEmailSender = invoiceEmailSender;
         this.auditTrailService = auditTrailService;
+        this.partnerRepository = partnerRepository;
     }
 
     private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
@@ -60,10 +65,21 @@ public class InvoiceDispatchService {
             throw new AccessDeniedException("Invoice " + invoiceId + " does not belong to the current company");
         }
 
-        // 3. Destinatario explícito validado. Invoice no modela el email del
-        // receptor (sólo RUT), por lo que no es posible comparar contra un dato
-        // registrado; queda documentado como pendiente del maestro de partners.
-        String recipient = recipientEmail != null ? recipientEmail.trim() : "";
+        // 3. Destinatario: si el receptor está en el maestro de partners y tiene
+        // email registrado, se usa ese y no se permite enviar a otro. Si el
+        // maestro no lo tiene, se acepta un email explícito validado.
+        String requested = recipientEmail != null ? recipientEmail.trim() : "";
+        String registered = partnerRepository
+                .findByCompanyIdAndRut(companyId, invoice.getReceiverRut())
+                .map(Partner::getEmail)
+                .filter(email -> email != null && !email.isBlank())
+                .orElse(null);
+
+        String recipient = registered != null ? registered.trim() : requested;
+        if (registered != null && !requested.isEmpty() && !requested.equalsIgnoreCase(registered)) {
+            throw new IllegalArgumentException(
+                    "El destinatario debe ser el email registrado del receptor: " + registered);
+        }
         if (!EMAIL.matcher(recipient).matches()) {
             throw new IllegalArgumentException("Invalid recipient email: " + recipientEmail);
         }

@@ -5,6 +5,7 @@ import com.casrusil.siierpai.modules.accounting.domain.model.AccountingEntry;
 import com.casrusil.siierpai.modules.accounting.domain.model.EntryType;
 import com.casrusil.siierpai.modules.accounting.domain.service.AccountingEntryBuilder;
 import com.casrusil.siierpai.modules.accounting.domain.service.AccountingEntryService;
+import com.casrusil.siierpai.modules.accounting.application.service.F29AlertService;
 import com.casrusil.siierpai.modules.accounting.domain.port.out.AccountingEntryRepository;
 import com.casrusil.siierpai.modules.invoicing.domain.event.InvoiceSiiAcceptedEvent;
 import com.casrusil.siierpai.modules.invoicing.domain.model.Invoice;
@@ -31,13 +32,16 @@ public class InvoiceAccountingListener {
     private final AccountingEntryService accountingEntryService;
     private final InvoiceRepository invoiceRepository;
     private final AccountingEntryRepository accountingEntryRepository;
+    private final F29AlertService f29AlertService;
 
     public InvoiceAccountingListener(AccountingEntryService accountingEntryService,
             InvoiceRepository invoiceRepository,
-            AccountingEntryRepository accountingEntryRepository) {
+            AccountingEntryRepository accountingEntryRepository,
+            F29AlertService f29AlertService) {
         this.accountingEntryService = accountingEntryService;
         this.invoiceRepository = invoiceRepository;
         this.accountingEntryRepository = accountingEntryRepository;
+        this.f29AlertService = f29AlertService;
     }
 
     /**
@@ -151,6 +155,9 @@ public class InvoiceAccountingListener {
                     builder.build(),
                     EntryType.SALE);
             accountingEntryService.recordEntry(entry);
+            // Si el período ya está cerrado/declarado, deja alerta (no reabre ni
+            // modifica el F29).
+            f29AlertService.registerIfPeriodClosed(invoice);
         }
     }
 

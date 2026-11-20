@@ -35,12 +35,16 @@ class InvoiceDispatchServiceTest {
 
     private InvoiceRepository invoiceRepository;
     private InvoiceEmailSender emailSender;
+    private com.casrusil.siierpai.modules.partners.domain.port.out.PartnerRepository partnerRepository;
     private InvoiceDispatchService service;
 
     @BeforeEach
     void setUp() {
         invoiceRepository = mock(InvoiceRepository.class);
         emailSender = mock(InvoiceEmailSender.class);
+        partnerRepository = mock(com.casrusil.siierpai.modules.partners.domain.port.out.PartnerRepository.class);
+        when(partnerRepository.findByCompanyIdAndRut(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(Optional.empty());
         service = new InvoiceDispatchService(
                 invoiceRepository,
                 mock(CafRepository.class),
@@ -48,7 +52,8 @@ class InvoiceDispatchServiceTest {
                 mock(Pdf417Generator.class),
                 mock(InvoicePdfGenerator.class),
                 emailSender,
-                mock(InvoiceAuditTrailService.class));
+                mock(InvoiceAuditTrailService.class),
+                partnerRepository);
     }
 
     @Test

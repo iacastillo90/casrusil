@@ -43,7 +43,8 @@ public class PartnerJpaAdapter implements PartnerRepository {
                 partner.getCompanyId().value(),
                 partner.getRut(),
                 partner.getName(),
-                types);
+                types,
+                partner.getEmail());
     }
 
     private Partner toDomain(PartnerEntity entity) {
@@ -55,6 +56,7 @@ public class PartnerJpaAdapter implements PartnerRepository {
                 new CompanyId(entity.getCompanyId()),
                 entity.getRut(),
                 entity.getName(),
-                types);
+                types,
+                entity.getEmail());
     }
 }

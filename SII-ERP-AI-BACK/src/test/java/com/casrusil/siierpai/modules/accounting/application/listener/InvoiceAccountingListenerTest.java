@@ -40,6 +40,9 @@ class InvoiceAccountingListenerTest {
     @Mock
     private com.casrusil.siierpai.modules.accounting.domain.port.out.AccountingEntryRepository accountingEntryRepository;
 
+    @Mock
+    private com.casrusil.siierpai.modules.accounting.application.service.F29AlertService f29AlertService;
+
     @Test
     void handle_ShouldCreateAndSaveAccountingEntry() {
         // Given
@@ -98,5 +101,29 @@ class InvoiceAccountingListenerTest {
 
         verify(accountingEntryService, org.mockito.Mockito.never())
                 .recordEntry(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void handle_shouldRegisterF29AlertAfterSaleEntry() {
+        CompanyId companyId = CompanyId.random();
+        Invoice invoice = Invoice.create(
+                companyId,
+                InvoiceType.FACTURA_ELECTRONICA,
+                321L,
+                "76.123.456-7",
+                "76987654-3",
+                LocalDate.now(),
+                new BigDecimal("1000"),
+                new BigDecimal("190"),
+                new BigDecimal("1190"),
+                Collections.emptyList());
+        when(invoiceRepository.findById(invoice.getId())).thenReturn(java.util.Optional.of(invoice));
+        when(accountingEntryRepository.findByCompanyIdAndReferenceTypeInAndReferenceId(
+                companyId, List.of("INVOICE", "FACTURA_AI"), "321"))
+                .thenReturn(Collections.emptyList());
+
+        invoiceAccountingListener.handle(new InvoiceSiiAcceptedEvent(invoice));
+
+        verify(f29AlertService).registerIfPeriodClosed(invoice);
     }
 }

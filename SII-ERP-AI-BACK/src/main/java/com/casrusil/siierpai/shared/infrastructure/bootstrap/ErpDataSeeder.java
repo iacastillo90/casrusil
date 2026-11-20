@@ -44,15 +44,11 @@ public class ErpDataSeeder {
 
         try {
 
-            // Tax Parameters 2024
-            if (taxRepo.count() == 0) {
-                TaxParameterEntity p = new TaxParameterEntity();
-                p.setId("YEAR_2024");
-                p.setUtmValue(new BigDecimal("64793"));
-                p.setUfValue(new BigDecimal("36900"));
-                p.setBheRetentionRate(new BigDecimal("13.75"));
-                taxRepo.save(p);
-            }
+            // Parámetros tributarios (valores oficiales SII "Valores y fechas").
+            // UTM = enero del año; UF = 01-01; BHE = tasa de retención vigente.
+            seedTaxParameter("YEAR_2024", "64793", "36900", "13.75");
+            seedTaxParameter("YEAR_2025", "67429", "38419.17", "14.50");
+            seedTaxParameter("YEAR_2026", "69751", "39731.79", "15.25");
 
             // MRP
             if (mrpService.getBoms(compId).isEmpty()) {
@@ -90,5 +86,17 @@ public class ErpDataSeeder {
         } catch (Exception e) {
             System.err.println("Seeding error: " + e.getMessage());
         }
+    }
+
+    private void seedTaxParameter(String id, String utm, String uf, String bhe) {
+        if (taxRepo.existsById(id)) {
+            return;
+        }
+        TaxParameterEntity p = new TaxParameterEntity();
+        p.setId(id);
+        p.setUtmValue(new BigDecimal(utm));
+        p.setUfValue(new BigDecimal(uf));
+        p.setBheRetentionRate(new BigDecimal(bhe));
+        taxRepo.save(p);
     }
 }

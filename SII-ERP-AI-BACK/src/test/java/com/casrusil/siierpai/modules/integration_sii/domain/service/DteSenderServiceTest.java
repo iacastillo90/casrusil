@@ -88,7 +88,8 @@ class DteSenderServiceTest {
                 envioDteBuilder,
                 siiUploadClient,
                 certificateRepository,
-                org.mockito.Mockito.mock(DteEmissionValidator.class));
+                org.mockito.Mockito.mock(DteEmissionValidator.class),
+                org.mockito.Mockito.mock(com.casrusil.siierpai.modules.sso.application.service.CompanyCertificateService.class));
 
         // Set default certificate path for testing
         ReflectionTestUtils.setField(dteSenderService, "defaultCertPath", "/test/cert.p12");
