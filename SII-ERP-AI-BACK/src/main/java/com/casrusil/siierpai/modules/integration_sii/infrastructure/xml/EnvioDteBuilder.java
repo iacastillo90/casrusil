@@ -30,8 +30,10 @@ public class EnvioDteBuilder {
         StringBuilder sb = new StringBuilder();
 
         sb.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
-        sb.append(
-                "<EnvioDTE xmlns=\"http://www.sii.cl/SiiDte\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" version=\"1.0\" xsi:schemaLocation=\"http://www.sii.cl/SiiDte EnvioDTE_v10.xsd\">");
+        // Sin xmlns:xsi ni xsi:schemaLocation: cualquier namespace extra en la
+        // raíz cambia el SignedInfo del DTE al embeberlo (C14N inclusiva) y la
+        // firma deja de validar. schemaLocation es opcional para el SII.
+        sb.append("<EnvioDTE xmlns=\"http://www.sii.cl/SiiDte\" version=\"1.0\">");
 
         sb.append("<SetDTE ID=\"SetDoc\">");
 

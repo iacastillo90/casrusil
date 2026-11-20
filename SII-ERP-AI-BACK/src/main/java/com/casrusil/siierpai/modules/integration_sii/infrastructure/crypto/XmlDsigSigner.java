@@ -69,28 +69,29 @@ public class XmlDsigSigner {
             // <Documento> y ID="SetDoc" en <SetDTE>, sin DTD/XSD que lo declare.
             registerIdAttributes(doc);
 
-            // SignedInfo también con C14N exclusiva: de lo contrario los
-            // namespaces heredados del sobre (xmlns:xsi) cambian el SignedInfo
-            // al embeber el DTE y la firma deja de validar.
+            // SignedInfo con C14N INCLUSIVA: el esquema oficial del SII
+            // (xmldsignature_v10.xsd) fija ese valor en CanonicalizationMethod.
+            // Para que la firma sobreviva al embeber el DTE, <EnvioDTE> no debe
+            // declarar namespaces extra en su raíz (ver EnvioDteBuilder).
             XMLSignature signature = new XMLSignature(doc, null, XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,
-                    Transforms.TRANSFORM_C14N_EXCL_OMIT_COMMENTS);
+                    Transforms.TRANSFORM_C14N_OMIT_COMMENTS);
 
             // Append signature to document root
             doc.getDocumentElement().appendChild(signature.getElement());
 
             Transforms transforms = new Transforms(doc);
+            // Una sola transformada: el esquema del SII
+            // (xmldsignature_v10.xsd) admite exactamente una y la
+            // canonicalización es la inclusiva fijada en CanonicalizationMethod.
             transforms.addTransform(Transforms.TRANSFORM_ENVELOPED_SIGNATURE);
-            // C14N exclusiva: el SII la usa y es obligatoria para que la firma del
-            // DTE siga válida al embeberlo dentro de <EnvioDTE> (los namespaces
-            // heredados del sobre no deben entrar en el digest).
-            transforms.addTransform(Transforms.TRANSFORM_C14N_EXCL_OMIT_COMMENTS);
 
             String uri = (referenceId == null || referenceId.isEmpty()) ? "" : "#" + referenceId;
             signature.addDocument(uri, transforms,
                     org.apache.xml.security.utils.Constants.ALGO_ID_DIGEST_SHA1);
 
-            signature.addKeyInfo(certificate.certificate());
+            // El esquema del SII exige KeyInfo en el orden KeyValue -> X509Data.
             signature.addKeyInfo(certificate.certificate().getPublicKey());
+            signature.addKeyInfo(certificate.certificate());
 
             signature.sign(certificate.privateKey());
 

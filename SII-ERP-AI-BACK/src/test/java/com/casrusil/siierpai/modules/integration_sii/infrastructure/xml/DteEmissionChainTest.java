@@ -55,7 +55,8 @@ class DteEmissionChainTest {
     @BeforeEach
     void setUp() {
         signer = new XmlDsigSigner();
-        dteXmlBuilder = new DteXmlBuilder();
+        dteXmlBuilder = new DteXmlBuilder(org.mockito.Mockito
+                .mock(com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository.class));
         envioDteBuilder = new EnvioDteBuilder();
         tedGenerator = new TedGenerator();
         certificate = loadCertificate();
@@ -115,7 +116,8 @@ class DteEmissionChainTest {
                 Invoice.ORIGIN_MANUAL,
                 TransactionType.SALE,
                 List.of(new InvoiceLine(1, "Asesoría", null, BigDecimal.ONE,
-                        new BigDecimal("1000"), new BigDecimal("1000"), "UN")));
+                        new BigDecimal("1000"), new BigDecimal("1000"), "UN")))
+                .withReceiverName("Receptor SpA");
     }
 
     private Document parse(String xml) throws Exception {
