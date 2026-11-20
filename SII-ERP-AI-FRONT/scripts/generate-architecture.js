@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- script Node en CommonJS; require es la forma correcta */
 const fs = require('fs');
 const path = require('path');
 
