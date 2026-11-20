@@ -41,7 +41,7 @@ public class EnvioDteBuilder {
         sb.append("<RutReceptor>").append("60803000-K").append("</RutReceptor>"); // SII RUT
         sb.append("<FchResol>").append("2014-08-22").append("</FchResol>"); // Resolution Date (Example)
         sb.append("<NroResol>").append("80").append("</NroResol>"); // Resolution Number (Example)
-        sb.append("<TmstFirmaEnv>").append(java.time.LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+        sb.append("<TmstFirmaEnv>").append(java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")))
                 .append("</TmstFirmaEnv>");
 
         // Subtotals
