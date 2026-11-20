@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { energyService } from '../services/energy.service';
-import { EnergyStation, EnergyMetrics, EnergyAlert, ChargeSession } from '../types/energy.types';
 
 export const useEnergyStations = () => {
     return useQuery({
