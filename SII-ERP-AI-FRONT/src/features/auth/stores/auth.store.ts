@@ -8,12 +8,17 @@ interface AuthState {
     isAuthenticated: boolean;
     companyId: string | null;
     companies: Company[];
+    /** true cuando el backend rechazó la sesión; lo consume el login. */
+    sessionExpired: boolean;
 
     // Actions
     setAuth: (user: User, token: string, companyId?: string, companies?: Company[]) => void;
     setCompanies: (companies: Company[]) => void;
     switchCompany: (companyId: string) => void;
     logout: () => void;
+    /** Cierra la sesión por expiración y deja el aviso para el login. */
+    expireSession: () => void;
+    clearSessionExpired: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -24,6 +29,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             companyId: null,
             companies: [],
+            sessionExpired: false,
 
             setAuth: (user, token, companyId, companies) => set({
                 user,
@@ -36,6 +42,17 @@ export const useAuthStore = create<AuthState>()(
             setCompanies: (companies) => set({ companies }),
 
             switchCompany: (companyId) => set({ companyId }),
+
+            expireSession: () => set({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+                companyId: null,
+                companies: [],
+                sessionExpired: true,
+            }),
+
+            clearSessionExpired: () => set({ sessionExpired: false }),
 
             logout: () => set({
                 user: null,
@@ -55,6 +72,7 @@ export const useAuthStore = create<AuthState>()(
                 companyId: state.companyId,
                 companies: state.companies,
                 isAuthenticated: state.isAuthenticated,
+                sessionExpired: state.sessionExpired,
                 // token: EXCLUIDO intencionalmente por seguridad
             }),
         }
