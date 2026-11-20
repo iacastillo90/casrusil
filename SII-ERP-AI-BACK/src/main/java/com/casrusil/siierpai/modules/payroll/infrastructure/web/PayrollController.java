@@ -58,19 +58,24 @@ public class PayrollController {
     }
 
     /**
-     * Obtiene las liquidaciones del empleado indicado.
+     * Obtiene las liquidaciones del empleado vinculado al usuario autenticado.
      *
      * <p>
-     * En una implementación completa el {@code employeeId} se extrae del JWT; hoy
-     * llega por header. La autorización del endpoint se declara de forma explícita
-     * para no depender únicamente de la anotación a nivel de clase.
+     * El empleado se resuelve desde el {@link UserId} del JWT y la empresa del
+     * tenant; se ignora cualquier header de empleado para evitar que un USER
+     * consulte liquidaciones ajenas.
      * </p>
      */
     @GetMapping("/employee/payslips")
     @PreAuthorize("hasAnyRole('ADMIN','HR','USER')")
-    public ResponseEntity<List<PayslipResponse>> getMyPayslips(
-            @RequestHeader(value = "X-Employee-Id", defaultValue = "00000000-0000-0000-0000-000000000000") String employeeId) {
-        // In a real scenario, employeeId is extracted from JWT (SecurityContextHolder).
-        return ResponseEntity.ok(payrollUseCase.getEmployeePayslips(employeeId));
+    public ResponseEntity<List<PayslipResponse>> getMyPayslips() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication();
+        if (authentication == null
+                || !(authentication.getPrincipal() instanceof com.casrusil.siierpai.shared.domain.valueobject.UserId userId)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
+        }
+        var companyId = com.casrusil.siierpai.shared.infrastructure.context.CompanyContext.requireCompanyId();
+        return ResponseEntity.ok(payrollUseCase.getMyPayslips(companyId.value().toString(), userId.value()));
     }
 }

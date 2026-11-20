@@ -3,6 +3,7 @@ package com.casrusil.siierpai.modules.payroll.domain.model;
 import lombok.Builder;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -16,4 +17,6 @@ public class Employee {
     private String healthSystem; // Fonasa, Isapre
     private BigDecimal healthPercentage; // e.g., 7% default or UF agreed for Isapre
     private Integer familyLoads;
+    /** Usuario del sistema vinculado (para que un USER vea sólo sus liquidaciones). */
+    private UUID userId;
 }

@@ -105,8 +105,12 @@ public class PayrollServiceImpl implements PayrollUseCase {
     }
 
     @Override
-    public List<PayslipResponse> getEmployeePayslips(String employeeId) {
-        return payslipRepository.findByEmployeeId(employeeId).stream()
+    public List<PayslipResponse> getMyPayslips(String companyId, java.util.UUID userId) {
+        com.casrusil.siierpai.modules.payroll.domain.model.Employee employee = employeeRepository
+                .findByCompanyIdAndUserId(companyId, userId)
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException(
+                        "No hay un empleado vinculado al usuario autenticado"));
+        return payslipRepository.findByEmployeeId(convertToUUID(employee.getId()).toString()).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }

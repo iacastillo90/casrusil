@@ -27,6 +27,9 @@ public class EmployeeEntity {
     
     @Column(nullable = false)
     private String rut;
+
+    @jakarta.persistence.Column(name = "user_id")
+    private java.util.UUID userId;
     
     @Column(nullable = false)
     private String fullName;

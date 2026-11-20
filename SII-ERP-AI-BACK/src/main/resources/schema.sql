@@ -714,8 +714,11 @@ CREATE TABLE IF NOT EXISTS public.partners (
     email character varying(255)
 );
 
+ALTER TABLE public.pay_employees ADD COLUMN IF NOT EXISTS user_id uuid;
+
 CREATE TABLE IF NOT EXISTS public.pay_employees (
     id bigint NOT NULL,
+    user_id uuid,
     afp character varying(255) NOT NULL,
     base_salary numeric(19,4) NOT NULL,
     company_id character varying(255) NOT NULL,
@@ -1066,8 +1069,12 @@ CREATE TABLE IF NOT EXISTS sso.users (
     is_active boolean NOT NULL,
     password_hash character varying(255) NOT NULL,
     role character varying(255) NOT NULL,
-    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['ADMIN'::character varying, 'ACCOUNTANT'::character varying, 'TREASURER'::character varying, 'HR'::character varying, 'SALES'::character varying, 'OPERATIONS'::character varying, 'AUDITOR'::character varying, 'USER'::character varying])::text[])))
+    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['ADMIN'::character varying, 'ACCOUNTANT'::character varying, 'TREASURER'::character varying, 'HR'::character varying, 'SALES'::character varying, 'OPERATIONS'::character varying, 'AUDITOR'::character varying, 'USER'::character varying, 'B2B_CLIENT'::character varying])::text[])))
 );
+
+-- Migración para bases existentes: incorporar B2B_CLIENT al CHECK de roles.
+ALTER TABLE sso.users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE sso.users ADD CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['ADMIN'::character varying, 'ACCOUNTANT'::character varying, 'TREASURER'::character varying, 'HR'::character varying, 'SALES'::character varying, 'OPERATIONS'::character varying, 'AUDITOR'::character varying, 'USER'::character varying, 'B2B_CLIENT'::character varying])::text[])));
 
 CREATE TABLE IF NOT EXISTS sustainability.green_metrics (
     id uuid NOT NULL,
