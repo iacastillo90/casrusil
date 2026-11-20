@@ -50,9 +50,13 @@ public class Company {
     private String phoneNumber;
     private String logoUrl;
     private boolean isProfileComplete;
+    private String giro;
+    private String acteco;
+    private String comuna;
 
     public Company(CompanyId id, String rut, String razonSocial, String email, boolean isActive, Instant createdAt,
-            String commercialAddress, String website, String phoneNumber, String logoUrl, boolean isProfileComplete) {
+            String commercialAddress, String website, String phoneNumber, String logoUrl, boolean isProfileComplete,
+            String giro, String acteco, String comuna) {
         this.id = id;
         this.rut = rut;
         this.razonSocial = razonSocial;
@@ -64,6 +68,9 @@ public class Company {
         this.phoneNumber = phoneNumber;
         this.logoUrl = logoUrl;
         this.isProfileComplete = isProfileComplete;
+        this.giro = giro;
+        this.acteco = acteco;
+        this.comuna = comuna;
     }
 
     /**
@@ -76,7 +83,7 @@ public class Company {
      */
     public static Company create(String rut, String razonSocial, String email) {
         return new Company(CompanyId.generate(), rut, razonSocial, email, true, Instant.now(),
-                null, null, null, null, false);
+                null, null, null, null, false, null, null, null);
     }
 
     /**
@@ -104,7 +111,7 @@ public class Company {
      * Actualiza el perfil de la empresa.
      */
     public void updateProfile(String razonSocial, String email, String commercialAddress, String website,
-            String phoneNumber, String logoUrl) {
+            String phoneNumber, String logoUrl, String giro, String acteco, String comuna) {
         this.razonSocial = razonSocial;
         this.email = email;
         this.commercialAddress = commercialAddress;
@@ -113,6 +120,9 @@ public class Company {
         if (logoUrl != null) {
             this.logoUrl = logoUrl;
         }
+        this.giro = giro;
+        this.acteco = acteco;
+        this.comuna = comuna;
         checkProfileCompletion();
     }
 
@@ -160,6 +170,18 @@ public class Company {
 
     public String getLogoUrl() {
         return logoUrl;
+    }
+
+    public String getGiro() {
+        return giro;
+    }
+
+    public String getActeco() {
+        return acteco;
+    }
+
+    public String getComuna() {
+        return comuna;
     }
 
     public boolean isProfileComplete() {

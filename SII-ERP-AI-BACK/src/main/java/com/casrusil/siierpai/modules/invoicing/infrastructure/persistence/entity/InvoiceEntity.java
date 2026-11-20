@@ -77,6 +77,9 @@ public class InvoiceEntity {
     @Column(name = "business_name")
     private String businessName;
 
+    @Column(name = "receiver_name")
+    private String receiverName;
+
     @Column(name = "fixed_asset_amount")
     private BigDecimal fixedAssetAmount;
 
@@ -188,6 +191,14 @@ public class InvoiceEntity {
     public void setTransactionType(
             com.casrusil.siierpai.modules.invoicing.domain.model.TransactionType transactionType) {
         this.transactionType = transactionType;
+    }
+
+    public String getReceiverName() {
+        return receiverName;
+    }
+
+    public void setReceiverName(String receiverName) {
+        this.receiverName = receiverName;
     }
 
     public String getBusinessName() {

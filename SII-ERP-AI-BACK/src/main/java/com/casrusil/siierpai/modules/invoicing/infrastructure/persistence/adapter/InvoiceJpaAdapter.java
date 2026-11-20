@@ -112,6 +112,7 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
                 invoice.getTransactionType(),
                 invoice.getStatus());
 
+        entity.setReceiverName(invoice.getReceiverName());
         entity.setDteStatus(invoice.getDteStatus());
         entity.setSiiTrackId(invoice.getSiiTrackId());
         entity.setSentAt(invoice.getSentAt());
@@ -167,7 +168,8 @@ public class InvoiceJpaAdapter implements InvoiceRepository {
                 entity.getStatus() != null ? entity.getStatus()
                         : com.casrusil.siierpai.modules.invoicing.domain.model.PaymentStatus.PENDING, // Fallback
                 items,
-                "CLP");
+                "CLP",
+                entity.getReceiverName());
         invoice.applySiiStatus(entity.getDteStatus(), entity.getSiiTrackId(), entity.getSentAt());
         return invoice;
     }

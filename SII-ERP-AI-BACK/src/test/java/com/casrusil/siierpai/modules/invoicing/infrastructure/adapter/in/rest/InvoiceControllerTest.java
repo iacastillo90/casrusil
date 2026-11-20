@@ -86,7 +86,8 @@ class InvoiceControllerTest {
                 new BigDecimal("1000"),
                 new BigDecimal("190"),
                 List.of(new InvoiceController.InvoiceLineRequest("Item 1", BigDecimal.ONE, new BigDecimal("1000"),
-                        new BigDecimal("1000"))));
+                        new BigDecimal("1000"))),
+                "Receptor SpA");
 
         Invoice invoice = Invoice.create(companyId, InvoiceType.FACTURA_ELECTRONICA, 123L, "76123456-7", "76987654-3",
                 LocalDate.now(), new BigDecimal("1000"), new BigDecimal("190"), new BigDecimal("1190"),

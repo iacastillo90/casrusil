@@ -45,6 +45,7 @@ public class DteSenderService {
 
     private final com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.out.rest.SiiUploadClient siiUploadClient;
     private final com.casrusil.siierpai.modules.sso.domain.port.out.CompanyCertificateRepository certificateRepository;
+    private final DteEmissionValidator dteEmissionValidator;
 
     public DteSenderService(
             XmlDsigSigner xmlDsigSigner,
@@ -55,7 +56,8 @@ public class DteSenderService {
             com.casrusil.siierpai.modules.integration_sii.infrastructure.xml.DteXmlBuilder dteXmlBuilder,
             com.casrusil.siierpai.modules.integration_sii.infrastructure.xml.EnvioDteBuilder envioDteBuilder,
             com.casrusil.siierpai.modules.integration_sii.infrastructure.adapter.out.rest.SiiUploadClient siiUploadClient,
-            com.casrusil.siierpai.modules.sso.domain.port.out.CompanyCertificateRepository certificateRepository) {
+            com.casrusil.siierpai.modules.sso.domain.port.out.CompanyCertificateRepository certificateRepository,
+            DteEmissionValidator dteEmissionValidator) {
         this.xmlDsigSigner = xmlDsigSigner;
         this.tokenRepository = tokenRepository;
         this.pkcs12Handler = pkcs12Handler;
@@ -65,6 +67,7 @@ public class DteSenderService {
         this.envioDteBuilder = envioDteBuilder;
         this.siiUploadClient = siiUploadClient;
         this.certificateRepository = certificateRepository;
+        this.dteEmissionValidator = dteEmissionValidator;
     }
 
     /**
@@ -76,6 +79,9 @@ public class DteSenderService {
      */
     public DteSendResult sendInvoice(Invoice invoice, CompanyId companyId) {
         logger.info("Sending Invoice #{} to SII for company {}", invoice.getFolio(), companyId);
+
+        // Falla con 422 antes de consumir folio o certificado.
+        dteEmissionValidator.validate(invoice);
 
         try {
             // 1. Get CAF for this DTE type and Folio

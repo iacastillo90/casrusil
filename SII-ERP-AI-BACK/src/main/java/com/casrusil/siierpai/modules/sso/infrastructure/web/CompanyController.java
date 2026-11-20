@@ -52,7 +52,10 @@ public class CompanyController {
                 request.commercialAddress(),
                 request.website(),
                 request.phoneNumber(),
-                request.logoUrl());
+                request.logoUrl(),
+                request.giro(),
+                request.acteco(),
+                request.comuna());
         return ResponseEntity.ok(updatedCompany);
     }
 
@@ -76,6 +79,6 @@ public class CompanyController {
     }
 
     public record UpdateCompanyRequest(String razonSocial, String email, String commercialAddress, String website,
-            String phoneNumber, String logoUrl) {
+            String phoneNumber, String logoUrl, String giro, String acteco, String comuna) {
     }
 }

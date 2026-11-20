@@ -32,7 +32,9 @@ class DteXmlBuilderTest {
 
     private static final String TED = "<TED version=\"1.0\"><DD/><FRMT>firma</FRMT></TED>";
 
-    private final DteXmlBuilder builder = new DteXmlBuilder();
+    private final com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository companyRepository = org.mockito.Mockito
+            .mock(com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository.class);
+    private final DteXmlBuilder builder = new DteXmlBuilder(companyRepository);
 
     @Test
     void buildDte_shouldEmitEncabezadoDetalleTedAndTmstFirmaInOrder() throws Exception {
@@ -150,7 +152,7 @@ class DteXmlBuilderTest {
                 BigDecimal.ZERO,
                 Invoice.ORIGIN_MANUAL,
                 TransactionType.SALE,
-                items);
+                items).withReceiverName("Receptor SpA");
     }
 
     private Document parse(String xml) throws Exception {
