@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 
+/** Empleado expuesto por `GET /payroll/employees` (EmployeeResponse). */
 export interface Employee {
-    id: string;
+    id: number;
     name: string;
     rut: string;
     base: number;
@@ -10,28 +11,68 @@ export interface Employee {
     isapre: string;
 }
 
-    export const usePayroll = () => {
+/** Liquidación devuelta por `POST /payroll/calculate` (PayslipResponse). */
+export interface Payslip {
+    id: number;
+    employeeName: string;
+    rut: string;
+    period: string;
+    taxableIncome: number;
+    nonTaxableIncome: number;
+    totalDiscounts: number;
+    netSalary: number;
+}
+
+export interface PayrollPeriod {
+    year: number;
+    month: number;
+}
+
+export const usePayroll = () => {
     const queryClient = useQueryClient();
 
-    const { data: employees, isLoading, error } = useQuery({
+    const employeesQuery = useQuery({
         queryKey: ['payroll', 'employees'],
         queryFn: async () => {
-            const { data } = await api.get('/payroll/employees');
-            return data as Employee[];
+            const { data } = await api.get<Employee[]>('/payroll/employees');
+            return data ?? [];
         },
     });
 
-    const processPrevired = useMutation({
-        mutationFn: async (payload: { year: number; month: number }) => {
-            const { data } = await api.post('/payroll/previred/export', payload, { responseType: 'blob' });
-            return data;
-        }
+    /** Calcula la nómina del período: crea/actualiza las liquidaciones. */
+    const calculatePayroll = useMutation({
+        mutationFn: async (period: PayrollPeriod) => {
+            const { data } = await api.post<Payslip[]>('/payroll/calculate', period);
+            return data ?? [];
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll'] }),
+    });
+
+    /** Descarga el archivo Previred del período como texto plano. */
+    const exportPrevired = useMutation({
+        mutationFn: async (period: PayrollPeriod) => {
+            const response = await api.post('/payroll/previred/export', period, {
+                responseType: 'blob',
+            });
+            const blob = new Blob([response.data], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `previred_${period.year}_${String(period.month).padStart(2, '0')}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        },
     });
 
     return {
-        employees: employees || [],
-        isLoading,
-        error,
-        processPrevired
+        employees: employeesQuery.data ?? [],
+        isLoading: employeesQuery.isLoading,
+        isFetching: employeesQuery.isFetching,
+        error: employeesQuery.error,
+        refetch: employeesQuery.refetch,
+        calculatePayroll,
+        exportPrevired,
     };
 };

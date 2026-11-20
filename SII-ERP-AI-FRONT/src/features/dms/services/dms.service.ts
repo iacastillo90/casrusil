@@ -8,7 +8,17 @@ export interface DmsDocument {
     expirationDate?: string | null;
 }
 
+export interface CreateDmsDocumentRequest {
+    title: string;
+    documentType: string;
+    storageUrl: string;
+}
+
 export const dmsService = {
+    createDocument: async (payload: CreateDmsDocumentRequest): Promise<DmsDocument> => {
+        const response = await api.post('/dms', payload);
+        return response.data;
+    },
     getDocuments: async (): Promise<DmsDocument[]> => {
         const response = await api.get('/dms');
         return response.data;
