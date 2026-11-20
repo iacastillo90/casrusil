@@ -46,6 +46,11 @@ export function LoginForm() {
 
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    // Sin JS el navegador enviaría el formulario de forma nativa. El botón no
+    // se habilita hasta que React esté montado.
+    const [hydrated, setHydrated] = useState(false);
+
+    useEffect(() => setHydrated(true), []);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -102,7 +107,9 @@ export function LoginForm() {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    {/* method="post" evita que un submit nativo (sin JS) mande la
+                        contraseña en la query string. action="" no expone datos. */}
+                    <form method="post" action="" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="email"
@@ -141,7 +148,7 @@ export function LoginForm() {
                             )}
                         />
 
-                        <Button type="submit" className="w-full" disabled={isLoading}>
+                        <Button type="submit" className="w-full" disabled={isLoading || !hydrated}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {isLoading ? "Ingresando..." : "Iniciar Sesión"}
                         </Button>

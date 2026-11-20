@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
 import { authService } from '@/features/auth/services/auth.service';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
+import type { User } from '@/features/auth/types/auth.types';
 
 /**
  * Valida la sesión al montar el dashboard.
@@ -34,6 +35,28 @@ export function SessionGuard() {
         validated.current = true;
 
         let cancelled = false;
+
+        // `/auth/me` todavía no existe en el backend; cuando esté disponible se
+        // usa para reconstruir la identidad sin depender del store. Si responde
+        // 404 se cae al chequeo de sesión por /company/profile.
+        api.get<Partial<User> & { companyId?: string }>('/auth/me')
+            .then(({ data }) => {
+                if (cancelled || !data?.id) return;
+                const current = useAuthStore.getState();
+                current.setAuth(
+                    {
+                        id: data.id,
+                        email: data.email ?? current.user?.email ?? '',
+                        name: data.name ?? current.user?.name ?? '',
+                        role: data.role ?? current.user?.role ?? 'USER',
+                    },
+                    current.token ?? '',
+                    data.companyId ?? current.companyId ?? undefined,
+                    current.companies,
+                );
+            })
+            .catch(() => undefined);
+
         api.get('/company/profile')
             .catch(async () => {
                 if (cancelled) return;

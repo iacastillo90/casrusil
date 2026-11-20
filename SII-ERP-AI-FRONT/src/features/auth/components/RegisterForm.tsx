@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -30,6 +32,10 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export function RegisterForm() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    // Evita el submit nativo antes de hidratar (no debe haber datos en la URL).
+    const [hydrated, setHydrated] = useState(false);
+
+    useEffect(() => setHydrated(true), []);
 
     const { register, handleSubmit, setValue, formState: { errors } } = useForm<RegisterFormData>({
         resolver: zodResolver(registerSchema),
@@ -73,7 +79,7 @@ export function RegisterForm() {
                     Registra tu empresa para comenzar
                 </CardDescription>
             </CardHeader>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form method="post" action="" onSubmit={handleSubmit(onSubmit)}>
                 <CardContent className="grid gap-4">
                     <div className="grid gap-2">
                         <Label htmlFor="rut">RUT Empresa</Label>
@@ -107,7 +113,7 @@ export function RegisterForm() {
                     </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-4">
-                    <Button className="w-full" type="submit" disabled={isLoading}>
+                    <Button className="w-full" type="submit" disabled={isLoading || !hydrated}>
                         {isLoading ? "Creando cuenta..." : "Registrarse"}
                     </Button>
                     <div className="text-sm text-center text-muted-foreground">
