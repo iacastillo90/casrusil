@@ -80,13 +80,13 @@ public class ComplianceController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('ACCOUNTANT')")
     @Operation(summary = "🧠 Obtiene el Dashboard Unificado Ferrari Engine")
     public ResponseEntity<ComplianceDashboardDTO> getComplianceDashboard(
-            @RequestHeader("X-Tenant-ID") String tenantId,
             @RequestParam(value = "period", required = false) YearMonth period) {
 
         if (period == null)
             period = YearMonth.now();
         final YearMonth selectedPeriod = period;
-        final CompanyId companyId = CompanyId.fromString(tenantId);
+        final CompanyId companyId = com.casrusil.siierpai.shared.infrastructure.context.CompanyContext
+                .requireCompanyId();
 
         // Ejecución paralela con Virtual Threads (Java 21+)
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
