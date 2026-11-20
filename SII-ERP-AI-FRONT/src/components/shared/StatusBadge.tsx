@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
  * subconjunto de estados: el backend puede enviar estados nuevos sin romper tipos.
  */
 type DteStatus =
+    | 'PENDING'
     | 'DRAFT'
     | 'SIGNED'
     | 'SENT'
@@ -32,6 +33,13 @@ interface StatusConfig {
 }
 
 const STATUS_CONFIG: Record<DteStatus, StatusConfig> = {
+    // El backend persiste los documentos recién creados como PENDING
+    // (dteStatus PENDIENTE); DRAFT se mantiene por compatibilidad.
+    PENDING: {
+        label: 'Pendiente de envío',
+        icon: FileText,
+        className: 'border-neutral-subtle-foreground/20 bg-neutral-subtle text-neutral-subtle-foreground',
+    },
     DRAFT: {
         label: 'Borrador',
         icon: FileText,

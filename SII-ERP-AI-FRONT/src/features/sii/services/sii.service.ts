@@ -9,6 +9,18 @@ export interface CafUploadResult {
     folioRange: CafFolioRange;
 }
 
+export interface CafListEntry {
+    id: string;
+    tipoDte: string;
+    folioDesde: number;
+    folioHasta: number;
+    folioActual: number;
+    disponibles: number;
+    fechaAutorizacion: string;
+    fechaVencimiento: string | null;
+    estado: 'VIGENTE' | 'POR_AGOTARSE' | 'AGOTADO' | 'VENCIDO';
+}
+
 /**
  * Estado de sincronización SII
  */
@@ -46,6 +58,14 @@ export const siiService = {
         const { data } = await api.post<CafUploadResult>('/sii/caf', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
+        return data;
+    },
+
+    /**
+     * Lista los CAFs de la empresa con su estado actual.
+     */
+    getCafs: async (): Promise<CafListEntry[]> => {
+        const { data } = await api.get<CafListEntry[]>('/sii/caf');
         return data;
     },
 

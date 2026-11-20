@@ -30,6 +30,9 @@ export function middleware(request: NextRequest) {
 // El patrón negativo '(?!...)' excluye las rutas públicas.
 export const config = {
     matcher: [
-        '/((?!login|register|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        // /api se excluye para que las llamadas al backend lleguen al rewrite
+        // de next.config.mjs: si el middleware las intercepta, redirige a
+        // /login y el cliente recibe HTML en lugar del JSON de la API.
+        '/((?!api/|login|register|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }

@@ -79,7 +79,7 @@ export const QUERY_KEYS = {
 
     // Invoices
     INVOICES: ['invoices'],
-    INVOICES_FILTERED: (filters: any) => ['invoices', 'filtered', filters],
+    INVOICES_FILTERED: (filters: Record<string, unknown>) => ['invoices', 'filtered', filters],
     INVOICE_DETAIL: (id: string) => ['invoices', id],
 
     // Accounting
@@ -115,6 +115,7 @@ export const INVOICE_TYPES = {
 
 export const DTE_STATUS = {
     DRAFT: 'DRAFT',
+    PENDING: 'PENDING',
     SIGNED: 'SIGNED',
     SENT: 'SENT',
     ACCEPTED: 'ACCEPTED',

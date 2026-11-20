@@ -42,8 +42,8 @@ export function InvoiceTable({ invoices, isLoading = false, onView, onSend }: In
                 <TableHeader>
                     <TableRow>
                         <TableHead>Folio</TableHead>
-                        <TableHead>Receptor</TableHead>
-                        <TableHead>RUT</TableHead>
+                        <TableHead>Emisor</TableHead>
+                        <TableHead>RUT receptor</TableHead>
                         <TableHead>Emisión</TableHead>
                         <TableHead className="text-right">Total</TableHead>
                         <TableHead className="text-center">Estado</TableHead>
@@ -54,7 +54,7 @@ export function InvoiceTable({ invoices, isLoading = false, onView, onSend }: In
                     {invoices.map((invoice) => (
                         <TableRow key={invoice.id}>
                             <TableCell className="font-mono text-xs">#{invoice.folio}</TableCell>
-                            <TableCell className="font-medium">{invoice.recipientName}</TableCell>
+                            <TableCell className="font-medium">{invoice.issuerName || '—'}</TableCell>
                             <TableCell className="font-mono text-xs">
                                 {invoice.recipientRut ? formatRut(invoice.recipientRut) : "-"}
                             </TableCell>

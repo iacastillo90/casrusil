@@ -53,7 +53,7 @@ export function RecentInvoices() {
                             >
                                 <div className="space-y-1">
                                     <p className="font-medium leading-none">
-                                        {invoice.recipientName}
+                                        {invoice.recipientName || invoice.issuerName || '—'}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
                                         Folio #{invoice.folio} • {formatDate(invoice.issueDate)}
