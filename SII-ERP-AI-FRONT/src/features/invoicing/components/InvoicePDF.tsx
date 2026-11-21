@@ -1,6 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
-import { formatCLP, formatDate } from '@/lib/formatters';
+import { formatCLP, formatDate, formatRut } from '@/lib/formatters';
 import { Invoice } from '@/features/invoicing/types/invoice.types';
 import { DTE_STATUS } from '@/lib/constants';
 
@@ -140,22 +140,6 @@ const styles = StyleSheet.create({
 });
 
 // Status colors
-const getStatusColor = (status: string): string => {
-    switch (status) {
-        case DTE_STATUS.DRAFT:
-            return '#6B7280'; // gray
-        case DTE_STATUS.SIGNED:
-            return '#3B82F6'; // blue
-        case DTE_STATUS.SENT:
-            return '#8B5CF6'; // purple
-        case DTE_STATUS.ACCEPTED:
-            return '#10B981'; // green
-        case DTE_STATUS.REJECTED:
-            return '#EF4444'; // red
-        default:
-            return '#6B7280';
-    }
-};
 
 const getStatusLabel = (status: string): string => {
     switch (status) {
@@ -179,10 +163,10 @@ interface InvoicePDFProps {
 }
 
 export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
-    // Calculate totals
-    const netAmount = invoice.lines.reduce((sum, line) => sum + (line.lineTotal || line.quantity * line.unitPrice), 0);
-    const taxAmount = netAmount * 0.19; // IVA 19%
-    const totalAmount = netAmount + taxAmount;
+    // Totales calculados por el backend (no se recalculan en el cliente).
+    const netAmount = invoice.netAmount;
+    const taxAmount = invoice.taxAmount;
+    const totalAmount = invoice.totalAmount;
 
     // Format CLP without currency symbol for better PDF layout
     const formatCLPNoSymbol = (amount: number): string => {
@@ -229,7 +213,10 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
                         <View style={styles.invoiceMeta}>
                             <View>
                                 <Text style={styles.metaLabel}>Razón Social:</Text>
-                                <Text style={styles.metaValue}>{invoice.recipientName || 'N/A'}</Text>
+                                <Text style={styles.metaValue}>
+                                    {invoice.recipientName ||
+                                        (invoice.recipientRut ? formatRut(invoice.recipientRut) : 'N/A')}
+                                </Text>
                             </View>
                             <View style={{ marginTop: 5 }}>
                                 <Text style={styles.metaLabel}>RUT:</Text>
