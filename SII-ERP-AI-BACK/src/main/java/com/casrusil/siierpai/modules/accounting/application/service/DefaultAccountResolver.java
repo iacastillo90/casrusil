@@ -46,14 +46,14 @@ public class DefaultAccountResolver {
 
     public DefaultAccountResolver(
             AccountRepository accountRepository,
-            @Value("${app.accounts.cash:1.1.01.001}") String cash,
-            @Value("${app.accounts.sales:4.1.01.001}") String sales,
+            @Value("${app.accounts.cash:110101}") String cash,
+            @Value("${app.accounts.sales:410101}") String sales,
             @Value("${app.accounts.other-income:4201}") String otherIncome,
-            @Value("${app.accounts.office-supplies:5.1.03.025}") String officeSupplies,
-            @Value("${app.accounts.services:5.1.03.025}") String services,
-            @Value("${app.accounts.other-expense:5.9.99.999}") String otherExpense,
-            @Value("${app.accounts.depreciation-expense:5.9.99.999}") String depreciationExpense,
-            @Value("${app.accounts.accumulated-depreciation:1.1.03.999}") String accumulatedDepreciation) {
+            @Value("${app.accounts.office-supplies:5298}") String officeSupplies,
+            @Value("${app.accounts.services:5298}") String services,
+            @Value("${app.accounts.other-expense:5299}") String otherExpense,
+            @Value("${app.accounts.depreciation-expense:5297}") String depreciationExpense,
+            @Value("${app.accounts.accumulated-depreciation:1201}") String accumulatedDepreciation) {
         this.accountRepository = accountRepository;
 
         Map<DefaultAccountRole, String> configured = new EnumMap<>(DefaultAccountRole.class);
@@ -67,6 +67,8 @@ public class DefaultAccountResolver {
         configured.put(DefaultAccountRole.ACCUMULATED_DEPRECIATION, accumulatedDepreciation);
         this.configuredCodes = Map.copyOf(configured);
 
+        // Fallback al plan canónico antiguo: se mantiene sólo para bases que aún
+        // no hayan corrido la migración V3; retirar en una ronda posterior.
         Map<DefaultAccountRole, List<String>> fallback = new EnumMap<>(DefaultAccountRole.class);
         fallback.put(DefaultAccountRole.CASH, List.of("110101", "1101", "1"));
         fallback.put(DefaultAccountRole.SALES, List.of("410101", "4101", "41", "4"));

@@ -303,29 +303,34 @@ BEGIN
         VALUES (gen_random_uuid(), v_company_id, '5302', 'Comisiones de Venta', 'EXPENSE', 'Comisiones a vendedores', true)
         ON CONFLICT DO NOTHING;
 
-        -- Additional accounts from ensureAccountingBasics (GENESIS)
+        -- Cuentas detalladas equivalentes a los códigos canónicos antiguos.
+        -- Plan único de 6 dígitos (decisión del dueño).
         INSERT INTO accounting.accounts (id, company_id, code, name, type, description, active)
-        VALUES (gen_random_uuid(), v_company_id, '1.1.03.001', 'Existencias', 'ASSET', 'Existencias de inventario', true)
+        VALUES (gen_random_uuid(), v_company_id, '1103', 'Existencias', 'ASSET', 'Inventarios', true)
         ON CONFLICT DO NOTHING;
 
         INSERT INTO accounting.accounts (id, company_id, code, name, type, description, active)
-        VALUES (gen_random_uuid(), v_company_id, '1.1.03.999', 'Existencias por Clasificar', 'ASSET', 'Existencias pendientes de clasificación', true)
+        VALUES (gen_random_uuid(), v_company_id, '110301', 'Mercaderías', 'ASSET', 'Existencias de mercaderías', true)
         ON CONFLICT DO NOTHING;
 
         INSERT INTO accounting.accounts (id, company_id, code, name, type, description, active)
-        VALUES (gen_random_uuid(), v_company_id, '2.1.04.001', 'IVA Débito Fiscal', 'LIABILITY', 'IVA débito fiscal', true)
+        VALUES (gen_random_uuid(), v_company_id, '110399', 'Existencias por Clasificar', 'ASSET', 'Existencias pendientes de clasificación', true)
         ON CONFLICT DO NOTHING;
 
         INSERT INTO accounting.accounts (id, company_id, code, name, type, description, active)
-        VALUES (gen_random_uuid(), v_company_id, '4.1.01.001', 'Ventas Nacionales', 'REVENUE', 'Ventas nacionales', true)
+        VALUES (gen_random_uuid(), v_company_id, '1201', 'Depreciación Acumulada', 'ASSET', 'Depreciación acumulada de activos fijos', true)
         ON CONFLICT DO NOTHING;
 
         INSERT INTO accounting.accounts (id, company_id, code, name, type, description, active)
-        VALUES (gen_random_uuid(), v_company_id, '5.1.03.025', 'Gastos Generales', 'EXPENSE', 'Gastos generales', true)
+        VALUES (gen_random_uuid(), v_company_id, '5297', 'Depreciación', 'EXPENSE', 'Gasto por depreciación', true)
         ON CONFLICT DO NOTHING;
 
         INSERT INTO accounting.accounts (id, company_id, code, name, type, description, active)
-        VALUES (gen_random_uuid(), v_company_id, '5.9.99.999', 'Gastos por Clasificar', 'EXPENSE', 'Gastos pendientes de clasificación', true)
+        VALUES (gen_random_uuid(), v_company_id, '5298', 'Gastos Generales', 'EXPENSE', 'Gastos generales de administración', true)
+        ON CONFLICT DO NOTHING;
+
+        INSERT INTO accounting.accounts (id, company_id, code, name, type, description, active)
+        VALUES (gen_random_uuid(), v_company_id, '5299', 'Gastos por Clasificar', 'EXPENSE', 'Gastos pendientes de clasificación', true)
         ON CONFLICT DO NOTHING;
     END LOOP;
 END $$;
