@@ -99,6 +99,44 @@ openssl rand -base64 32
 | `CHAOS_MONKEY_ENABLED` | **Sí** | Flag de caos | `false` | **No arranca** |
 | `RESILIENCE4J_*` | No | Umbrales de circuit breaker | ver properties | Defaults del código |
 
+## 4.1 Migraciones de base de datos (Flyway)
+
+El backend ejecuta Flyway al arrancar (`spring.flyway.enabled=true`). Las migraciones viven en `SII-ERP-AI-BACK/src/main/resources/db/migration`:
+
+- `V1__esquema_base.sql`: DDL del esquema (sin datos).
+- `V1.1__compatibilidad_bases_previas.sql`: tablas que faltaban en bases creadas antes de Flyway.
+- `V2__datos_maestros.sql`: plan de cuentas detallado, parámetros tributarios y datos maestros.
+- `V3__unificar_plan_cuentas.sql`: reasigna movimientos de cuentas canónicas al plan detallado.
+- `V4__pay_periods_varchar.sql`: convierte `pay_periods.period` de `bytea` a `varchar(7)`.
+
+El único plan de cuentas válido es el **detallado de 6 dígitos** (por ejemplo
+`110101` Caja, `4201` Otros Ingresos, `5204` Servicios Básicos). V3 reasigna los
+movimientos de los códigos canónicos con puntos (`1.1.01.001` → `110101`, etc.)
+y elimina la cuenta canónica sólo si queda sin movimientos. Los defaults
+`app.accounts.*` apuntan a los códigos detallados; el fallback al plan canónico
+se conserva temporalmente para bases que aún no hayan migrado.
+
+`spring.sql.init.mode=never` y `ddl-auto=validate` en main/dev/prod. En test se mantiene `ddl-auto=create-drop` y `spring.flyway.enabled=false` para que Hibernate cree el esquema efímero de Testcontainers.
+
+### Base nueva
+
+1. Crear una base PostgreSQL 15 vacía.
+2. Configurar `POSTGRES_*` y arrancar el backend.
+3. Flyway aplica V1, V1.1, V2, V3 y V4; verificar:
+
+```sql
+select version, description, success from public.flyway_schema_history order by installed_rank;
+```
+
+### Base existente (creada antes de Flyway)
+
+1. Hacer backup (`pg_dump`) y clonar la base.
+2. Arrancar el backend con `spring.flyway.baseline-on-migrate=true` y `baseline-version=1` (ya son los defaults).
+3. Flyway crea `flyway_schema_history` con baseline 1 y aplica V1.1–V4; no recrea tablas existentes.
+4. Verificar que la historia tenga baseline + migraciones y que `pay_periods.period` sea `varchar(7)`.
+
+Si una base existente ya tenía datos maestros, V2 es idempotente (`ON CONFLICT DO NOTHING/UPDATE`). No ejecutar `flyway clean` en producción.
+
 ## 5. Frontend
 
 | Variable | Obligatoria | Para qué | Ejemplo | Si falta |

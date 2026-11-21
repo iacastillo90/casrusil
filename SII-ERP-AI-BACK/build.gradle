@@ -65,6 +65,8 @@ dependencies {
 	// Phase 23: AI Memory
 	implementation 'dev.langchain4j:langchain4j-pgvector:0.35.0'
 	implementation 'org.postgresql:postgresql'
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
 	// Phase 24: The Time Gem (Audit)
 	implementation 'org.javers:javers-spring-boot-starter-sql:7.6.1'
 	implementation 'org.javers:javers-core:7.6.1'

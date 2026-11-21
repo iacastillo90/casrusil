@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.payroll.infrastructure.persistence.entity;
 
+import com.casrusil.siierpai.modules.payroll.infrastructure.persistence.converter.YearMonthStringConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,7 +22,8 @@ public class PayrollPeriodEntity {
     @Column(nullable = false)
     private String companyId;
     
-    @Column(nullable = false)
+    @Convert(converter = YearMonthStringConverter.class)
+    @Column(nullable = false, length = 7)
     private YearMonth period;
     
     @Column(nullable = false, precision = 19, scale = 4)
