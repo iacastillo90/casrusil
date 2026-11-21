@@ -17,30 +17,61 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/features/accounting/components/PageHeader';
 import { EmptyState, ErrorState, TableSkeleton } from '@/features/accounting/components/DataStates';
-import { useAnalyzeDocument, useCreateDocument, useDocuments } from '@/features/dms/hooks/useDms';
+import {
+    useAnalyzeDocument,
+    useDocuments,
+    useUploadDocumentFile,
+} from '@/features/dms/hooks/useDms';
+import { DMS_ALLOWED_TYPES, DMS_MAX_SIZE_BYTES } from '@/features/dms/services/dms.service';
 import { formatDate } from '@/lib/formatters';
 
 export default function DmsPage() {
     const [open, setOpen] = useState(false);
-    const [form, setForm] = useState({ title: '', documentType: '', storageUrl: '' });
+    const [form, setForm] = useState({ title: '', documentType: '' });
+    const [file, setFile] = useState<File | null>(null);
+    const [fileError, setFileError] = useState<string | null>(null);
 
     const documents = useDocuments();
-    const createDocument = useCreateDocument();
+    const uploadDocument = useUploadDocumentFile();
     const analyze = useAnalyzeDocument();
+
+    const validateFile = (candidate: File | null): string | null => {
+        if (!candidate) return 'Selecciona un archivo';
+        if (candidate.size === 0) return 'El archivo está vacío';
+        if (candidate.size > DMS_MAX_SIZE_BYTES) {
+            return `El archivo supera el máximo de 10 MB (${(candidate.size / (1024 * 1024)).toFixed(1)} MB)`;
+        }
+        const type = candidate.type || 'application/octet-stream';
+        if (!(DMS_ALLOWED_TYPES as readonly string[]).includes(type)) {
+            return `Tipo no permitido (${type}). Usa PDF, PNG, JPEG, TXT, DOCX o XLSX`;
+        }
+        return null;
+    };
 
     const handleCreate = async (event: React.FormEvent) => {
         event.preventDefault();
-        if (!form.title || !form.documentType || !form.storageUrl) {
-            toast.error('Completa título, tipo y URL del documento');
+        const validationError = validateFile(file);
+        if (validationError) {
+            setFileError(validationError);
+            return;
+        }
+        if (!form.documentType.trim()) {
+            toast.error('Indica el tipo de documento (por ejemplo CONTRATO)');
             return;
         }
         try {
-            await createDocument.mutateAsync(form);
-            toast.success('Documento registrado');
+            await uploadDocument.mutateAsync({
+                file: file as File,
+                title: form.title.trim() || undefined,
+                documentType: form.documentType.trim(),
+            });
+            toast.success('Documento subido');
             setOpen(false);
-            setForm({ title: '', documentType: '', storageUrl: '' });
+            setForm({ title: '', documentType: '' });
+            setFile(null);
+            setFileError(null);
         } catch (error) {
-            toast.error('No se pudo registrar el documento', {
+            toast.error('No se pudo subir el documento', {
                 description: error instanceof Error ? error.message : undefined,
             });
         }
@@ -64,7 +95,7 @@ export default function DmsPage() {
                 actions={
                     <Button onClick={() => setOpen(true)}>
                         <FilePlus2 aria-hidden="true" className="mr-2 h-4 w-4" />
-                        Registrar documento
+                        Subir documento
                     </Button>
                 }
             />
@@ -90,7 +121,7 @@ export default function DmsPage() {
                     action={
                         <Button variant="outline" onClick={() => setOpen(true)}>
                             <FilePlus2 aria-hidden="true" className="mr-2 h-4 w-4" />
-                            Registrar documento
+                            Subir documento
                         </Button>
                     }
                 />
@@ -150,10 +181,10 @@ export default function DmsPage() {
                 <DialogContent>
                     <form onSubmit={handleCreate} className="space-y-4">
                         <DialogHeader>
-                            <DialogTitle>Registrar documento</DialogTitle>
+                            <DialogTitle>Subir documento</DialogTitle>
                             <DialogDescription>
-                                El backend registra el documento por su URL: todavía no recibe el
-                                archivo binario.
+                                Se sube el archivo al almacenamiento del sistema (máx. 10 MB): PDF,
+                                PNG, JPEG, TXT, DOCX o XLSX.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -183,17 +214,25 @@ export default function DmsPage() {
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label htmlFor="doc-url">URL del documento</Label>
+                                <Label htmlFor="doc-file">Archivo</Label>
                                 <Input
-                                    id="doc-url"
-                                    type="url"
-                                    value={form.storageUrl}
-                                    onChange={(event) =>
-                                        setForm({ ...form, storageUrl: event.target.value })
-                                    }
-                                    placeholder="https://…"
-                                    required
+                                    id="doc-file"
+                                    type="file"
+                                    accept={DMS_ALLOWED_TYPES.join(',')}
+                                    onChange={(event) => {
+                                        const selected = event.target.files?.[0] ?? null;
+                                        setFile(selected);
+                                        setFileError(validateFile(selected));
+                                    }}
                                 />
+                                {file ? (
+                                    <p className="text-xs text-muted-foreground">
+                                        {file.name} · {(file.size / 1024).toFixed(0)} KB
+                                    </p>
+                                ) : null}
+                                {fileError ? (
+                                    <p className="text-xs text-destructive">{fileError}</p>
+                                ) : null}
                             </div>
                         </div>
 
@@ -201,13 +240,21 @@ export default function DmsPage() {
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => setOpen(false)}
-                                disabled={createDocument.isPending}
+                                onClick={() => {
+                                    setOpen(false);
+                                    setFile(null);
+                                    setFileError(null);
+                                }}
+                                disabled={uploadDocument.isPending}
                             >
                                 Cancelar
                             </Button>
-                            <Button type="submit" loading={createDocument.isPending}>
-                                Registrar
+                            <Button
+                                type="submit"
+                                loading={uploadDocument.isPending}
+                                disabled={!file || Boolean(fileError)}
+                            >
+                                Subir documento
                             </Button>
                         </DialogFooter>
                     </form>
