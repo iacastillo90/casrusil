@@ -98,8 +98,19 @@ public class SecurityConfig {
         // Métodos HTTP permitidos
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-        // Headers permitidos (Necesario para JWT y tenant)
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-ID"));
+        // Headers permitidos (JWT, tenant y cabeceras estándar del navegador).
+        // Lista explícita: con allowCredentials=true NO se puede usar "*".
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "X-Tenant-ID",
+                "X-Company-Id",
+                "X-Requested-With"));
+
+        // El front descarga archivos (Excel/Previred/PDF) y puede leer el nombre
+        // sugerido por el backend.
+        configuration.setExposedHeaders(List.of("Content-Disposition"));
 
         // Permitir credenciales (cookies, headers de auth)
         configuration.setAllowCredentials(true);
