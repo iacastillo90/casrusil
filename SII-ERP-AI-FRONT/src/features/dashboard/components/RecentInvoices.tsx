@@ -49,22 +49,22 @@ export function RecentInvoices() {
                         {recentInvoices.map((invoice: Invoice) => (
                             <div
                                 key={invoice.id}
-                                className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                                className="flex items-start justify-between gap-3 border-b pb-4 last:border-0 last:pb-0"
                             >
-                                <div className="space-y-1">
-                                    <p className="font-medium leading-none">
+                                <div className="min-w-0 flex-1 space-y-1">
+                                    <p className="truncate font-medium leading-none">
                                         {invoice.recipientName || invoice.issuerName || '—'}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="truncate text-sm text-muted-foreground">
                                         Folio #{invoice.folio} • {formatDate(invoice.issueDate)}
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-4">
-                                    <StatusBadge status={invoice.status as 'DRAFT' | 'SIGNED' | 'SENT' | 'ACCEPTED' | 'REJECTED'} />
+                                <div className="flex shrink-0 flex-col items-end gap-1">
                                     <CurrencyDisplay
                                         amount={invoice.totalAmount}
-                                        className="font-semibold"
+                                        className="whitespace-nowrap font-semibold"
                                     />
+                                    <StatusBadge status={invoice.status as 'DRAFT' | 'SIGNED' | 'SENT' | 'ACCEPTED' | 'REJECTED'} />
                                 </div>
                             </div>
                         ))}

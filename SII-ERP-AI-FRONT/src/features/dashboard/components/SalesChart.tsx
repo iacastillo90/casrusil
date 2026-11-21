@@ -44,23 +44,24 @@ export function SalesChart() {
                         <BarChart data={metrics.monthlySales}>
                             <XAxis
                                 dataKey="name"
-                                stroke="#888888"
+                                stroke="hsl(var(--muted-foreground))"
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <YAxis
-                                stroke="#888888"
+                                stroke="hsl(var(--muted-foreground))"
                                 fontSize={12}
+                                width={90}
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(value) => `$${value}`}
+                                tickFormatter={(value) => formatCLP(value)}
                             />
                             <Tooltip
                                 formatter={(value: number) => formatCLP(value)}
                                 cursor={{ fill: 'transparent' }}
                             />
-                            <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 )}

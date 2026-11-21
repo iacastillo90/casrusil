@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useInvoice } from "@/features/invoicing/hooks/useInvoices";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCLP, formatDate, formatRut } from "@/lib/formatters";
-import { Badge } from "@/components/ui/badge";
+import { formatCLP, formatRut } from "@/lib/formatters";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import dynamic from "next/dynamic";
 const PDFDownloadButton = dynamic(
