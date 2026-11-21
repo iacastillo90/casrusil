@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, MapPin, CheckSquare, ScanBarcode } from "lucide-react";
+import { UnavailableAction } from "@/components/shared/UnavailableAction";
 import { useLocations, usePickingTasks, useCompletePickingTask } from "@/features/wms/hooks/useWms";
 import { toast } from "sonner";
 
@@ -25,7 +26,11 @@ export default function WmsPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Logística y Bodega (WMS)</h1>
                     <p className="text-muted-foreground mt-1">Gestión avanzada de ubicaciones y picking.</p>
                 </div>
-                <Button variant="outline"><ScanBarcode className="mr-2 h-4 w-4" /> Escanear QR</Button>
+                <UnavailableAction reason="Escaneo QR no disponible aún">
+                    <Button variant="outline" disabled aria-disabled="true">
+                        <ScanBarcode className="mr-2 h-4 w-4" /> Escanear QR
+                    </Button>
+                </UnavailableAction>
             </div>
 
             <Tabs defaultValue="picking" className="space-y-4">

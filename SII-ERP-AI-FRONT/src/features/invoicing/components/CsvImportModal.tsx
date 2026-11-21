@@ -15,6 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/axios";
+import { useAuthStore } from "@/features/auth/stores/auth.store";
 
 export type BookType = "SALE" | "PURCHASE";
 
@@ -22,31 +25,63 @@ interface CsvImportModalProps {
     defaultBookType?: BookType;
 }
 
+interface InvoiceImportResult {
+    successCount: number;
+    errorCount: number;
+    message?: string;
+}
+
+const getErrorMessage = (error: unknown): string =>
+    error instanceof Error ? error.message : "Inténtalo nuevamente";
+
 export function CsvImportModal({ defaultBookType = "SALE" }: CsvImportModalProps) {
     const [open, setOpen] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [bookType, setBookType] = useState<BookType>(defaultBookType);
     const [importing, setImporting] = useState(false);
+    const companyId = useAuthStore((state) => state.companyId);
+    const queryClient = useQueryClient();
 
     const handleImport = async () => {
         if (!file) return;
+
+        if (!companyId) {
+            toast.error("No se pudo identificar la empresa. Vuelve a iniciar sesión.");
+            return;
+        }
+
         setImporting(true);
         try {
             const formData = new FormData();
-            formData.append('file', file);
-            formData.append('bookType', bookType);
-            
-            // await api.post('/invoices/import', formData, {
-            //     headers: { 'Content-Type': 'multipart/form-data' }
-            // });
-            
-            // Asumiendo que el endpoint está pendiente en el backend, por ahora solo mostramos el éxito
-            // sin timeout artificial para no fingir un proceso.
-            toast.success(`CSV de ${bookType === "SALE" ? "ventas" : "compras"} procesado.`);
-            setFile(null);
-            setOpen(false);
-        } catch {
-            toast.error("Error al importar el CSV.");
+            formData.append("file", file);
+
+            const { data } = await api.post<InvoiceImportResult>("/invoices/import", formData, {
+                params: { companyId, bookType },
+            });
+
+            if (data.successCount > 0) {
+                toast.success(`Se importaron ${data.successCount} documentos.`, {
+                    description:
+                        data.errorCount > 0
+                            ? `${data.errorCount} filas no se pudieron procesar.`
+                            : undefined,
+                });
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ["invoices"] }),
+                    queryClient.invalidateQueries({ queryKey: ["reports"] }),
+                ]);
+                setFile(null);
+                setOpen(false);
+            } else {
+                toast.error("No se importaron documentos.", {
+                    description:
+                        data.message || "Revisa el formato del CSV del SII e inténtalo nuevamente.",
+                });
+            }
+        } catch (error) {
+            toast.error("Error al importar el CSV.", {
+                description: getErrorMessage(error),
+            });
         } finally {
             setImporting(false);
         }

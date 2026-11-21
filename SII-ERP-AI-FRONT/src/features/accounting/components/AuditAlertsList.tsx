@@ -11,7 +11,8 @@ export interface AuditAlert {
     severity: AuditAlertSeverity;
     title: string;
     message: string;
-    createdAt: string;
+    /** El endpoint de auditoría no expone fecha; puede venir vacío. */
+    createdAt?: string;
 }
 
 interface AuditAlertsListProps {
@@ -48,7 +49,11 @@ export function AuditAlertsList({ alerts }: AuditAlertsListProps) {
                         <div className="min-w-0 flex-1">
                             <p className="font-medium leading-tight">{alert.title}</p>
                             <p className="mt-0.5 text-sm text-muted-foreground">{alert.message}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">{formatDate(alert.createdAt)}</p>
+                            {alert.createdAt ? (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {formatDate(alert.createdAt)}
+                                </p>
+                            ) : null}
                         </div>
                     </li>
                 );
