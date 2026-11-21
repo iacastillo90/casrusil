@@ -50,7 +50,7 @@ public class SsoIntegrationTest extends com.casrusil.siierpai.shared.test.BaseIn
         void testRegisterAndLoginFlow() throws Exception {
                 // 1. Register Company + Admin
                 AuthController.RegisterRequest registerRequest = new AuthController.RegisterRequest(
-                                "76123456-7",
+                                "79999999-9",
                                 "Test Company SpA",
                                 "admin@test.com",
                                 "password123");
