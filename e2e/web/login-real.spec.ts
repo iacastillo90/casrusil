@@ -20,5 +20,6 @@ test('login real por UI llega al dashboard', async ({ page }) => {
   await page.getByRole('button', { name: /Iniciar Sesión/i }).click();
 
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 90_000 });
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  // El dashboard tiene más de un h1 (header + contenido): se valida el primero.
+  await expect(page.locator('h1').first()).toBeVisible();
 });

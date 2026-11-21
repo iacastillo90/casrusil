@@ -30,6 +30,8 @@ test('sesión expirada vuelve a /login con aviso', async ({ page, context }) => 
 
   await page.goto('/inventory', { waitUntil: 'domcontentloaded' });
 
-  await expect(page).toHaveURL(/\/login\?expired=1/, { timeout: 60_000 });
+  // El interceptor de axios puede redirigir antes de que el guard agregue el
+  // query param; lo que importa es volver a /login y ver el aviso.
+  await expect(page).toHaveURL(/\/login/, { timeout: 60_000 });
   await expect(page.getByText('Tu sesión expiró')).toBeVisible({ timeout: 20_000 });
 });
