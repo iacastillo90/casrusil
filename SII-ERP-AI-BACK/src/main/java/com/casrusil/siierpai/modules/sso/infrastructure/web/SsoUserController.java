@@ -9,8 +9,10 @@ import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.domain.valueobject.UserId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -60,6 +62,33 @@ public class SsoUserController {
     public ResponseEntity<User> updateRole(@PathVariable UUID id, @Valid @RequestBody UpdateRoleRequest request) {
         User user = userService.updateUser(new UserId(id), null, request.role());
         return ResponseEntity.ok(user);
+    }
+
+    /**
+     * Desactiva (soft delete) un usuario de la empresa. Solo ADMIN y nunca el
+     * propio usuario autenticado.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deactivateUser(@PathVariable UUID id) {
+        UserId requesterId = currentUserId();
+        if (requesterId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        if (requesterId.getValue().equals(id)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+
+        userService.deactivateUser(new UserId(id), requesterId);
+        return ResponseEntity.noContent().build();
+    }
+
+    private UserId currentUserId() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null
+                || !(authentication.getPrincipal() instanceof UserId userId)) {
+            return null;
+        }
+        return userId;
     }
 
     @PostMapping("/invite")
