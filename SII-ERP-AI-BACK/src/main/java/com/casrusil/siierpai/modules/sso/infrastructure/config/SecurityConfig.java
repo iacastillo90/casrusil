@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -58,6 +59,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Permitir OPTIONS (pre-flight requests de CORS)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        // /me requiere sesión aunque cuelgue de /auth
+                        .requestMatchers("/api/v1/auth/me", "/auth/me").authenticated()
                         // Endpoints públicos de autenticación
                         .requestMatchers("/api/v1/auth/**", "/error").permitAll()
                         // Actuator: solo health/info son públicos (probes de LB/k8s).
@@ -66,6 +69,11 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // Todo lo demás requiere autenticación
                         .anyRequest().authenticated())
+
+                // 4.b Sin sesión, responder 401 (no 403) en endpoints autenticados.
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        (request, response, authException) -> response.sendError(
+                                HttpStatus.UNAUTHORIZED.value(), "No autenticado")))
 
                 // 5. Agregar filtro JWT antes del filtro de autenticación de usuario/password
                 .addFilterBefore(securityFilter,

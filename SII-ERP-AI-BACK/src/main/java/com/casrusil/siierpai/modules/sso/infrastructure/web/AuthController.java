@@ -2,11 +2,19 @@ package com.casrusil.siierpai.modules.sso.infrastructure.web;
 
 import com.casrusil.siierpai.modules.sso.application.dto.AuthResult;
 import com.casrusil.siierpai.modules.sso.application.service.AuthService;
+import com.casrusil.siierpai.modules.sso.domain.model.Company;
+import com.casrusil.siierpai.modules.sso.domain.model.User;
+import com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository;
+import com.casrusil.siierpai.modules.sso.domain.port.out.UserRepository;
 import com.casrusil.siierpai.modules.sso.infrastructure.security.JwtTokenProvider;
 import com.casrusil.siierpai.modules.sso.infrastructure.security.LoginRateLimiter;
 import com.casrusil.siierpai.modules.sso.infrastructure.security.SecurityFilter;
 import com.casrusil.siierpai.modules.sso.infrastructure.security.TokenBlacklistService;
 import com.casrusil.siierpai.modules.sso.infrastructure.web.dto.AuthResponse;
+import com.casrusil.siierpai.modules.sso.infrastructure.web.dto.MeResponse;
+import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
+import com.casrusil.siierpai.shared.domain.valueobject.UserId;
+import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -16,6 +24,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Controlador REST para autenticación pública.
@@ -53,6 +65,8 @@ public class AuthController {
     private final LoginRateLimiter loginRateLimiter;
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
+    private final CompanyRepository companyRepository;
 
     /** true en producción para exigir HTTPS en la cookie (Secure). */
     @Value("${security.cookie.secure:false}")
@@ -64,11 +78,62 @@ public class AuthController {
     public AuthController(AuthService authService,
             LoginRateLimiter loginRateLimiter,
             TokenBlacklistService tokenBlacklistService,
-            JwtTokenProvider jwtTokenProvider) {
+            JwtTokenProvider jwtTokenProvider,
+            UserRepository userRepository,
+            CompanyRepository companyRepository) {
         this.authService = authService;
         this.loginRateLimiter = loginRateLimiter;
         this.tokenBlacklistService = tokenBlacklistService;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
+        this.companyRepository = companyRepository;
+    }
+
+    /**
+     * Devuelve el usuario autenticado desde el JWT.
+     *
+     * <p>
+     * Requiere una sesión válida (cookie {@code access_token} o header
+     * {@code Authorization: Bearer ...}). Sin sesión responde {@code 401}.
+     * </p>
+     *
+     * @return identidad y contexto de empresa del usuario
+     */
+    @GetMapping("/me")
+    public ResponseEntity<MeResponse> me() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserId userId)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || !user.isActive()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        CompanyId tokenCompanyId = CompanyContext.getCompanyId();
+        if (tokenCompanyId != null && !tokenCompanyId.getValue().equals(user.getCompanyId().getValue())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Company company = companyRepository.findById(user.getCompanyId()).orElse(null);
+        if (company == null || !company.isActive()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<MeResponse.CompanySummary> companies = List.of(
+                new MeResponse.CompanySummary(
+                        company.getId().getValue(),
+                        company.getRazonSocial(),
+                        company.getRut()));
+
+        return ResponseEntity.ok(new MeResponse(
+                user.getId().getValue(),
+                user.getEmail(),
+                user.getFullName(),
+                user.getRole().name(),
+                user.getCompanyId().getValue(),
+                companies));
     }
 
     @PostMapping("/register")
