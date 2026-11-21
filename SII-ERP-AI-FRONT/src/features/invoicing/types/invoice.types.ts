@@ -16,9 +16,8 @@ export interface Invoice {
     /** Razón social del emisor (`businessName` en el backend). */
     issuerName?: string;
     /**
-     * El backend todavía no persiste la razón social del receptor: la columna
-     * `business_name` guarda la del emisor. Se mantiene vacío y la UI usa
-     * `issuerName` para el emisor.
+     * Razón social del receptor (`receiverName` del backend). Puede venir vacía
+     * en documentos antiguos; en ese caso la UI muestra el RUT formateado.
      */
     recipientName: string;
     recipientRut: string;

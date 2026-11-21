@@ -72,9 +72,9 @@ export function RegisterForm() {
     };
 
     return (
-        <Card className="w-full max-w-md">
-            <CardHeader>
-                <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
+        <Card className="w-full max-w-md border-border/60 shadow-sm">
+            <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl font-semibold tracking-tight">Crear Cuenta</CardTitle>
                 <CardDescription>
                     Registra tu empresa para comenzar
                 </CardDescription>
@@ -85,6 +85,7 @@ export function RegisterForm() {
                         <Label htmlFor="rut">RUT Empresa</Label>
                         <Input
                             id="rut"
+                            autoComplete="off"
                             {...register("rut")}
                             onBlur={(e) => setValue("rut", formatRut(e.target.value))}
                             placeholder="76.543.210-K"
@@ -93,32 +94,37 @@ export function RegisterForm() {
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="razonSocial">Razón Social</Label>
-                        <Input id="razonSocial" {...register("razonSocial")} />
+                        <Input id="razonSocial" autoComplete="organization" {...register("razonSocial")} />
                         {errors.razonSocial && <span className="text-xs text-destructive">{errors.razonSocial.message}</span>}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="email">Email Admin</Label>
-                        <Input id="email" type="email" {...register("email")} />
+                        <Input id="email" type="email" autoComplete="email" {...register("email")} />
                         {errors.email && <span className="text-xs text-destructive">{errors.email.message}</span>}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="password">Contraseña</Label>
-                        <Input id="password" type="password" {...register("password")} />
+                        <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
                         {errors.password && <span className="text-xs text-destructive">{errors.password.message}</span>}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-                        <Input id="confirmPassword" type="password" {...register("confirmPassword")} />
+                        <Input id="confirmPassword" type="password" autoComplete="new-password" {...register("confirmPassword")} />
                         {errors.confirmPassword && <span className="text-xs text-destructive">{errors.confirmPassword.message}</span>}
                     </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-4">
-                    <Button className="w-full" type="submit" disabled={isLoading || !hydrated}>
-                        {isLoading ? "Creando cuenta..." : "Registrarse"}
+                    <Button
+                        className="w-full"
+                        type="submit"
+                        loading={isLoading}
+                        disabled={!hydrated}
+                    >
+                        Registrarse
                     </Button>
                     <div className="text-sm text-center text-muted-foreground">
                         ¿Ya tienes cuenta?{" "}
-                        <Link href="/login" className="underline text-primary">
+                        <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
                             Inicia Sesión
                         </Link>
                     </div>

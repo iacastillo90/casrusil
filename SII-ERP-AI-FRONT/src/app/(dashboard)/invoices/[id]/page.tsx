@@ -17,11 +17,10 @@ import type { InvoiceLine } from "@/features/invoicing/types/invoice.types";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { AlertCircle, Calculator, Download, FileText, History, Leaf, Send } from "lucide-react";
+import { AlertCircle, Calculator, Download, FileText, History, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountingEntryCard } from "@/features/accounting/components/AccountingEntryCard";
-import { SustainabilityCard } from "@/features/sustainability/components/SustainabilityCard";
 import { InvoiceAuditTrail } from "@/features/invoicing/components/InvoiceAuditTrail";
 import { accountingService } from "@/features/accounting/services/accounting.service";
 import { siiService } from "@/features/sii/services/sii.service";
@@ -160,7 +159,7 @@ export default function InvoiceDetailPage() {
 
             {/* Tabbed Interface */}
             <Tabs defaultValue="general" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+                <TabsList className="grid w-full grid-cols-3 lg:w-auto">
                     <TabsTrigger value="general" className="gap-2">
                         <FileText className="h-4 w-4" />
                         <span className="hidden sm:inline">General</span>
@@ -168,10 +167,6 @@ export default function InvoiceDetailPage() {
                     <TabsTrigger value="contabilidad" className="gap-2">
                         <Calculator className="h-4 w-4" />
                         <span className="hidden sm:inline">Contabilidad</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="sostenibilidad" className="gap-2">
-                        <Leaf className="h-4 w-4" />
-                        <span className="hidden sm:inline">Sostenibilidad</span>
                     </TabsTrigger>
                     <TabsTrigger value="trazabilidad" className="gap-2">
                         <History className="h-4 w-4" />
@@ -201,12 +196,14 @@ export default function InvoiceDetailPage() {
                             </CardHeader>
                             <CardContent>
                                 <dl className="grid grid-cols-3 gap-2 text-sm">
-                                    {invoice.recipientName && (
-                                        <>
-                                            <dt className="font-medium text-muted-foreground">Razón Social:</dt>
-                                            <dd className="col-span-2">{invoice.recipientName}</dd>
-                                        </>
-                                    )}
+                                    <dt className="font-medium text-muted-foreground">Razón Social:</dt>
+                                    <dd className="col-span-2">
+                                        {invoice.recipientName || (
+                                            <span className="text-muted-foreground">
+                                                Sin razón social registrada
+                                            </span>
+                                        )}
+                                    </dd>
                                     <dt className="font-medium text-muted-foreground">RUT:</dt>
                                     <dd className="col-span-2">{formatRut(invoice.recipientRut)}</dd>
                                 </dl>
@@ -263,14 +260,6 @@ export default function InvoiceDetailPage() {
                     <AccountingEntryCard
                         entry={accountingEntry ?? null}
                         isLoading={isLoadingEntry}
-                    />
-                </TabsContent>
-
-                {/* Sostenibilidad Tab */}
-                <TabsContent value="sostenibilidad" className="mt-6">
-                    <SustainabilityCard
-                        data={null}
-                        isLoading={false}
                     />
                 </TabsContent>
 

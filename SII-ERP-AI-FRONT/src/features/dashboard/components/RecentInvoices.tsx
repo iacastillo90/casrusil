@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay';
 import { APP_ROUTES } from '@/lib/constants';
-import { formatDate } from '@/lib/formatters';
+import { formatDate, formatRut } from '@/lib/formatters';
 import { useInvoices } from '@/features/invoicing/hooks/useInvoices';
 import { Invoice } from '@/features/invoicing/types/invoice.types';
 import { SkeletonLoader } from '../../../components/shared/SkeletonLoader';
@@ -53,7 +53,10 @@ export function RecentInvoices() {
                             >
                                 <div className="min-w-0 flex-1 space-y-1">
                                     <p className="truncate font-medium leading-none">
-                                        {invoice.recipientName || invoice.issuerName || '—'}
+                                        {invoice.recipientName ||
+                                            (invoice.recipientRut
+                                                ? formatRut(invoice.recipientRut)
+                                                : '—')}
                                     </p>
                                     <p className="truncate text-sm text-muted-foreground">
                                         Folio #{invoice.folio} • {formatDate(invoice.issueDate)}

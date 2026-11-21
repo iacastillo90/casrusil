@@ -20,6 +20,7 @@ interface InvoiceApiDto {
     status: string;
     issuerRut: string;
     receiverRut: string;
+    receiverName?: string | null;
     businessName: string;
     date: string;
     dueDate?: string;
@@ -98,7 +99,8 @@ export interface UpdateInvoiceRequest {
     folio: number;
     status: string;
     issuerRut: string;
-    recipientName: string;
+    /** Campo del contrato de actualización; el backend lo mapea a business_name. */
+    recipientName?: string;
 }
 
 export interface InvoiceTotals {
@@ -174,7 +176,9 @@ export const toUpdateInvoiceRequest = (
         folio: original.folio,
         status: original.status,
         issuerRut: original.issuerRut,
-        recipientName: original.recipientName,
+        // `recipientName` en el PUT del backend sobrescribe `business_name`
+        // (razón social del emisor), así que no se envía.
+        recipientName: undefined,
     };
 };
 
@@ -185,9 +189,9 @@ const mapInvoice = (dto: InvoiceApiDto): Invoice => ({
     issuerRut: dto.issuerRut,
     issuerName: dto.businessName,
     recipientRut: dto.receiverRut,
-    // `businessName` corresponde al emisor, no al receptor: el backend aún no
-    // persiste la razón social del receptor.
-    recipientName: '',
+    // `businessName` es la razón social del emisor; la del receptor viene en
+    // `receiverName` (persistida por el backend desde el fix de facturación).
+    recipientName: (dto.receiverName ?? '').trim(),
     lines: (dto.items ?? []).map((item) => ({
         id: item.lineNumber != null ? String(item.lineNumber) : '',
         description: item.itemName ?? '',
