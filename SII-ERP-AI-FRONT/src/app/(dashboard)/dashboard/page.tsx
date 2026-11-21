@@ -7,24 +7,18 @@ import { SalesChart } from '@/features/dashboard/components/SalesChart';
 import { RecentInvoices } from '@/features/dashboard/components/RecentInvoices';
 import { KPIGrid } from '@/features/dashboard/components/KPIGrid';
 import { SkeletonLoader } from '../../../components/shared/SkeletonLoader';
+import { PageHeader } from '@/features/accounting/components/PageHeader';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 
 export default function DashboardPage() {
     useRealtimeNotifications();
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Header con Saludo */}
-            <div className="flex justify-between items-end mb-4">
-                <div>
-                    <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                        Dashboard <span className="inline-block animate-bounce">🚀</span>
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">
-                        Centro de Comando Financiero & Sostenible
-                    </p>
-                </div>
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Panel"
+                description="Salud financiera, ventas y sostenibilidad de la empresa en un solo lugar."
+            />
 
             {/* SECCIÓN 1: ESCUDO FINANCIERO (NIVEL DIOS) */}
             <div className="grid gap-6 grid-cols-1">

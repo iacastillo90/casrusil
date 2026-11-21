@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react';
 import {
     AlertTriangle,
+    CalendarPlus,
     Download,
+    Lock,
     Receipt,
     Users,
 } from 'lucide-react';
@@ -16,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PageHeader } from '@/features/accounting/components/PageHeader';
 import { EmptyState, ErrorState, TableSkeleton } from '@/features/accounting/components/DataStates';
 import { formatCLP } from '@/lib/formatters';
-import { usePayroll, type Payslip } from '@/features/payroll/hooks/usePayroll';
+import { usePayroll, type PayrollPeriodRecord, type Payslip } from '@/features/payroll/hooks/usePayroll';
 
 const currentPeriod = () => {
     const now = new Date();
@@ -34,6 +36,8 @@ const periodLabel = (period: string) => {
 export default function PayrollPage() {
     const [period, setPeriod] = useState(currentPeriod);
     const [payslips, setPayslips] = useState<Payslip[] | null>(null);
+    const [openedPeriod, setOpenedPeriod] = useState<PayrollPeriodRecord | null>(null);
+    const [periodError, setPeriodError] = useState<string | null>(null);
 
     const [year, month] = period.split('-').map(Number);
     const {
@@ -42,6 +46,7 @@ export default function PayrollPage() {
         isFetching,
         error,
         refetch,
+        openPeriod,
         calculatePayroll,
         exportPrevired,
     } = usePayroll();
@@ -61,6 +66,34 @@ export default function PayrollPage() {
             { discounts: 0, net: 0 },
         );
     }, [payslips]);
+
+    const handleOpenPeriod = async () => {
+        setPeriodError(null);
+        try {
+            const record = await openPeriod.mutateAsync({ year, month });
+            setOpenedPeriod(record);
+            toast.success(`Período ${periodLabel(period)} abierto`, {
+                description: `UF ${record.ufValue.toLocaleString('es-CL')} · UTM ${record.utmValue.toLocaleString('es-CL')}`,
+            });
+        } catch (mutationError) {
+            const message =
+                mutationError instanceof Error
+                    ? mutationError.message
+                    : 'No se pudo abrir el período';
+            setPeriodError(message);
+            if (message.toLowerCase().includes('cerrado')) {
+                toast.error(`El período ${periodLabel(period)} está cerrado`, {
+                    description: 'No se pueden calcular ni modificar liquidaciones de un período cerrado.',
+                });
+            } else {
+                toast.error('No se pudo abrir el período', { description: message });
+            }
+        }
+    };
+
+    const periodClosed = Boolean(
+        periodError?.toLowerCase().includes('cerrado') || openedPeriod?.closed,
+    );
 
     const handleCalculate = async () => {
         try {
@@ -107,6 +140,8 @@ export default function PayrollPage() {
                             onChange={(event) => {
                                 setPeriod(event.target.value);
                                 setPayslips(null);
+                                setOpenedPeriod(null);
+                                setPeriodError(null);
                             }}
                         />
                         <Button
@@ -119,7 +154,21 @@ export default function PayrollPage() {
                             )}
                             Archivo Previred
                         </Button>
-                        <Button onClick={handleCalculate} loading={calculatePayroll.isPending}>
+                        <Button
+                            variant="outline"
+                            onClick={handleOpenPeriod}
+                            loading={openPeriod.isPending}
+                        >
+                            {!openPeriod.isPending && (
+                                <CalendarPlus aria-hidden="true" className="mr-2 h-4 w-4" />
+                            )}
+                            Abrir período
+                        </Button>
+                        <Button
+                            onClick={handleCalculate}
+                            loading={calculatePayroll.isPending}
+                            disabled={periodClosed}
+                        >
                             {!calculatePayroll.isPending && (
                                 <Receipt aria-hidden="true" className="mr-2 h-4 w-4" />
                             )}
@@ -128,6 +177,43 @@ export default function PayrollPage() {
                     </div>
                 }
             />
+
+            {periodError ? (
+                <div
+                    role="alert"
+                    className={`flex items-start gap-3 rounded-lg border p-4 text-sm ${
+                        periodClosed
+                            ? 'border-warning-subtle-foreground/30 bg-warning-subtle text-warning-subtle-foreground'
+                            : 'border-destructive/30 bg-destructive-subtle text-destructive-subtle-foreground'
+                    }`}
+                >
+                    {periodClosed ? (
+                        <Lock aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
+                    ) : (
+                        <AlertTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
+                    )}
+                    <div>
+                        <p className="font-medium">
+                            {periodClosed
+                                ? 'Período cerrado'
+                                : 'No se pudo abrir el período'}
+                        </p>
+                        <p>{periodError}</p>
+                    </div>
+                </div>
+            ) : openedPeriod ? (
+                <div
+                    role="status"
+                    className="flex items-center gap-2 rounded-lg border border-success-subtle-foreground/25 bg-success-subtle p-4 text-sm text-success-subtle-foreground"
+                >
+                    <CalendarPlus aria-hidden="true" className="h-5 w-5 shrink-0" />
+                    <p>
+                        Período <strong>{periodLabel(openedPeriod.period)}</strong> abierto · UF{' '}
+                        {openedPeriod.ufValue.toLocaleString('es-CL')} · UTM{' '}
+                        {openedPeriod.utmValue.toLocaleString('es-CL')}
+                    </p>
+                </div>
+            ) : null}
 
             {error ? (
                 <ErrorState

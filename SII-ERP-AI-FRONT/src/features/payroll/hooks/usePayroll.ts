@@ -28,6 +28,14 @@ export interface PayrollPeriod {
     month: number;
 }
 
+export interface PayrollPeriodRecord {
+    id: number;
+    period: string;
+    ufValue: number;
+    utmValue: number;
+    closed: boolean;
+}
+
 export const usePayroll = () => {
     const queryClient = useQueryClient();
 
@@ -36,6 +44,17 @@ export const usePayroll = () => {
         queryFn: async () => {
             const { data } = await api.get<Employee[]>('/payroll/employees');
             return data ?? [];
+        },
+    });
+
+    /**
+     * Crea o abre el período de remuneraciones (idempotente).
+     * 409 si está cerrado; 400 si no hay UF/UTM para el año.
+     */
+    const openPeriod = useMutation({
+        mutationFn: async (period: PayrollPeriod) => {
+            const { data } = await api.post<PayrollPeriodRecord>('/payroll/periods', period);
+            return data;
         },
     });
 
@@ -72,6 +91,7 @@ export const usePayroll = () => {
         isFetching: employeesQuery.isFetching,
         error: employeesQuery.error,
         refetch: employeesQuery.refetch,
+        openPeriod,
         calculatePayroll,
         exportPrevired,
     };

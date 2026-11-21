@@ -11,6 +11,22 @@ export const useCreateDocument = () => {
     });
 };
 
+export const useUploadDocumentFile = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            file,
+            title,
+            documentType,
+        }: {
+            file: File;
+            title?: string;
+            documentType: string;
+        }) => dmsService.uploadDocumentFile(file, { title, documentType }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dms', 'docs'] }),
+    });
+};
+
 export const useAnalyzeDocument = () => {
     const queryClient = useQueryClient();
     return useMutation({
