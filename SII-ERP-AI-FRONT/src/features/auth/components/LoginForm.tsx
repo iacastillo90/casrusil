@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 import { authService } from "../services/auth.service";
 import Link from "next/link";
-import { LoginCredentials } from "../types/auth.types";
 import { useAuthStore } from '@/features/auth/stores/auth.store';
 
 const loginSchema = z.object({
@@ -98,9 +96,9 @@ export function LoginForm() {
     }
 
     return (
-        <Card className="w-full max-w-sm">
-            <CardHeader>
-                <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+        <Card className="w-full max-w-sm border-border/60 shadow-sm">
+            <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl font-semibold tracking-tight">Iniciar Sesión</CardTitle>
                 <CardDescription>
                     Ingresa tu email para acceder a tu cuenta
                 </CardDescription>
@@ -109,7 +107,7 @@ export function LoginForm() {
                 <Form {...form}>
                     {/* method="post" evita que un submit nativo (sin JS) mande la
                         contraseña en la query string. action="" no expone datos. */}
-                    <form method="post" action="" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form method="post" action="" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                         <FormField
                             control={form.control}
                             name="email"
@@ -120,6 +118,7 @@ export function LoginForm() {
                                         <Input
                                             placeholder="nombre@empresa.com"
                                             type="email"
+                                            autoComplete="email"
                                             disabled={isLoading}
                                             {...field}
                                         />
@@ -139,6 +138,7 @@ export function LoginForm() {
                                         <Input
                                             placeholder="••••••••"
                                             type="password"
+                                            autoComplete="current-password"
                                             disabled={isLoading}
                                             {...field}
                                         />
@@ -148,9 +148,13 @@ export function LoginForm() {
                             )}
                         />
 
-                        <Button type="submit" className="w-full" disabled={isLoading || !hydrated}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isLoading ? "Ingresando..." : "Iniciar Sesión"}
+                        <Button
+                            type="submit"
+                            className="w-full"
+                            loading={isLoading}
+                            disabled={!hydrated}
+                        >
+                            Iniciar Sesión
                         </Button>
                     </form>
                 </Form>
@@ -158,7 +162,7 @@ export function LoginForm() {
             <CardFooter className="flex justify-center">
                 <div className="text-sm text-center text-muted-foreground">
                     ¿No tienes cuenta?{" "}
-                    <Link href="/register" className="underline text-primary">
+                    <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
                         Regístrate
                     </Link>
                 </div>
