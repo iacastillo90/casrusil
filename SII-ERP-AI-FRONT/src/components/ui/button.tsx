@@ -59,10 +59,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 data-loading={loading ? "true" : undefined}
                 {...props}
             >
-                {showSpinner && (
-                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                {asChild ? (
+                    children
+                ) : (
+                    <>
+                        {showSpinner && (
+                            <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        {children}
+                    </>
                 )}
-                {children}
             </Comp>
         )
     }

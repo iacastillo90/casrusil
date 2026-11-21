@@ -4,6 +4,7 @@ import React from 'react';
 import { useMyPayslips } from '@/features/employee/hooks/useEmployee';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { UnavailableAction } from '@/components/shared/UnavailableAction';
 import { Download, FileText, CalendarClock } from 'lucide-react';
 import { Payslip } from '@/features/employee/services/employee.service';
 
@@ -21,10 +22,12 @@ export default function EmployeePortalPage() {
                     <h2 className="text-2xl font-bold tracking-tight">Mi Portal</h2>
                     <p className="text-muted-foreground">Revisa tus liquidaciones y solicita vacaciones.</p>
                 </div>
-                <Button variant="outline">
-                    <CalendarClock className="mr-2 h-4 w-4" />
-                    Solicitar Vacaciones
-                </Button>
+                <UnavailableAction reason="Solicitud de vacaciones no disponible aún">
+                    <Button variant="outline" disabled aria-disabled="true">
+                        <CalendarClock className="mr-2 h-4 w-4" />
+                        Solicitar Vacaciones
+                    </Button>
+                </UnavailableAction>
             </div>
 
             <Card>
@@ -49,9 +52,11 @@ export default function EmployeePortalPage() {
                                             Sueldo Líquido: <span className="font-medium text-gray-900">${payslip.netSalary.toLocaleString('es-CL')}</span>
                                         </div>
                                     </div>
-                                    <Button variant="ghost" size="icon">
-                                        <Download className="h-5 w-5 text-blue-600" />
-                                    </Button>
+                                    <UnavailableAction reason="PDF de liquidación pendiente de definición">
+                                        <Button variant="ghost" size="icon" disabled aria-disabled="true">
+                                            <Download className="h-5 w-5 text-blue-600" />
+                                        </Button>
+                                    </UnavailableAction>
                                 </div>
                             ))}
                         </div>

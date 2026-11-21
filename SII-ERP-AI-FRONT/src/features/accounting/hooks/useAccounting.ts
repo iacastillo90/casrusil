@@ -11,6 +11,7 @@ import {
     type SiiAuditReport,
 } from '../services/accounting.service';
 import type { AuditAlert } from '../components/AuditAlertsList';
+import { useAuthStore } from '@/features/auth/stores/auth.store';
 
 interface FixedAsset {
     id: string;
@@ -83,13 +84,47 @@ export const useClosedPeriods = () => {
     });
 };
 
+interface AuditAlertApiDto {
+    id: string;
+    type?: string;
+    severity: string;
+    title: string;
+    description?: string;
+}
+
+interface AuditAlertsApiResponse {
+    alerts?: AuditAlertApiDto[];
+}
+
 /**
  * Alertas de auditoría para el menú de notificaciones.
- * El endpoint de alertas de auditoría exige rol ADMIN/AUDITOR y hoy devuelve
- * datos simulados en el backend, así que se mantiene vacío a propósito.
+ *
+ * El endpoint `GET /audit/alerts` exige rol ADMIN/AUDITOR, por eso la consulta
+ * se deshabilita para otros roles. El backend no expone `createdAt` en este
+ * DTO; la fecha se omite en la UI en vez de inventarla.
  */
 export const useAuditAlerts = (): { data: AuditAlert[]; isLoading: boolean; error: unknown } => {
-    return { data: [], isLoading: false, error: null };
+    const role = useAuthStore((state) => state.user?.role);
+    const canReadAudit = role === 'ADMIN' || role === 'AUDITOR';
+
+    const { data, isLoading, error } = useQuery<AuditAlert[]>({
+        queryKey: ['audit-alerts'],
+        queryFn: async () => {
+            const { data } = await api.get<AuditAlertsApiResponse>('/audit/alerts');
+            return (data.alerts ?? []).map((alert) => ({
+                id: alert.id,
+                severity: alert.severity as AuditAlert['severity'],
+                title: alert.title,
+                message: alert.description ?? '',
+                createdAt: '',
+            }));
+        },
+        enabled: canReadAudit,
+        retry: false,
+        staleTime: 60_000,
+    });
+
+    return { data: data ?? [], isLoading: canReadAudit ? isLoading : false, error };
 };
 
 /** Activos fijos de la empresa. */
