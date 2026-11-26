@@ -68,6 +68,14 @@ public class TreasuryController {
         return ResponseEntity.ok(aiPredictorUseCase.predictCashFlow(companyId, days));
     }
 
+    /**
+     * Registra un movimiento de caja (ruta histórica en singular).
+     *
+     * @deprecated el front usa {@code POST /treasury/cash-entries}. Se mantiene
+     *             solo por compatibilidad con clientes antiguos; no agregar usos
+     *             nuevos.
+     */
+    @Deprecated
     @PostMapping("/cash-entry")
     public ResponseEntity<Void> recordCashEntry(@Valid @RequestBody CashEntryRequest request) {
         cashManagementService.recordCashTransaction(toCashTransaction(request));
@@ -85,8 +93,9 @@ public class TreasuryController {
     }
 
     /**
-     * Registra un movimiento de caja. Alias plural del endpoint histórico
-     * {@code /cash-entry}; ambos comparten la misma lógica.
+     * Registra un movimiento de caja. Contrato vigente (lo usa el front); el
+     * endpoint histórico {@code /cash-entry} queda obsoleto y comparte la misma
+     * lógica.
      *
      * @param request movimiento a registrar
      * @return 204
