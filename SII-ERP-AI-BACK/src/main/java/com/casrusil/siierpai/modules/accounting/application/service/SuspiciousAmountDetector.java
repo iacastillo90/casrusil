@@ -28,7 +28,7 @@ public class SuspiciousAmountDetector {
     private final InvoiceRepository invoiceRepository;
     private static final double STANDARD_DEVIATIONS_THRESHOLD = 3.0;
     // Formateador para pesos chilenos
-    private static final NumberFormat CLP_FORMAT = NumberFormat.getCurrencyInstance(new Locale("es", "CL"));
+    private static final NumberFormat CLP_FORMAT = NumberFormat.getCurrencyInstance(Locale.of("es", "CL"));
 
     public SuspiciousAmountDetector(InvoiceRepository invoiceRepository) {
         this.invoiceRepository = invoiceRepository;

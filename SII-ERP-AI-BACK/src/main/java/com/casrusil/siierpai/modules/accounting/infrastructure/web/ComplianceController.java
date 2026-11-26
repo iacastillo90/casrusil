@@ -154,8 +154,8 @@ public class ComplianceController {
         long greenSuppliers = greenMetricsRepository.countGreenSuppliers(companyId);
 
         // Calcular salud ambiental (0-100)
-        BigDecimal environmentalHealth = greenScore.divide(new BigDecimal("10"), 2, BigDecimal.ROUND_HALF_UP)
-                .subtract(carbonFootprint.divide(new BigDecimal("1000"), 2, BigDecimal.ROUND_HALF_UP))
+        BigDecimal environmentalHealth = greenScore.divide(new BigDecimal("10"), 2, java.math.RoundingMode.HALF_UP)
+                .subtract(carbonFootprint.divide(new BigDecimal("1000"), 2, java.math.RoundingMode.HALF_UP))
                 .add(new BigDecimal("50"));
 
         // Clamp entre 0 y 100

@@ -28,7 +28,7 @@ public class InvoicePdfGenerator {
     private static final Font FONT_BOLD = new Font(Font.HELVETICA, 10, Font.BOLD);
     private static final Font FONT_NORMAL = new Font(Font.HELVETICA, 10, Font.NORMAL);
     private static final Font FONT_TITLE = new Font(Font.HELVETICA, 14, Font.BOLD, Color.RED);
-    private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(new Locale("es", "CL"));
+    private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(Locale.of("es", "CL"));
 
     public byte[] generatePdf(Invoice invoice, byte[] tedImage) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
