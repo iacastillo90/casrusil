@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useEsgReport } from '../hooks/useSustainability';
-import { Leaf, Cloud, Truck, Factory, Lightbulb } from 'lucide-react';
+import { Leaf, Lightbulb } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 export const EsgReportPanel = () => {

@@ -1,15 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { 
-    RefreshCw, 
     Clock, 
-    CheckCircle2, 
     Activity, 
     FileText,
     BarChart3,
@@ -18,15 +15,6 @@ import {
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { siiService } from "../services/sii.service";
-
-interface ModuleStatus {
-    id: string;
-    name: string;
-    icon: React.ElementType;
-    status: 'SYNCED' | 'PENDING' | 'ERROR';
-    lastSync?: string;
-    description: string;
-}
 
 const moduleConfig: { id: string; name: string; icon: React.ElementType; description: string }[] = [
     { 
