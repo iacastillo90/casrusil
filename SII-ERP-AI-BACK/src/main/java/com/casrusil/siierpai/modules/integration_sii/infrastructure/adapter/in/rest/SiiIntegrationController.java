@@ -67,13 +67,9 @@ public class SiiIntegrationController {
                     "SII Certificate not configured. Set sii.certificate.path and sii.certificate.password");
         }
 
-        CompanyId companyId;
-        try {
-            companyId = CompanyContext.requireCompanyId();
-        } catch (IllegalStateException e) {
-            // Fallback for testing without auth context
-            companyId = new CompanyId(java.util.UUID.randomUUID());
-        }
+        // Sin contexto de empresa no se descarga nada: antes se usaba una empresa
+        // aleatoria y el RCV quedaba asociado a un tenant inexistente.
+        CompanyId companyId = CompanyContext.requireCompanyId();
 
         // 1. Load Certificate
         SiiCertificate certificate = pkcs12Handler.loadCertificate(certPath, certPassword);
