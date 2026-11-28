@@ -14,7 +14,6 @@ import com.casrusil.siierpai.modules.partners.domain.model.Partner;
 import com.casrusil.siierpai.modules.partners.domain.port.out.PartnerRepository;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Pattern;
@@ -56,14 +55,13 @@ public class InvoiceDispatchService {
 
     public void dispatchInvoice(UUID invoiceId, String recipientEmail) {
         // 1. Fetch Invoice
-        Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new IllegalArgumentException("Invoice not found: " + invoiceId));
-
-        // 2. La factura debe pertenecer a la empresa del usuario autenticado.
+        // 2. La factura debe pertenecer a la empresa del usuario autenticado; si es de
+        // otra empresa se responde como inexistente (404) para no revelar el id.
         CompanyId companyId = CompanyContext.requireCompanyId();
-        if (!invoice.getCompanyId().equals(companyId)) {
-            throw new AccessDeniedException("Invoice " + invoiceId + " does not belong to the current company");
-        }
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .filter(found -> found.getCompanyId().equals(companyId))
+                .orElseThrow(() -> new com.casrusil.siierpai.modules.invoicing.domain.exception.InvoiceNotFoundException(
+                        "Invoice not found"));
 
         // 3. Destinatario: si el receptor está en el maestro de partners y tiene
         // email registrado, se usa ese y no se permite enviar a otro. Si el

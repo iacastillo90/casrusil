@@ -101,35 +101,8 @@ public class SsoUserController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/invite/validate/{token}")
-    public ResponseEntity<com.casrusil.siierpai.modules.sso.domain.model.UserInvitation> validateInvitation(
-            @PathVariable String token) {
-        return inviteUserUseCase.validateInvitation(token)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping("/register-invite")
-    public ResponseEntity<User> registerWithInvite(@Valid @RequestBody RegisterInviteRequest request) {
-        var invitationOpt = inviteUserUseCase.validateInvitation(request.token());
-        if (invitationOpt.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        var invitation = invitationOpt.get();
-
-        // Create User
-        User user = userService.createUser(
-                invitation.getEmail(),
-                request.fullName(),
-                request.password(),
-                UserRole.valueOf(invitation.getRole()),
-                invitation.getTargetCompanyId());
-
-        // Mark Accepted
-        inviteUserUseCase.acceptInvitation(request.token());
-
-        return ResponseEntity.ok(user);
-    }
+    // La validación y aceptación de invitaciones son públicas (el invitado no tiene
+    // sesión): ver InvitationController en /api/v1/auth/invitations (R11).
 
     public record CreateUserRequest(String email, String fullName, String password, UserRole role) {
     }
@@ -138,8 +111,5 @@ public class SsoUserController {
     }
 
     public record InviteUserRequest(String email, UserRole role) {
-    }
-
-    public record RegisterInviteRequest(String token, String fullName, String password) {
     }
 }

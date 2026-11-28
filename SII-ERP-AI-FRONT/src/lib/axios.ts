@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
 
 // URL relativa: las peticiones salen al mismo origen del frontend y next.config.mjs
@@ -19,20 +19,9 @@ const api = axios.create({
 // Alias for backward compatibility if needed, but 'api' is the main export now.
 export const apiClient = api;
 
-// Request interceptor: companyId opcional (el token viaja en la cookie httpOnly,
-// enviada automáticamente por el navegador gracias a withCredentials + proxy same-origin).
-api.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-        const { companyId } = useAuthStore.getState();
-
-        if (companyId) {
-            config.headers['X-Company-Id'] = companyId;
-        }
-
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+// La empresa activa la resuelve el backend desde el JWT (cookie httpOnly enviada
+// automáticamente gracias a withCredentials + proxy same-origin). No se envía
+// ningún header de empresa: el backend lo ignoraría y no debe depender del cliente.
 
 // Response interceptor: Handle 401 (auto logout)
 api.interceptors.response.use(

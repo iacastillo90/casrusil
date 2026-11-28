@@ -40,9 +40,9 @@ import java.util.List;
  * Controlador REST para autenticación pública.
  *
  * <p>
- * Maneja registro, login y logout. El token JWT se entrega como cookie
- * {@code HttpOnly} (no accesible por JavaScript, mitiga XSS) además de en el
- * cuerpo de la respuesta para clientes de API. Aplica rate limiting anti
+ * Maneja registro, login y logout. El token JWT se entrega solo como cookie
+ * {@code HttpOnly} (no accesible por JavaScript, mitiga XSS); el body trae el
+ * contexto de usuario y empresa, nunca el token (R10). Aplica rate limiting anti
  * fuerza-bruta por IP.
  *
  * <h2>Endpoints:</h2>
@@ -230,8 +230,8 @@ public class AuthController {
     }
 
     private AuthResponse mapToResponse(AuthResult result) {
+        // R10: el JWT viaja solo en la cookie httpOnly; nunca en el body.
         return new AuthResponse(
-                result.token(),
                 result.user().getId().getValue(),
                 result.user().getEmail(),
                 result.company().getId().getValue(),

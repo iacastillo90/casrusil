@@ -22,6 +22,9 @@ import java.util.UUID;
 /**
  * REST controller for enhanced pricing operations.
  */
+// P0 multiempresa: apagado por defecto porque sus tablas (alertas, mantenciones, precios, campañas, catálogo) no tienen company_id.
+// Sin el bean, sus rutas responden 404 como cualquier ruta inexistente. Ver ronda P6.
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(prefix = "app.features.energy-admin", name = "enabled", havingValue = "true", matchIfMissing = false)
 @RestController
 @RequestMapping("/api/v1/pricing")
 @Tag(name = "Enhanced Pricing", description = "Advanced pricing with demand-based, seasonal, and promotional strategies")

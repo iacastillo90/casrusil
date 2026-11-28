@@ -23,6 +23,9 @@ import java.util.UUID;
 /**
  * REST controller for real-time monitoring and dashboard.
  */
+// P0 multiempresa: apagado por defecto porque sus tablas (alertas, mantenciones, precios, campañas, catálogo) no tienen company_id.
+// Sin el bean, sus rutas responden 404 como cualquier ruta inexistente. Ver ronda P6.
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(prefix = "app.features.energy-admin", name = "enabled", havingValue = "true", matchIfMissing = false)
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @Tag(name = "Dashboard & Monitoring", description = "Real-time metrics, alerts, and system monitoring")

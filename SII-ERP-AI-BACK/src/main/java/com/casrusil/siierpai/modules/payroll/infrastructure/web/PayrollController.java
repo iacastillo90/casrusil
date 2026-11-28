@@ -23,8 +23,11 @@ import java.util.List;
 public class PayrollController {
 
     private final PayrollUseCase payrollUseCase;
-    
-    private static final String COMPANY_HEADER = "X-Company-Id";
+
+    /** Empresa del usuario autenticado (JWT). Nunca se acepta desde la petición. */
+    private static String currentCompany() {
+        return com.casrusil.siierpai.shared.infrastructure.context.CompanyContext.requireCompanyId().value().toString();
+    }
 
     /**
      * Crea el período de remuneraciones o devuelve el existente (idempotente).
@@ -32,24 +35,21 @@ public class PayrollController {
      */
     @PostMapping("/periods")
     public ResponseEntity<PayrollPeriodResponse> openPeriod(
-            @RequestHeader(COMPANY_HEADER) String companyId,
             @Valid @RequestBody OpenPayrollPeriodRequest request) {
-        return ResponseEntity.ok(payrollUseCase.openPeriod(request, companyId));
+        return ResponseEntity.ok(payrollUseCase.openPeriod(request, currentCompany()));
     }
 
     @PostMapping("/calculate")
     public ResponseEntity<List<PayslipResponse>> calculatePayroll(
-            @RequestHeader(COMPANY_HEADER) String companyId,
             @Valid @RequestBody PayrollProcessRequest request) {
-        return ResponseEntity.ok(payrollUseCase.calculatePayrollForPeriod(request, companyId));
+        return ResponseEntity.ok(payrollUseCase.calculatePayrollForPeriod(request, currentCompany()));
     }
 
     @PostMapping("/previred/export")
     public ResponseEntity<byte[]> exportPreviredFile(
-            @RequestHeader(COMPANY_HEADER) String companyId,
             @Valid @RequestBody PayrollProcessRequest request) {
             
-        byte[] fileContent = payrollUseCase.generatePreviredFile(request, companyId);
+        byte[] fileContent = payrollUseCase.generatePreviredFile(request, currentCompany());
         
         String filename = String.format("previred_%s_%s.txt", request.getYear(), request.getMonth());
         

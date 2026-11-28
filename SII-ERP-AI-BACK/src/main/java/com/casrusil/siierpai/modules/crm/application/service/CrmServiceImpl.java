@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.crm.application.service;
 
+import com.casrusil.siierpai.shared.infrastructure.context.TenantGuard;
 import com.casrusil.siierpai.modules.crm.domain.model.Lead;
 import com.casrusil.siierpai.modules.crm.domain.model.LeadStatus;
 import com.casrusil.siierpai.modules.crm.domain.model.Quote;
@@ -36,8 +37,7 @@ public class CrmServiceImpl implements CrmUseCase {
     @Override
     @Transactional
     public Lead updateLeadStatus(UUID leadId, LeadStatus status) {
-        Lead lead = leadRepository.findById(leadId)
-                .orElseThrow(() -> new RuntimeException("Lead not found"));
+        Lead lead = TenantGuard.requireOwned(leadRepository.findById(leadId), Lead::getCompanyId, "Lead");
         lead.updateStatus(status);
         return leadRepository.save(lead);
     }
@@ -50,6 +50,10 @@ public class CrmServiceImpl implements CrmUseCase {
     @Override
     @Transactional
     public Quote createQuote(CompanyId companyId, UUID leadId, String clientRut, String clientName, LocalDate expirationDate, List<QuoteLine> lines) {
+        if (leadId != null) {
+            // El lead referenciado debe ser de la misma empresa.
+            TenantGuard.requireOwned(leadRepository.findById(leadId), Lead::getCompanyId, "Lead");
+        }
         Quote quote = Quote.create(companyId, leadId, clientRut, clientName, expirationDate, lines);
         return quoteRepository.save(quote);
     }
@@ -57,8 +61,7 @@ public class CrmServiceImpl implements CrmUseCase {
     @Override
     @Transactional
     public Quote acceptQuote(UUID quoteId) {
-        Quote quote = quoteRepository.findById(quoteId)
-                .orElseThrow(() -> new RuntimeException("Quote not found"));
+        Quote quote = TenantGuard.requireOwned(quoteRepository.findById(quoteId), Quote::getCompanyId, "Cotización");
         quote.markAsAccepted();
         
         // TODO: In a real system, emit an event here to trigger the Invoice Generation in Invoicing Module
@@ -69,8 +72,7 @@ public class CrmServiceImpl implements CrmUseCase {
     @Override
     @Transactional
     public Quote rejectQuote(UUID quoteId) {
-        Quote quote = quoteRepository.findById(quoteId)
-                .orElseThrow(() -> new RuntimeException("Quote not found"));
+        Quote quote = TenantGuard.requireOwned(quoteRepository.findById(quoteId), Quote::getCompanyId, "Cotización");
         quote.markAsRejected();
         return quoteRepository.save(quote);
     }

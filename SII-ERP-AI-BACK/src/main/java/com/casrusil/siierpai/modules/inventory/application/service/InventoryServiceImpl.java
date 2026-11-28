@@ -51,7 +51,7 @@ public class InventoryServiceImpl implements InventoryUseCase {
     @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request, String companyId) {
         Product product = productRepository.findByIdAndCompanyId(id, companyId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException("Producto no encontrado"));
                 
         product.setSku(request.getSku());
         product.setName(request.getName());
@@ -75,7 +75,7 @@ public class InventoryServiceImpl implements InventoryUseCase {
     public ProductResponse getProduct(Long id, String companyId) {
         return productRepository.findByIdAndCompanyId(id, companyId)
                 .map(this::mapToResponse)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException("Producto no encontrado"));
     }
 
     @Override
@@ -89,7 +89,7 @@ public class InventoryServiceImpl implements InventoryUseCase {
     @Transactional
     public StockMovementResponse registerMovement(Long productId, StockMovementRequest request, String companyId) {
         Product product = productRepository.findByIdAndCompanyId(productId, companyId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException("Producto no encontrado"));
                 
         // `unitCost` y `movementDate` son opcionales en el contrato: sin costo se
         // usa el costo medio del producto y sin fecha, el momento del registro.

@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.procurement.application.service;
 
+import com.casrusil.siierpai.shared.infrastructure.context.TenantGuard;
 import com.casrusil.siierpai.modules.procurement.domain.model.PurchaseOrder;
 import com.casrusil.siierpai.modules.procurement.domain.model.PurchaseOrderLine;
 import com.casrusil.siierpai.modules.procurement.domain.port.in.PurchaseOrderUseCase;
@@ -31,8 +32,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderUseCase {
 
     @Override
     public PurchaseOrder getPurchaseOrder(UUID id) {
-        return purchaseOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Purchase Order not found: " + id));
+        return TenantGuard.requireOwned(purchaseOrderRepository.findById(id),
+                PurchaseOrder::getCompanyId, "Orden de compra");
     }
 
     @Override

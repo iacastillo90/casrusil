@@ -33,8 +33,8 @@ export interface RegisterData {
     adminPassword: string;
 }
 
+// El JWT no viene en el body: el backend lo entrega solo en la cookie httpOnly.
 export interface AuthResponse {
-    token: string;
     userId: string;
     userName: string;
     companyId: string;

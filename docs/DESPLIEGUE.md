@@ -20,11 +20,11 @@ Convención de esta tabla:
 
 | Variable | Obligatoria | Para qué | Ejemplo | Si falta |
 |---|---|---|---|---|
-| `POSTGRES_HOST` | Sí (prod tiene `localhost` por defecto; no lo uses) | Host de PostgreSQL | `db.internal` | En prod cae a `localhost` y no conecta |
+| `POSTGRES_HOST` | **Sí** | Host de PostgreSQL | `db.internal` | **No arranca** (prod sin default) |
 | `POSTGRES_PORT` | Sí | Puerto de PostgreSQL | `5432` | Default `5432` en prod |
 | `POSTGRES_DB` | Sí | Nombre de la base | `sii_erp` | Default `sii_erp_ai` en prod |
-| `POSTGRES_USER` | Sí | Usuario | `sii_app` | Default `postgres` en prod |
-| `POSTGRES_PASSWORD` | Sí | Contraseña | `__CAMBIAR__` | Default `postgres` en prod (inseguro) |
+| `POSTGRES_USER` | **Sí** | Usuario | `sii_app` | **No arranca** (prod sin default) |
+| `POSTGRES_PASSWORD` | **Sí** | Contraseña | `__CAMBIAR__` | **No arranca** (prod sin default) |
 | `REDIS_PASSWORD` | Según infraestructura | Contraseña de Redis (compose/staging) | `__CAMBIAR__` | Redis sin auth o conexión rechazada |
 
 ## 2. Backend — seguridad y sesión
@@ -37,6 +37,9 @@ Convención de esta tabla:
 | `SECURITY_COOKIE_SAME_SITE` | No | Política SameSite | `Strict` | Default `Strict` |
 | `SECURITY_LOGIN_MAX_ATTEMPTS` | No | Intentos de login antes de bloquear | `5` | Default 5 |
 | `SECURITY_LOGIN_WINDOW_MINUTES` | No | Ventana del rate limit | `15` | Default 15 |
+| `SECURITY_REDIS_FAIL_CLOSED` | No | Sin Redis, logout y login responden 503 en vez de seguir sin blacklist ni rate limit (B04/B05) | `true` | `true` en prod, `false` en dev |
+| `APP_FEATURES_ENERGY_ADMIN_ENABLED` | No | Endpoints de energía sin `company_id` (reportes, dashboard, mantención, precios, catálogo) | `false` | Apagados (404) en todos los perfiles hasta la ronda P6 |
+| `APP_FEATURES_LEGACY_USER_ADMIN_ENABLED` | No | Módulo `/users`, `/roles`, `/organizations` (esquema `public`, sin `company_id`) | `false` | Apagados (404) en todos los perfiles; el login no depende de él |
 | `APP_CRYPTO_KEY` | **Sí** | Clave AES-GCM para cifrar certificados `.p12` y sus contraseñas | `openssl rand -base64 32` | **No arranca** (`SecretCipher` falla si el perfil es `prod` y la clave es la de desarrollo) |
 
 ### Generar `APP_CRYPTO_KEY`
@@ -82,8 +85,8 @@ openssl rand -base64 32
 | Variable | Obligatoria | Para qué | Ejemplo | Si falta |
 |---|---|---|---|---|
 | `MINIO_URL` | No | Endpoint S3/MinIO | `https://s3.internal` | Default `http://localhost:9000` |
-| `MINIO_ACCESS_KEY` | No | Usuario S3 | `sii-app` | Default `admin` (inseguro) |
-| `MINIO_SECRET_KEY` | No | Secreto S3 | `__CAMBIAR__` | Default `password123` (inseguro) |
+| `MINIO_ACCESS_KEY` | **Sí** (prod) | Usuario S3 | `sii-app` | **No arranca** en prod; el compose de MinIO también exige el valor |
+| `MINIO_SECRET_KEY` | **Sí** (prod) | Secreto S3 | `__CAMBIAR__` | **No arranca** en prod; el compose de MinIO también exige el valor |
 | `MINIO_BUCKET` | No | Bucket de documentos | `sii-erp-documents` | Default `sii-erp-documents` |
 | `MAIL_HOST` | No | SMTP | `smtp.gmail.com` | Default `smtp.gmail.com` |
 | `MAIL_PORT` | No | Puerto SMTP | `587` | Default `587` |
@@ -159,3 +162,11 @@ Si una base existente ya tenía datos maestros, V2 es idempotente (`ON CONFLICT 
 6. Confirmar `SECURITY_COOKIE_SECURE=true` y HTTPS en el front.
 7. Tras el despliegue, validar `GET /actuator/health` (público) y que
    `GET /actuator/metrics` responda **200 sólo a ADMIN**.
+8. Los `docker-compose*.yml` ya no traen contraseñas por defecto: `DB_PASSWORD`,
+   `JWT_SECRET`, `MINIO_ACCESS_KEY` y `MINIO_SECRET_KEY` deben venir del entorno o
+   `docker compose` se niega a arrancar.
+9. El login y el registro **no devuelven el JWT en el body**: viaja solo en la cookie
+   `access_token` (HttpOnly). Clientes de API que necesiten Bearer deben leerlo del
+   `Set-Cookie`.
+10. Redis es obligatorio en producción: si cae, login, registro y logout responden 503
+    hasta que vuelva (fail-closed).

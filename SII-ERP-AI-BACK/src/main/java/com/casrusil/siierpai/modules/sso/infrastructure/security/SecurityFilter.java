@@ -54,6 +54,8 @@ public class SecurityFilter extends OncePerRequestFilter {
             "/api/v1/auth/login",
             "/api/v1/auth/register",
             "/api/v1/auth/logout",
+            "/api/v1/auth/invitations/validate",
+            "/api/v1/auth/invitations/accept",
             "/auth/login",
             "/auth/register",
             "/auth/logout");

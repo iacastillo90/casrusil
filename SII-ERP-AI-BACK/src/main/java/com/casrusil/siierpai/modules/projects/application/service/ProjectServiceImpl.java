@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.projects.application.service;
 
+import com.casrusil.siierpai.shared.infrastructure.context.TenantGuard;
 import com.casrusil.siierpai.modules.projects.domain.model.Project;
 import com.casrusil.siierpai.modules.projects.domain.port.in.ProjectUseCase;
 import com.casrusil.siierpai.modules.projects.domain.port.out.ProjectRepository;
@@ -30,8 +31,8 @@ public class ProjectServiceImpl implements ProjectUseCase {
     @Override
     @Transactional
     public Project updateStatus(UUID projectId, String status) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+        Project project = TenantGuard.requireOwned(projectRepository.findById(projectId),
+                Project::getCompanyId, "Proyecto");
         project.setStatus(status);
         return projectRepository.save(project);
     }
@@ -43,7 +44,6 @@ public class ProjectServiceImpl implements ProjectUseCase {
 
     @Override
     public Project getProjectById(UUID id) {
-        return projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+        return TenantGuard.requireOwned(projectRepository.findById(id), Project::getCompanyId, "Proyecto");
     }
 }

@@ -75,7 +75,10 @@ class PermissionMatrixTest extends BaseIntegrationTest {
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/api/v1/auth/login",
             "/api/v1/auth/register",
-            "/api/v1/auth/logout");
+            "/api/v1/auth/logout",
+            // R11: el invitado acepta su invitación sin sesión (token de un solo uso).
+            "/api/v1/auth/invitations/validate",
+            "/api/v1/auth/invitations/accept");
 
     private static final String AUTHENTICATED = "__AUTHENTICATED__";
     private static final String PUBLIC = "__PUBLIC__";

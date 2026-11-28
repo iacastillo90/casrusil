@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 /**
  * REST controller for role and permission management.
  */
+// P0 multiempresa: apagado por defecto porque el módulo user/roles/organizations (esquema public) no tiene company_id y no lo usa el login.
+// Sin el bean, sus rutas responden 404 como cualquier ruta inexistente. Ver ronda P6.
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(prefix = "app.features.legacy-user-admin", name = "enabled", havingValue = "true", matchIfMissing = false)
 @RestController
 @RequestMapping("/api/v1/roles")
 @Tag(name = "Roles", description = "RBAC role and permission management")

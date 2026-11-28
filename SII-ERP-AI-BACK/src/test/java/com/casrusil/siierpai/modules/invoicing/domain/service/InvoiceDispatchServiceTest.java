@@ -13,7 +13,6 @@ import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
 import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -63,7 +62,9 @@ class InvoiceDispatchServiceTest {
         UUID invoiceId = UUID.randomUUID();
         when(invoiceRepository.findById(invoiceId)).thenReturn(Optional.of(invoice(owner, invoiceId)));
 
-        assertThrows(AccessDeniedException.class, () -> CompanyContext.runInCompanyContext(attacker,
+        // R5: una factura de otra empresa se trata como inexistente (404), sin revelar el id.
+        assertThrows(com.casrusil.siierpai.modules.invoicing.domain.exception.InvoiceNotFoundException.class,
+                () -> CompanyContext.runInCompanyContext(attacker,
                 () -> service.dispatchInvoice(invoiceId, "cliente@test.cl")));
 
         verify(emailSender, never()).sendInvoiceEmail(

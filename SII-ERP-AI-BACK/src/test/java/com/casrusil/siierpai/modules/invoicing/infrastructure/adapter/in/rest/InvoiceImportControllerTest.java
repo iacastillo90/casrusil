@@ -31,6 +31,10 @@ class InvoiceImportControllerTest {
     private StubCreateInvoiceUseCase createInvoiceUseCase;
     private com.casrusil.siierpai.modules.accounting.domain.port.out.AccountRepository accountRepository;
     private PartnerRepository partnerRepository;
+    private com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository companyRepository;
+    private final com.casrusil.siierpai.shared.domain.valueobject.CompanyId company =
+            com.casrusil.siierpai.shared.domain.valueobject.CompanyId.random();
+    private static final String OWN_RUT = "76123456-7";
 
     @BeforeEach
     void setUp() {
@@ -38,7 +42,14 @@ class InvoiceImportControllerTest {
         accountRepository = org.mockito.Mockito.mock(com.casrusil.siierpai.modules.accounting.domain.port.out.AccountRepository.class);
         partnerRepository = org.mockito.Mockito.mock(PartnerRepository.class);
 
-        InvoiceImportController controller = new InvoiceImportController(createInvoiceUseCase, accountRepository, partnerRepository);
+        companyRepository = org.mockito.Mockito.mock(com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository.class);
+        org.mockito.Mockito.when(companyRepository.findById(company)).thenReturn(java.util.Optional.of(
+                new com.casrusil.siierpai.modules.sso.domain.model.Company(company, OWN_RUT, "Empresa Propia SpA",
+                        "admin@propia.cl", true, java.time.Instant.now(), null, null, null, null, true, null, null,
+                        null)));
+
+        InvoiceImportController controller = new InvoiceImportController(createInvoiceUseCase, accountRepository,
+                partnerRepository, companyRepository);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -56,15 +67,15 @@ class InvoiceImportControllerTest {
                 MediaType.TEXT_PLAIN_VALUE,
                 csvContent);
 
-        UUID companyId = UUID.randomUUID();
-
-        mockMvc.perform(multipart("/api/v1/invoices/import/sii-csv")
+        asCompany(company, multipart("/api/v1/invoices/import/sii-csv")
                 .file(file)
-                .param("companyId", companyId.toString())
                 .param("bookType", "SALE"))
                 .andExpect(status().isOk());
 
         assertEquals(1, createInvoiceUseCase.createdInvoices.size());
+        // F08: el emisor de una venta es la empresa autenticada, con su RUT real.
+        assertEquals(OWN_RUT, createInvoiceUseCase.createdInvoices.get(0).getIssuerRut());
+        assertEquals(company, createInvoiceUseCase.createdInvoices.get(0).getCompanyId());
         assertEquals(Invoice.ORIGIN_MANUAL, createInvoiceUseCase.createdInvoices.get(0).getOrigin());
         assertEquals("Cliente Test SpA", createInvoiceUseCase.createdInvoices.get(0).getReceiverName());
     }
@@ -82,9 +93,8 @@ class InvoiceImportControllerTest {
         MockMultipartFile file = new MockMultipartFile("file", "import.csv", MediaType.TEXT_PLAIN_VALUE,
                 csv.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
 
-        mockMvc.perform(multipart("/api/v1/invoices/import/sii-csv")
+        asCompany(company, multipart("/api/v1/invoices/import/sii-csv")
                 .file(file)
-                .param("companyId", UUID.randomUUID().toString())
                 .param("bookType", "SALE"))
                 .andExpect(status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
@@ -105,12 +115,56 @@ class InvoiceImportControllerTest {
                 .create().setDelimiter(';').setHeader().setSkipHeaderRecord(true).build())) {
             var record = parser.getRecords().get(0);
             InvoiceImportController controller = new InvoiceImportController(createInvoiceUseCase, accountRepository,
-                    partnerRepository);
+                    partnerRepository, companyRepository);
             assertEquals(new BigDecimal("1234567"), controller.parseAmount(record, "Monto Neto"));
             // Columna vacía o ausente sigue valiendo cero (comportamiento previo).
             assertEquals(BigDecimal.ZERO, controller.parseAmount(record, "Monto IVA"));
             assertEquals(BigDecimal.ZERO, controller.parseAmount(record, "Monto Exento"));
         }
+    }
+
+    /**
+     * R1: aunque el cliente envíe companyId de otra empresa, la factura se crea en la
+     * empresa del JWT. El parámetro ya no existe en el controller y se ignora.
+     */
+    @Test
+    void importSiiCsv_companyIdDeOtraEmpresaEnLaPeticion_seIgnoraYUsaLaDelToken() throws Exception {
+        String csv = "Tipo Doc;Folio;RUT Proveedor;Razon Social;Fecha Docto;Monto Neto;Monto IVA;Monto Total\n"
+                + "33;9001;11111111-1;Proveedor SpA;27/10/2023;100000;19000;119000\n";
+        MockMultipartFile file = new MockMultipartFile("file", "compras.csv", MediaType.TEXT_PLAIN_VALUE,
+                csv.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+
+        asCompany(company, multipart("/api/v1/invoices/import/sii-csv")
+                .file(file)
+                .param("companyId", UUID.randomUUID().toString())
+                .param("bookType", "COMPRA"))
+                .andExpect(status().isOk());
+
+        assertEquals(1, createInvoiceUseCase.createdInvoices.size());
+        Invoice created = createInvoiceUseCase.createdInvoices.get(0);
+        assertEquals(company, created.getCompanyId());
+        // F08: en compras el receptor es la empresa propia con su RUT real (no "EMPRESA_PROPIA").
+        assertEquals(OWN_RUT, created.getReceiverRut());
+    }
+
+    @Test
+    void importSiiCsv_empresaSinRut_responde422SinCrearFacturas() throws Exception {
+        var otherCompany = com.casrusil.siierpai.shared.domain.valueobject.CompanyId.random();
+        org.mockito.Mockito.when(companyRepository.findById(otherCompany)).thenReturn(java.util.Optional.empty());
+        MockMultipartFile file = new MockMultipartFile("file", "x.csv", MediaType.TEXT_PLAIN_VALUE,
+                "Tipo Doc;Folio\n33;1\n".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+
+        asCompany(otherCompany, multipart("/api/v1/invoices/import/sii-csv").file(file).param("bookType", "SALE"))
+                .andExpect(status().isUnprocessableEntity());
+        assertEquals(0, createInvoiceUseCase.createdInvoices.size());
+    }
+
+    private org.springframework.test.web.servlet.ResultActions asCompany(
+            com.casrusil.siierpai.shared.domain.valueobject.CompanyId companyId,
+            org.springframework.test.web.servlet.RequestBuilder request) throws Exception {
+        return java.lang.ScopedValue
+                .where(com.casrusil.siierpai.shared.infrastructure.context.CompanyContext.COMPANY_ID, companyId)
+                .call(() -> mockMvc.perform(request));
     }
 
     static class StubCreateInvoiceUseCase implements CreateInvoiceUseCase {

@@ -74,8 +74,8 @@ public class SsoUserManagementService implements ManageUserUseCase {
     @Transactional
     public User updateUser(UserId id, String email, UserRole role) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new DomainException("User not found") {
-                });
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException(
+                        "User not found"));
         verifyCompanyContext(user.getCompanyId());
 
         // Check if email is being changed and if it's already taken
@@ -101,8 +101,8 @@ public class SsoUserManagementService implements ManageUserUseCase {
     @Transactional
     public void changePassword(UserId id, String oldPassword, String newPassword) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new DomainException("User not found") {
-                });
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException(
+                        "User not found"));
         verifyCompanyContext(user.getCompanyId());
 
         if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
@@ -136,8 +136,8 @@ public class SsoUserManagementService implements ManageUserUseCase {
         }
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new DomainException("User not found") {
-                });
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException(
+                        "User not found"));
         verifyCompanyContext(user.getCompanyId());
 
         user.deactivate();
@@ -153,8 +153,8 @@ public class SsoUserManagementService implements ManageUserUseCase {
         // This service is for "ManageUserUseCase", likely called from Controller where
         // context is set.
         if (currentCompanyId != null && !currentCompanyId.equals(targetCompanyId)) {
-            throw new DomainException("Access denied: Cannot manage users of another company") {
-            };
+            // Un usuario de otra empresa se trata como inexistente (404), sin revelar el id.
+            throw new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException("User not found");
         }
     }
 }

@@ -84,7 +84,7 @@ public class PayrollServiceImpl implements PayrollUseCase {
         YearMonth ym = YearMonth.of(request.getYear(), request.getMonth());
         
         PayrollPeriod period = periodRepository.findByPeriodAndCompanyId(ym, companyId)
-                .orElseThrow(() -> new RuntimeException("Payroll period not configured or not found"));
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException("Período de remuneraciones no encontrado"));
 
         if (period.isClosed()) {
             throw new RuntimeException("Payroll period is already closed");
@@ -121,7 +121,7 @@ public class PayrollServiceImpl implements PayrollUseCase {
         YearMonth ym = YearMonth.of(request.getYear(), request.getMonth());
 
         PayrollPeriod period = periodRepository.findByPeriodAndCompanyId(ym, companyId)
-                .orElseThrow(() -> new RuntimeException("Payroll period not configured or not found"));
+                .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException("Período de remuneraciones no encontrado"));
 
         List<Employee> employees = employeeRepository.findAllByCompanyId(companyId);
 

@@ -30,7 +30,7 @@ export const authService = {
 
         useAuthStore.getState().setAuth(
             user,
-            data.token, // se mantiene solo en memoria (excluido del persist)
+            '', // el JWT ya no viaja en el body: solo en la cookie httpOnly
             data.companyId,
             [] // companies array
         );

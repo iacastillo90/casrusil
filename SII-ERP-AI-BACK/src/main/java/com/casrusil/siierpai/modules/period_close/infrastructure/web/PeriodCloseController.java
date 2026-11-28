@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.period_close.infrastructure.web;
 
+import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
+
 import jakarta.validation.Valid;
 
 import com.casrusil.siierpai.modules.period_close.application.service.PeriodCloseUseCase;
@@ -17,20 +19,22 @@ import org.springframework.web.bind.annotation.*;
 public class PeriodCloseController {
 
     private final PeriodCloseUseCase periodCloseUseCase;
-    private static final String COMPANY_HEADER = "X-Company-Id";
+
+    /** Empresa del usuario autenticado (JWT). Nunca se acepta desde la petición. */
+    private static String currentCompany() {
+        return CompanyContext.requireCompanyId().value().toString();
+    }
 
     @PostMapping("/audit")
     public ResponseEntity<PeriodAuditResponse> auditPeriod(
-            @RequestHeader(COMPANY_HEADER) String companyId,
             @Valid @RequestBody PeriodCloseRequest request) {
-        return ResponseEntity.ok(periodCloseUseCase.auditPeriod(request, companyId));
+        return ResponseEntity.ok(periodCloseUseCase.auditPeriod(request, currentCompany()));
     }
 
     @PostMapping("/execute")
     public ResponseEntity<Void> executeClose(
-            @RequestHeader(COMPANY_HEADER) String companyId,
             @Valid @RequestBody PeriodCloseRequest request) {
-        periodCloseUseCase.executeClose(request, companyId);
+        periodCloseUseCase.executeClose(request, currentCompany());
         return ResponseEntity.noContent().build();
     }
 }
