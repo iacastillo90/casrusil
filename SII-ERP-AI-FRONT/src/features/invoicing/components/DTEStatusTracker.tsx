@@ -82,7 +82,7 @@ interface TimelineItemProps {
     isLast?: boolean;
 }
 
-const TimelineItem: React.FC<TimelineItemProps> = ({ entry, isFirst = false, isLast = false }) => {
+const TimelineItem: React.FC<TimelineItemProps> = ({ entry, isLast = false }) => {
     const Icon = entry.action.includes('enviado') ? Send :
                  entry.action.includes('aceptado') ? CheckCircle :
                  entry.action.includes('rechazado') ? XCircle :
