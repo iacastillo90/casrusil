@@ -38,7 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class InvitationFlowIntegrationTest extends BaseIntegrationTest {
 
-    private static final String PASSWORD = "ClaveSegura123";
+    /** Contraseña generada en cada ejecución (no hay credenciales fijas en el repositorio). */
+    private static final String PASSWORD = "Pw-" + UUID.randomUUID();
 
     @Autowired private MockMvc mockMvc;
     @Autowired private CompanyRepository companyRepository;
