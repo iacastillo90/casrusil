@@ -58,7 +58,7 @@ public class AiAssistantController {
     public ResponseEntity<Message> sendMessage(
             @PathVariable UUID conversationId,
             @Valid @RequestBody SendMessageRequest request) {
-        return ResponseEntity.ok(conversationService.sendMessage(conversationId, request.content()));
+        return ResponseEntity.ok(conversationService.sendMessage(conversationId, getCurrentUserId(), request.content()));
     }
 
     /**

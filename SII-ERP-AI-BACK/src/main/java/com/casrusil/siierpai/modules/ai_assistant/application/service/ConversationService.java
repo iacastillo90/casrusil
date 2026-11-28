@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.ai_assistant.application.service;
 
+import com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException;
 import com.casrusil.siierpai.modules.ai_assistant.domain.model.Conversation;
 import com.casrusil.siierpai.modules.ai_assistant.domain.model.Message;
 import com.casrusil.siierpai.modules.ai_assistant.domain.model.Tool;
@@ -25,6 +26,8 @@ import java.util.stream.Collectors;
 @Service
 public class ConversationService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ConversationService.class);
+
     private final ChatLanguageModel chatLanguageModel;
     private final List<Tool> tools;
     private final Map<UUID, Conversation> conversations = new ConcurrentHashMap<>();
@@ -44,11 +47,24 @@ public class ConversationService {
         return conversations.get(conversationId);
     }
 
-    public Message sendMessage(UUID conversationId, String content) {
+    /**
+     * Conversación del usuario y la empresa autenticados. Si no existe o pertenece a
+     * otro usuario/empresa responde 404 (no revela que el id existe).
+     */
+    public Conversation getOwnedConversation(UUID conversationId, UserId requester) {
         Conversation conversation = conversations.get(conversationId);
-        if (conversation == null) {
-            throw new IllegalArgumentException("Conversation not found: " + conversationId);
+        CompanyId current = CompanyContext.requireCompanyId();
+        if (conversation == null
+                || !current.equals(conversation.getCompanyId())
+                || requester == null
+                || !requester.equals(conversation.getUserId())) {
+            throw new ResourceNotFoundException("Conversación no encontrada");
         }
+        return conversation;
+    }
+
+    public Message sendMessage(UUID conversationId, UserId requester, String content) {
+        Conversation conversation = getOwnedConversation(conversationId, requester);
 
         // 1. Add User Message
         Message userMsg = Message.user(content);
@@ -120,7 +136,12 @@ public class ConversationService {
                 }
             });
         } catch (Exception e) {
-            finalResponseHolder[0] = "Error processing request: " + e.getMessage();
+            // R12: el mensaje crudo del proveedor de IA no se muestra al usuario.
+            String correlationId = com.casrusil.siierpai.shared.infrastructure.web.CorrelationIds.newId();
+            log.error("Error del asistente IA [correlationId={}] en conversación {}: {}", correlationId,
+                    conversationId, e.getMessage(), e);
+            finalResponseHolder[0] = "No pude procesar tu solicitud en este momento. Intenta nuevamente; "
+                    + "si persiste, informa la referencia " + correlationId + " a soporte.";
         }
 
         String finalResponse = finalResponseHolder[0];

@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.bankingsync.application.service;
 
+import com.casrusil.siierpai.shared.infrastructure.context.TenantGuard;
 import com.casrusil.siierpai.modules.bankingsync.domain.model.BankConnection;
 import com.casrusil.siierpai.modules.bankingsync.domain.model.BankTransaction;
 import com.casrusil.siierpai.modules.bankingsync.domain.port.in.BankingSyncUseCase;
@@ -63,7 +64,8 @@ public class BankingSyncServiceImpl implements BankingSyncUseCase {
     @Override
     @Transactional
     public void reconcileTransaction(UUID transactionId) {
-        BankTransaction tx = transactionRepository.findById(transactionId).orElseThrow();
+        BankTransaction tx = TenantGuard.requireOwned(transactionRepository.findById(transactionId),
+                BankTransaction::getCompanyId, "Movimiento bancario");
         tx.markAsReconciled();
         transactionRepository.save(tx);
     }
@@ -71,7 +73,8 @@ public class BankingSyncServiceImpl implements BankingSyncUseCase {
     @Override
     @Transactional
     public void ignoreTransaction(UUID transactionId) {
-        BankTransaction tx = transactionRepository.findById(transactionId).orElseThrow();
+        BankTransaction tx = TenantGuard.requireOwned(transactionRepository.findById(transactionId),
+                BankTransaction::getCompanyId, "Movimiento bancario");
         tx.markAsIgnored();
         transactionRepository.save(tx);
     }

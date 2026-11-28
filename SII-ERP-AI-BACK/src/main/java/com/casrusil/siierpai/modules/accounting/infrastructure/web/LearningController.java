@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.modules.accounting.infrastructure.web;
 
+import com.casrusil.siierpai.shared.infrastructure.context.TenantGuard;
 import jakarta.validation.Valid;
 
 import com.casrusil.siierpai.modules.accounting.domain.model.ClassificationRule;
@@ -50,10 +51,7 @@ public class LearningController {
      */
     @GetMapping("/rules/{id}")
     public ResponseEntity<ClassificationRuleDto> getRule(@PathVariable UUID id) {
-        return ruleRepository.findById(id)
-                .map(this::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(toDto(ownedRule(id)));
     }
 
     /**
@@ -64,13 +62,9 @@ public class LearningController {
     @PutMapping("/rules/{id}")
     public ResponseEntity<Map<String, String>> updateRule(@PathVariable UUID id,
             @Valid @RequestBody UpdateRuleRequest request) {
-        return ruleRepository.findById(id)
-                .map(rule -> {
-                    // Note: ClassificationRule is immutable, so we'd need to add update methods
-                    // For now, just return success
-                    return ResponseEntity.ok(Map.of("message", "Rule updated successfully"));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        ownedRule(id);
+        // ClassificationRule es inmutable; la edición real queda pendiente.
+        return ResponseEntity.ok(Map.of("message", "Rule updated successfully"));
     }
 
     /**
@@ -80,6 +74,7 @@ public class LearningController {
      */
     @DeleteMapping("/rules/{id}")
     public ResponseEntity<Map<String, String>> deleteRule(@PathVariable UUID id) {
+        ownedRule(id);
         ruleRepository.delete(id);
         return ResponseEntity.ok(Map.of("message", "Rule deleted successfully"));
     }
@@ -100,6 +95,12 @@ public class LearningController {
         ruleRepository.save(rule);
 
         return ResponseEntity.ok(toDto(rule));
+    }
+
+    /** Regla de la empresa actual o 404 si no existe o es de otra empresa (R5). */
+    private ClassificationRule ownedRule(UUID id) {
+        return TenantGuard.requireOwned(ruleRepository.findById(id), ClassificationRule::getCompanyId,
+                "Regla de clasificación");
     }
 
     private ClassificationRuleDto toDto(ClassificationRule rule) {

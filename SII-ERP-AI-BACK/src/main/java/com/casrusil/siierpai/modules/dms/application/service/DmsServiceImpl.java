@@ -161,7 +161,8 @@ public class DmsServiceImpl {
     public CorporateDocument analyzeDocumentWithAi(CompanyId companyId, UUID documentId) {
         CorporateDocumentEntity e = repo.findById(documentId)
             .filter(d -> d.getCompanyId().equals(companyId.value().toString()))
-            .orElseThrow(() -> new RuntimeException("Document not found"));
+            .orElseThrow(() -> new com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException(
+                    "Documento no encontrado"));
 
         byte[] bytes = downloadBytes(e.getStorageUrl());
 
