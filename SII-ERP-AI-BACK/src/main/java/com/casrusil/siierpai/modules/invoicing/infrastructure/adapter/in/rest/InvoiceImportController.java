@@ -28,11 +28,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import com.casrusil.siierpai.modules.partners.domain.model.Partner;
 import com.casrusil.siierpai.modules.partners.domain.model.PartnerType;
 import com.casrusil.siierpai.modules.partners.domain.port.out.PartnerRepository;
+import com.casrusil.siierpai.modules.sso.domain.model.Company;
+import com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository;
 
 @RestController
 @RequestMapping("/api/v1/invoices/import")
@@ -43,22 +44,27 @@ public class InvoiceImportController {
     private final CreateInvoiceUseCase createInvoiceUseCase;
     private final com.casrusil.siierpai.modules.accounting.domain.port.out.AccountRepository accountRepository;
     private final PartnerRepository partnerRepository;
+    private final CompanyRepository companyRepository;
 
     // Formato fecha SII: dd/MM/yyyy (ej: 30/09/2025)
     private static final DateTimeFormatter SII_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public InvoiceImportController(CreateInvoiceUseCase createInvoiceUseCase,
             com.casrusil.siierpai.modules.accounting.domain.port.out.AccountRepository accountRepository,
-            PartnerRepository partnerRepository) {
+            PartnerRepository partnerRepository,
+            CompanyRepository companyRepository) {
         this.createInvoiceUseCase = createInvoiceUseCase;
         this.accountRepository = accountRepository;
         this.partnerRepository = partnerRepository;
+        this.companyRepository = companyRepository;
     }
 
     @PostMapping(value = { "", "/sii-csv" }, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ImportResult> importSiiCsv(@RequestParam("file") MultipartFile file,
-            @RequestParam("companyId") UUID companyId,
             @RequestParam("bookType") String bookType) {
+
+        // La empresa sale del JWT (CompanyContext); nunca de la petición (R1).
+        final CompanyId companyId = CompanyContext.requireCompanyId();
 
         if (file.isEmpty())
             return ResponseEntity.badRequest().body(new ImportResult(0, 0, "Archivo vacío"));
@@ -77,7 +83,17 @@ public class InvoiceImportController {
         // Esto evita condiciones de carrera y asegura que el 100% de las facturas pasen
         // CRITICAL: Usa transacción independiente para que persistan incluso si falla
         // una factura
-        ensureCriticalAccountsExistIsolated(new CompanyId(companyId));
+        // El RUT propio es el de la empresa autenticada (F08); sin él no se importa.
+        final String ownRut = companyRepository.findById(companyId)
+                .map(Company::getRut)
+                .filter(rut -> !rut.isBlank())
+                .orElse(null);
+        if (ownRut == null) {
+            return ResponseEntity.unprocessableEntity().body(new ImportResult(0, 0,
+                    "La empresa no tiene RUT registrado; complétalo en el perfil de la empresa antes de importar"));
+        }
+
+        ensureCriticalAccountsExistIsolated(companyId);
 
         int successCount = 0;
         int errorCount = 0;
@@ -117,9 +133,9 @@ public class InvoiceImportController {
 
                     if (transactionType == TransactionType.PURCHASE) {
                         issuerRut = record.get("RUT Proveedor");
-                        receiverRut = "EMPRESA_PROPIA"; // O obtener RUT empresa actual
+                        receiverRut = ownRut;
                     } else {
-                        issuerRut = "EMPRESA_PROPIA";
+                        issuerRut = ownRut;
                         receiverRut = record.get("Rut cliente");
                     }
 
@@ -141,10 +157,10 @@ public class InvoiceImportController {
                     // CRITICAL: Usa transacción independiente para que el Partner persista
                     boolean isSale = (transactionType == TransactionType.SALE);
                     String partnerRut = (transactionType == TransactionType.PURCHASE) ? issuerRut : receiverRut;
-                    ensurePartnerExistsIsolated(new CompanyId(companyId), partnerRut, businessName, isSale);
+                    ensurePartnerExistsIsolated(companyId, partnerRut, businessName, isSale);
 
                     Invoice invoice = Invoice.create(
-                            new CompanyId(companyId),
+                            companyId,
                             InvoiceType.fromCode(typeCode),
                             folio,
                             issuerRut,
@@ -167,27 +183,38 @@ public class InvoiceImportController {
                     }
 
                     final Invoice invoiceToCreate = invoice;
-                    CompanyContext.runInCompanyContext(new CompanyId(companyId), () -> {
-                        createInvoiceUseCase.createInvoice(invoiceToCreate);
-                    });
+                    createInvoiceUseCase.createInvoice(invoiceToCreate);
                     successCount++;
                 } catch (Exception e) {
                     errorCount++;
-                    String errorMsg = e.getMessage();
-                    // Log full stack trace for debugging
-                    logger.error("Error procesando fila {}: {}", record.getRecordNumber(), errorMsg, e);
-                    errors.add("Fila " + record.getRecordNumber() + ": " + errorMsg);
+                    String ref = java.util.UUID.randomUUID().toString().substring(0, 8);
+                    logger.error("Error procesando fila {} [ref={}]: {}", record.getRecordNumber(), ref,
+                            e.getMessage(), e);
+                    errors.add("Fila " + record.getRecordNumber() + ": " + rowErrorMessage(e, ref));
                 }
             }
         } catch (Exception e) {
             logger.error("Error reading CSV", e);
-            return ResponseEntity.badRequest().body(
-                    new ImportResult(successCount, errorCount, "Error crítico al leer archivo: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(new ImportResult(successCount, errorCount,
+                    "No se pudo leer el archivo. Verifica que sea el CSV del SII (separado por ';')."));
         }
 
         String msg = String.format("Procesado: %d éxitos, %d errores. %s", successCount, errorCount,
                 String.join(" | ", errors));
         return ResponseEntity.ok(new ImportResult(successCount, errorCount, msg));
+    }
+
+    /**
+     * Mensaje de error por fila apto para el usuario: los errores de formato del CSV se
+     * muestran tal cual; los internos (BD, NPE, etc.) se ocultan tras una referencia.
+     */
+    static String rowErrorMessage(Exception e, String ref) {
+        if (e instanceof IllegalArgumentException
+                || e instanceof java.time.format.DateTimeParseException
+                || e instanceof com.casrusil.siierpai.shared.domain.exception.DomainException) {
+            return e.getMessage();
+        }
+        return "error interno al guardar la fila (ref " + ref + ")";
     }
 
     BigDecimal parseAmount(CSVRecord record, String... possibleHeaders) {
@@ -297,7 +324,7 @@ public class InvoiceImportController {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void ensurePartnerExistsIsolated(CompanyId companyId, String rut, String name, boolean isSale) {
-        if (rut == null || rut.isBlank() || "EMPRESA_PROPIA".equals(rut))
+        if (rut == null || rut.isBlank())
             return;
 
         try {

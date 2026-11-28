@@ -1,5 +1,7 @@
 package com.casrusil.siierpai.modules.dms.infrastructure.web;
 
+import com.casrusil.siierpai.shared.infrastructure.context.CompanyContext;
+
 import com.casrusil.siierpai.modules.dms.application.service.AutomatedAccountingService;
 import com.casrusil.siierpai.modules.dms.application.service.InvoiceAiReaderService;
 import com.casrusil.siierpai.shared.domain.valueobject.CompanyId;
@@ -26,10 +28,10 @@ public class AiInvoicingController {
 
     @PostMapping("/process")
     public ResponseEntity<?> processInvoiceUpload(
-            @RequestHeader("X-Tenant-ID") String tenantId,
             @RequestParam("file") MultipartFile file) throws IOException {
-        
-        CompanyId companyId = CompanyId.fromString(tenantId);
+
+        // Empresa del usuario autenticado (JWT). Nunca se acepta desde la petición.
+        CompanyId companyId = CompanyContext.requireCompanyId();
         
         // 1. Leer con Gemini AI
         InvoiceAiReaderService.ExtractedInvoiceData data = aiReaderService.readInvoice(file.getBytes());
