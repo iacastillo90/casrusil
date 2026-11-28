@@ -12,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -54,5 +55,48 @@ class RoleRepositoryAdapterTest {
         Set<Permission> permissions = Set.of(Permission.readOnly("treasury", PermissionScope.values()[0]));
         assertThat(RoleRepositoryAdapter.readPermissions(RoleRepositoryAdapter.writePermissions(permissions)))
                 .isEqualTo(permissions);
+    }
+
+    @Test
+    void readPermissionsLeeElFormatoCanonicoArregloDePermission() {
+        String json = "[{\"resource\":\"users\",\"actions\":[\"READ\",\"UPDATE\"],\"scope\":\"ORGANIZATION\"},"
+                + "{\"resource\":\"*\",\"actions\":[\"READ\"],\"scope\":\"ALL\"}]";
+
+        assertThat(RoleRepositoryAdapter.readPermissions(json)).containsExactlyInAnyOrder(
+                new Permission("users", Set.of(PermissionAction.READ, PermissionAction.UPDATE), PermissionScope.ORGANIZATION),
+                new Permission("*", Set.of(PermissionAction.READ), PermissionScope.ALL));
+    }
+
+    @Test
+    void readPermissionsLeeElFormatoLegadoDeLaSeedV2() {
+        // Literal de V2__datos_maestros.sql (rol ADMIN)
+        String json = "{\"users\": [\"read\", \"write\", \"delete\"], \"roles\": [\"read\", \"write\"], \"settings\": [\"read\"]}";
+
+        assertThat(RoleRepositoryAdapter.readPermissions(json)).containsExactlyInAnyOrder(
+                new Permission("users", Set.of(PermissionAction.READ, PermissionAction.CREATE,
+                        PermissionAction.UPDATE, PermissionAction.DELETE), PermissionScope.ORGANIZATION),
+                new Permission("roles", Set.of(PermissionAction.READ, PermissionAction.CREATE,
+                        PermissionAction.UPDATE), PermissionScope.ORGANIZATION),
+                new Permission("settings", Set.of(PermissionAction.READ), PermissionScope.ORGANIZATION));
+    }
+
+    @Test
+    void readPermissionsLegadoSuperAdminComodinEsAccesoTotalGlobal() {
+        assertThat(RoleRepositoryAdapter.readPermissions("{\"*\": [\"*\"]}")).containsExactly(
+                new Permission("*", Set.of(PermissionAction.values()), PermissionScope.ALL));
+    }
+
+    @Test
+    void readPermissionsLegadoIgnoraAccionesDesconocidas() {
+        assertThat(RoleRepositoryAdapter.readPermissions("{\"invoicing\": [\"read\", \"approve\"], \"x\": [\"zzz\"]}"))
+                .containsExactly(new Permission("invoicing", Set.of(PermissionAction.READ), PermissionScope.ORGANIZATION));
+    }
+
+    @Test
+    void readPermissionsRechazaFormasDesconocidas() {
+        assertThatThrownBy(() -> RoleRepositoryAdapter.readPermissions("\"texto\""))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> RoleRepositoryAdapter.readPermissions("{\"users\": \"read\"}"))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
