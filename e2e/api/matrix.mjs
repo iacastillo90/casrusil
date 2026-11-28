@@ -43,11 +43,30 @@ function fail(message) {
   process.exitCode = 1;
 }
 
+/**
+ * RUT chileno válido y único por corrida (módulo 11). El backend valida el
+ * formato de rutEmisor al emitir; un RUT inventado como "E2E-..." hacía que
+ * POST /invoices respondiera 400 y el flujo de facturación nunca emitía.
+ */
+function rutValido(seed) {
+  const cuerpo = 70_000_000 + (seed % 9_000_000);
+  let suma = 0;
+  let factor = 2;
+  for (const digito of String(cuerpo).split('').reverse()) {
+    suma += Number(digito) * factor;
+    factor = factor === 7 ? 2 : factor + 1;
+  }
+  const resto = 11 - (suma % 11);
+  const dv = resto === 11 ? '0' : resto === 10 ? 'K' : String(resto);
+  return `${cuerpo}-${dv}`;
+}
+
 async function registerCompany() {
   const adminEmail = `qa-admin-${stamp}@example.com`;
+  const rut = rutValido(stamp);
   const response = await http('POST', '/auth/register', {
     json: {
-      rut: `E2E-${stamp}`,
+      rut,
       razonSocial: `QA E2E ${stamp}`,
       adminEmail,
       adminPassword: PASSWORD,
@@ -62,6 +81,7 @@ async function registerCompany() {
     userId: response.json.userId,
     email: adminEmail,
     role: 'ADMIN',
+    rut,
   };
 }
 
@@ -300,6 +320,7 @@ UserRole incluye B2B_CLIENT. CustomerOrderService filtra por customerId y el tes
     sales: { email: created.SALES?.email, password: PASSWORD, role: 'SALES' },
     accountant: { email: created.ACCOUNTANT?.email, password: PASSWORD, role: 'ACCOUNTANT' },
     companyId: admin.companyId,
+    companyRut: admin.rut,
   }, null, 2));
 
   console.log(`\n${report}`);

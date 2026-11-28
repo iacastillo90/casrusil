@@ -201,7 +201,13 @@ jobs:
         run: |
           chmod +x gradlew
           nohup ./gradlew bootRun --args="--server.port=8092" --console=plain > /tmp/backend-e2e.log 2>&1 &
+          pid=$!
           for i in {1..90}; do
+            # Si bootRun ya murió (p. ej. falla de arranque) no tiene sentido
+            # esperar los 7,5 min completos.
+            if ! kill -0 "$pid" 2>/dev/null; then
+              echo "bootRun terminó antes de responder"; tail -100 /tmp/backend-e2e.log; exit 1
+            fi
             code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8092/actuator/health || true)
             if [ "$code" = "200" ] || [ "$code" = "503" ]; then
               echo "Backend arriba (health $code)"
@@ -211,15 +217,19 @@ jobs:
           done
           echo "Backend no respondió"; tail -100 /tmp/backend-e2e.log; exit 1
 
-      - name: Levantar frontend (3000)
+      - name: Levantar frontend (3000, build de producción)
         working-directory: SII-ERP-AI-FRONT
+        env:
+          BACKEND_INTERNAL_URL: http://localhost:8092
+          NEXT_PUBLIC_API_URL: /api/v1
         run: |
           npm ci
-          nohup env BACKEND_INTERNAL_URL=http://localhost:8092 npm run dev -- -p 3000 > /tmp/frontend-e2e.log 2>&1 &
+          npm run build
+          nohup env BACKEND_INTERNAL_URL=http://localhost:8092 npm start -- -p 3000 > /tmp/frontend-e2e.log 2>&1 &
           for i in {1..60}; do
             code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/login || true)
             if [ "$code" = "200" ]; then
-              echo "Frontend arriba"
+              echo "Frontend (producción) arriba"
               exit 0
             fi
             sleep 5
