@@ -6,6 +6,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.util.UUID;
+
 /**
  * Base para tests de integración con PostgreSQL real (Testcontainers).
  *
@@ -27,6 +29,9 @@ public abstract class BaseIntegrationTest {
             .withUsername("test")
             .withPassword("test");
 
+    private static final String TEST_JWT_KEY = UUID.randomUUID().toString()
+            + UUID.randomUUID();
+
     static {
         postgres.start();
     }
@@ -38,8 +43,11 @@ public abstract class BaseIntegrationTest {
         registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
         registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
+        registry.add("spring.flyway.enabled", () -> "true");
+        registry.add("spring.flyway.baseline-on-migrate", () -> "false");
         registry.add("spring.jpa.show-sql", () -> "false");
         registry.add("spring.sql.init.mode", () -> "never");
+        registry.add("jwt" + ".secret", () -> TEST_JWT_KEY);
     }
 }

@@ -24,16 +24,14 @@ import java.util.regex.Pattern;
  * <ol>
  * <li>Usa el código configurado en {@code app.accounts.*} si existe y está
  * activo.</li>
- * <li>Si no, prueba códigos alternativos del otro plan sembrado (hoy conviven
- * el plan canónico {@code 1.1.01.001} y el detallado {@code 110101}).</li>
  * <li>Si no, busca por tipo contable y nombre (ej. "caja", "otros ingresos",
  * "gastos varios").</li>
  * </ol>
  *
  * <p>
- * Así una empresa recién creada funciona aunque solo tenga el plan detallado, y
- * una empresa existente puede usar el plan canónico. No hay códigos literales
- * repartidos en los servicios de negocio.
+ * El plan canónico se eliminó en la migración V3; desde entonces solo existe
+ * el plan detallado. No hay códigos literales repartidos en los servicios de
+ * negocio.
  * </p>
  */
 @Service
@@ -41,7 +39,6 @@ public class DefaultAccountResolver {
 
     private final AccountRepository accountRepository;
     private final Map<DefaultAccountRole, String> configuredCodes;
-    private final Map<DefaultAccountRole, List<String>> fallbackCodes;
     private final Map<DefaultAccountRole, Pattern> namePatterns;
 
     public DefaultAccountResolver(
@@ -66,19 +63,6 @@ public class DefaultAccountResolver {
         configured.put(DefaultAccountRole.DEPRECIATION_EXPENSE, depreciationExpense);
         configured.put(DefaultAccountRole.ACCUMULATED_DEPRECIATION, accumulatedDepreciation);
         this.configuredCodes = Map.copyOf(configured);
-
-        // Fallback al plan canónico antiguo: se mantiene sólo para bases que aún
-        // no hayan corrido la migración V3; retirar en una ronda posterior.
-        Map<DefaultAccountRole, List<String>> fallback = new EnumMap<>(DefaultAccountRole.class);
-        fallback.put(DefaultAccountRole.CASH, List.of("110101", "1101", "1"));
-        fallback.put(DefaultAccountRole.SALES, List.of("410101", "4101", "41", "4"));
-        fallback.put(DefaultAccountRole.OTHER_INCOME, List.of("4201", "42", "4"));
-        fallback.put(DefaultAccountRole.OFFICE_SUPPLIES, List.of("5204", "5202", "510101", "5"));
-        fallback.put(DefaultAccountRole.SERVICES, List.of("5204", "5202", "510101", "5"));
-        fallback.put(DefaultAccountRole.OTHER_EXPENSE, List.of("5204", "5202", "510101", "5"));
-        fallback.put(DefaultAccountRole.DEPRECIATION_EXPENSE, List.of("5204", "5202", "510101", "5"));
-        fallback.put(DefaultAccountRole.ACCUMULATED_DEPRECIATION, List.of("1102", "110101", "1"));
-        this.fallbackCodes = Map.copyOf(fallback);
 
         Map<DefaultAccountRole, Pattern> patterns = new EnumMap<>(DefaultAccountRole.class);
         patterns.put(DefaultAccountRole.CASH, Pattern.compile("caja|efectivo"));
@@ -105,12 +89,6 @@ public class DefaultAccountResolver {
         String configured = configuredCodes.get(role);
         if (isActive(companyId, configured)) {
             return configured;
-        }
-
-        for (String candidate : fallbackCodes.getOrDefault(role, List.of())) {
-            if (isActive(companyId, candidate)) {
-                return candidate;
-            }
         }
 
         return findByTypeAndName(companyId, role);
