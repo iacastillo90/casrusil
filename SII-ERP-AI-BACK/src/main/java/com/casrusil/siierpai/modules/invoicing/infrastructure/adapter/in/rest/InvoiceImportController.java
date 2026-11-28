@@ -190,7 +190,7 @@ public class InvoiceImportController {
         return ResponseEntity.ok(new ImportResult(successCount, errorCount, msg));
     }
 
-    private BigDecimal parseAmount(CSVRecord record, String... possibleHeaders) {
+    BigDecimal parseAmount(CSVRecord record, String... possibleHeaders) {
         for (String header : possibleHeaders) {
             // Check if mapped AND has value (case insensitive check logic is in parser
             // options)
@@ -202,7 +202,10 @@ public class InvoiceImportController {
                         String clean = val.replace(".", "").replace(",", ".");
                         return new BigDecimal(clean);
                     } catch (NumberFormatException e) {
-                        // Log warning if needed, or return ZERO
+                        // Antes se devolvía ZERO en silencio y la factura se importaba con
+                        // montos en cero. Ahora la fila se reporta como error.
+                        throw new IllegalArgumentException(
+                                "Monto inválido en columna '" + header + "': '" + val + "'", e);
                     }
                 }
             }

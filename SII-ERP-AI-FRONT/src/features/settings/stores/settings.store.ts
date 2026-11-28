@@ -20,7 +20,7 @@ interface SettingsState {
 
 export const useSettingsStore = create<SettingsState>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             company: {
                 name: '',
                 rut: '',
@@ -58,7 +58,7 @@ export const useSettingsStore = create<SettingsState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const updatedCompany = await settingsService.updateCompanyProfile(data);
-                    set((state) => ({ company: updatedCompany, isLoading: false }));
+                    set({ company: updatedCompany, isLoading: false });
                 } catch (error) {
                     set({ isLoading: false, error: "Error al actualizar compañía" });
                     throw error;

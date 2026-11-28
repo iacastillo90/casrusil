@@ -69,6 +69,50 @@ class InvoiceImportControllerTest {
         assertEquals("Cliente Test SpA", createInvoiceUseCase.createdInvoices.get(0).getReceiverName());
     }
 
+    /**
+     * Deuda técnica: un monto mal formado se convertía en 0 en silencio y la
+     * factura se importaba con montos en cero. Ahora la fila cuenta como error y
+     * no se crea la factura.
+     */
+    @Test
+    void importSiiCsv_montoMalFormado_reportaErrorEnLaFilaYNoCreaFactura() throws Exception {
+        String csv = "Tipo Doc;Folio;Rut cliente;Razon Social;Fecha Docto;Monto Neto;Monto IVA;Monto Total\n"
+                + "33;1001;12345678-9;Cliente Test SpA;27/10/2023;100000;19000;119000\n"
+                + "33;1002;12345678-9;Cliente Test SpA;27/10/2023;CIEN MIL;19000;119000\n";
+        MockMultipartFile file = new MockMultipartFile("file", "import.csv", MediaType.TEXT_PLAIN_VALUE,
+                csv.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+
+        mockMvc.perform(multipart("/api/v1/invoices/import/sii-csv")
+                .file(file)
+                .param("companyId", UUID.randomUUID().toString())
+                .param("bookType", "SALE"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.successCount").value(1))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.errorCount").value(1))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Monto inválido")));
+
+        assertEquals(1, createInvoiceUseCase.createdInvoices.size());
+        assertEquals(1001L, createInvoiceUseCase.createdInvoices.get(0).getFolio());
+    }
+
+    @Test
+    void parseAmount_formatoChilenoConMilesYDecimales() throws Exception {
+        String csv = "Monto Neto;Monto IVA\n1.234.567;\n";
+        try (var parser = org.apache.commons.csv.CSVParser.parse(csv, org.apache.commons.csv.CSVFormat.Builder
+                .create().setDelimiter(';').setHeader().setSkipHeaderRecord(true).build())) {
+            var record = parser.getRecords().get(0);
+            InvoiceImportController controller = new InvoiceImportController(createInvoiceUseCase, accountRepository,
+                    partnerRepository);
+            assertEquals(new BigDecimal("1234567"), controller.parseAmount(record, "Monto Neto"));
+            // Columna vacía o ausente sigue valiendo cero (comportamiento previo).
+            assertEquals(BigDecimal.ZERO, controller.parseAmount(record, "Monto IVA"));
+            assertEquals(BigDecimal.ZERO, controller.parseAmount(record, "Monto Exento"));
+        }
+    }
+
     static class StubCreateInvoiceUseCase implements CreateInvoiceUseCase {
         List<Invoice> createdInvoices = new ArrayList<>();
 

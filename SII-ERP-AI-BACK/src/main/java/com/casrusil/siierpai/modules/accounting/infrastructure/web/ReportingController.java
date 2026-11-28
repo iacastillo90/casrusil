@@ -35,8 +35,8 @@ import java.util.Map;
  * <li>{@code GET /api/v1/reports/sales/excel}: Descargar reporte de ventas en
  * Excel.</li>
  * <li>{@code GET /api/v1/reports/balance-sheet}: Obtener Balance General.</li>
- * <li>{@code POST /api/v1/reports/f29/submit}: Enviar declaración F29 al
- * SII.</li>
+ * <li>{@code POST /api/v1/reports/f29/submit}: Envío del F29 al SII. No
+ * implementado: responde 501.</li>
  * </ul>
  * 
  * @see ExcelExportService
@@ -170,7 +170,17 @@ public class ReportingController {
         YearMonth period = YearMonth.parse(periodStr);
 
         F29Report report = f29CalculatorService.calculateF29(companyId, period);
-        String transactionId = f29SenderService.sendDeclaration(companyId, report);
+        String transactionId;
+        try {
+            transactionId = f29SenderService.sendDeclaration(companyId, report);
+        } catch (UnsupportedOperationException notImplemented) {
+            // El envío al SII no existe: no se informa "SUBMITTED" con un folio inventado.
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_IMPLEMENTED).body(Map.of(
+                    "status", "NOT_IMPLEMENTED",
+                    "message", notImplemented.getMessage(),
+                    "period", period.toString(),
+                    "amountToPay", report.vatPayable().toString()));
+        }
 
         return ResponseEntity.ok(Map.of(
                 "status", "SUBMITTED",

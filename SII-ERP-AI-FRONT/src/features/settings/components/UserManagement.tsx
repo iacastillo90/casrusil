@@ -22,7 +22,7 @@ export function UserManagement() {
             try {
                 await removeUser(userId);
                 toast.success("Usuario eliminado");
-            } catch (error) {
+            } catch {
                 toast.error("No se pudo eliminar al usuario");
             }
         }

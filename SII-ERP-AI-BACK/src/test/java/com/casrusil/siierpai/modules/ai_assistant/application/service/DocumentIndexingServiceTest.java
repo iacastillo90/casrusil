@@ -75,9 +75,9 @@ class DocumentIndexingServiceTest {
 
         // Mock search results
         TextSegment segment1 = TextSegment.from("Result 1",
-                new dev.langchain4j.data.document.Metadata().add("companyId", companyId.value().toString()));
+                new dev.langchain4j.data.document.Metadata().put("companyId", companyId.value().toString()));
         TextSegment segment2 = TextSegment.from("Result 2",
-                new dev.langchain4j.data.document.Metadata().add("companyId", "other-company-id"));
+                new dev.langchain4j.data.document.Metadata().put("companyId", "other-company-id"));
 
         EmbeddingMatch<TextSegment> match1 = new EmbeddingMatch<>(0.9, "id1", new Embedding(new float[] { 0.1f }),
                 segment1);

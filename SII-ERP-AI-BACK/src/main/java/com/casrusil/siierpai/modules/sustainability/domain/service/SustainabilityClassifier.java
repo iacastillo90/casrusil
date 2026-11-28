@@ -72,7 +72,7 @@ public class SustainabilityClassifier {
         // 2. SCOPE 2: Electricidad (Emisiones indirectas)
         if (containsAny(glosaUpper, "ELECTRICIDAD", "ENERGIA ELECTRICA", "LUZ", "ENEL", "CGE")) {
             // Estimación: $50,000 CLP ≈ 100 kWh
-            BigDecimal estimatedKwh = invoice.getNetAmount().divide(new BigDecimal("500"), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal estimatedKwh = invoice.getNetAmount().divide(new BigDecimal("500"), 2, java.math.RoundingMode.HALF_UP);
             BigDecimal emissions = estimatedKwh.multiply(ELECTRICITY_EMISSION_FACTOR);
 
             logger.info("⚡ [SCOPE 2] Electricidad detectada: {} kWh ≈ {} kg CO2e", estimatedKwh, emissions);

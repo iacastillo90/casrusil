@@ -40,7 +40,7 @@ public final class ElectricalSpecification {
      * P = V * I / 1000 (para obtener kW)
      */
     public BigDecimal calculateTheoreticalPower() {
-        return maxVoltage.multiply(maxCurrent).divide(BigDecimal.valueOf(1000), 2, BigDecimal.ROUND_HALF_UP);
+        return maxVoltage.multiply(maxCurrent).divide(BigDecimal.valueOf(1000), 2, java.math.RoundingMode.HALF_UP);
     }
 
     private void validatePositive(BigDecimal value, String fieldName) {

@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,34 +38,34 @@ class InvoiceControllerTest {
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private CreateInvoiceUseCase createInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private SearchInvoicesUseCase searchInvoicesUseCase;
 
-    @MockBean
+    @MockitoBean
     private InvoiceDispatchService invoiceDispatchService;
 
-    @MockBean
+    @MockitoBean
     private com.casrusil.siierpai.modules.invoicing.domain.port.in.ManageInvoiceUseCase manageInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private com.casrusil.siierpai.modules.invoicing.domain.port.in.UpdateInvoiceUseCase updateInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private com.casrusil.siierpai.modules.invoicing.domain.port.in.GetInvoiceAuditTrailUseCase getInvoiceAuditTrailUseCase;
 
-    @MockBean
+    @MockitoBean
     private com.casrusil.siierpai.modules.sso.infrastructure.security.JwtTokenProvider jwtTokenProvider;
 
-    @MockBean
+    @MockitoBean
     private com.casrusil.siierpai.modules.sso.infrastructure.security.TokenBlacklistService tokenBlacklistService;
 
-    @MockBean
+    @MockitoBean
     private com.casrusil.siierpai.modules.sso.domain.port.out.CompanyRepository companyRepository;
 
-    @MockBean
+    @MockitoBean
     private com.casrusil.siierpai.modules.accounting.domain.port.out.AccountRepository accountRepository;
 
     @Autowired

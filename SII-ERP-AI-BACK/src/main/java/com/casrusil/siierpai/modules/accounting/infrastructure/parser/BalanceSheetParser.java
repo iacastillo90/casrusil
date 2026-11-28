@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 public class BalanceSheetParser {
 
     // Chilean locale for number parsing (1.000.000,00)
-    private static final Locale CHILE = new Locale("es", "CL");
+    private static final Locale CHILE = Locale.of("es", "CL");
 
     public List<OpeningBalanceService.OpeningBalanceItem> parseTsv(InputStream inputStream) throws IOException {
         List<OpeningBalanceService.OpeningBalanceItem> items = new ArrayList<>();

@@ -69,15 +69,6 @@ export default function CAFPage() {
         loadCafs();
     }, []);
 
-    const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return '—';
-        try {
-            return new Date(dateStr).toLocaleDateString('es-CL');
-        } catch {
-            return dateStr;
-        }
-    };
-
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold tracking-tight">Administración de Folios (CAF)</h1>
