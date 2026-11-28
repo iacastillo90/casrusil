@@ -41,9 +41,26 @@ public class UserInvitation {
                 email,
                 companyId,
                 role,
-                UUID.randomUUID().toString(), // Simple token generation
+                newToken(), // 256 bits aleatorios, URL-safe, de un solo uso
                 Instant.now().plusSeconds(86400 * 7), // 7 days expiration
                 Status.PENDING);
+    }
+
+    private static final java.security.SecureRandom RANDOM = new java.security.SecureRandom();
+
+    static String newToken() {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    /** Marca la invitación como vencida si pasó su fecha y sigue pendiente. */
+    public boolean expireIfDue(Instant now) {
+        if (this.status == Status.PENDING && !now.isBefore(expiresAt)) {
+            this.status = Status.EXPIRED;
+            return true;
+        }
+        return false;
     }
 
     public void accept() {
