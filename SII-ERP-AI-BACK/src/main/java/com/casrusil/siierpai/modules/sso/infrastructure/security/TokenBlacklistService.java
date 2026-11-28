@@ -37,8 +37,17 @@ public class TokenBlacklistService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public TokenBlacklistService(RedisTemplate<String, Object> redisTemplate) {
+    /**
+     * B04: en prod ({@code security.redis.fail-closed=true}) un logout que no puede
+     * revocar el token en Redis se rechaza con 503 en vez de fingir éxito. En dev
+     * sigue siendo permisivo porque Redis puede no estar levantado.
+     */
+    private final boolean failClosed;
+
+    public TokenBlacklistService(RedisTemplate<String, Object> redisTemplate,
+            @org.springframework.beans.factory.annotation.Value("${security.redis.fail-closed:false}") boolean failClosed) {
         this.redisTemplate = redisTemplate;
+        this.failClosed = failClosed;
     }
 
     /**
@@ -57,6 +66,13 @@ public class TokenBlacklistService {
             }
             redisTemplate.opsForValue().set(key(token), REVOKED, Duration.ofMillis(ttlMillis));
         } catch (Exception e) {
+            if (failClosed) {
+                log.error("Logout rechazado: no se pudo revocar el token en Redis: {}", e.getMessage());
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+                        "No se pudo cerrar la sesión de forma segura (servicio de sesiones no disponible). "
+                                + "Intenta nuevamente en unos minutos.");
+            }
             log.warn("No se pudo registrar el token en la blacklist (Redis): {}", e.getMessage());
         }
     }

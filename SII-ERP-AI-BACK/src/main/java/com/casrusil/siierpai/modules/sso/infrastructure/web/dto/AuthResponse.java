@@ -6,11 +6,10 @@ import java.util.UUID;
  * DTO de respuesta para autenticación exitosa (Login/Register).
  * 
  * <p>
- * Devuelve no solo el token JWT, sino también el contexto mínimo necesario
- * para que el frontend pueda inicializar su estado (Store) sin hacer una
- * petición adicional a /me.
+ * Devuelve el contexto mínimo para que el frontend inicialice su estado sin
+ * llamar a /me. El JWT NO va en el body: se entrega solo en la cookie httpOnly
+ * (Set-Cookie), para que JavaScript no pueda leerlo (R10).
  * 
- * @param token       JWT Bearer token
  * @param userId      ID del usuario autenticado
  * @param userName    Nombre del usuario (o email si no tiene nombre)
  * @param companyId   ID de la empresa (contexto actual)
@@ -18,7 +17,6 @@ import java.util.UUID;
  * @param role        Rol del usuario (para el gating de UI en el frontend)
  */
 public record AuthResponse(
-        String token,
         UUID userId,
         String userName,
         UUID companyId,

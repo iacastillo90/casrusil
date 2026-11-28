@@ -11,12 +11,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 
 @AutoConfigureMockMvc
 @org.springframework.test.context.TestPropertySource(properties = "spring.main.allow-bean-definition-overriding=true")
@@ -59,12 +59,11 @@ public class SsoIntegrationTest extends com.casrusil.siierpai.shared.test.BaseIn
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(registerRequest)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.token").exists())
+                                // R10: el JWT viaja solo en la cookie httpOnly, no en el body.
+                                .andExpect(jsonPath("$.token").doesNotExist())
                                 .andReturn();
 
-                String token = objectMapper.readValue(registerResult.getResponse().getContentAsString(), Map.class)
-                                .get("token")
-                                .toString();
+                String token = registerResult.getResponse().getCookie("access_token").getValue();
 
                 // 2. Login (Verify credentials)
                 AuthController.LoginRequest loginRequest = new AuthController.LoginRequest(
@@ -75,7 +74,8 @@ public class SsoIntegrationTest extends com.casrusil.siierpai.shared.test.BaseIn
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(loginRequest)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.token").exists());
+                                .andExpect(jsonPath("$.token").doesNotExist())
+                                .andExpect(cookie().httpOnly("access_token", true));
 
                 // 3. Access Protected Endpoint (Update Profile)
                 CompanyController.UpdateCompanyRequest updateRequest = new CompanyController.UpdateCompanyRequest(

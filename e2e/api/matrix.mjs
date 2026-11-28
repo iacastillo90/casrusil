@@ -32,7 +32,11 @@ async function http(method, pathOrUrl, { token, json, form, root = false } = {})
     const text = await response.text();
     let parsed;
     try { parsed = JSON.parse(text); } catch { parsed = undefined; }
-    return { status: response.status, text, json: parsed };
+    // El JWT ya no viaja en el body (R10): se toma de la cookie httpOnly del Set-Cookie.
+    const cookies = typeof response.headers.getSetCookie === 'function' ? response.headers.getSetCookie() : [];
+    const tokenCookie = cookies.find((c) => c.startsWith('access_token='));
+    const cookieToken = tokenCookie ? tokenCookie.split(';')[0].slice('access_token='.length) : undefined;
+    return { status: response.status, text, json: parsed, cookieToken };
   } catch (error) {
     return { status: 'TIMEOUT/ERROR', text: String(error), json: undefined };
   }
@@ -53,11 +57,11 @@ async function registerCompany() {
       adminPassword: PASSWORD,
     },
   });
-  if (response.status !== 200 || !response.json?.token) {
+  if (response.status !== 200 || !response.cookieToken) {
     throw new Error(`Registro falló (${response.status}): ${response.text}`);
   }
   return {
-    token: response.json.token,
+    token: response.cookieToken,
     companyId: response.json.companyId,
     userId: response.json.userId,
     email: adminEmail,
@@ -67,10 +71,10 @@ async function registerCompany() {
 
 async function login(email) {
   const response = await http('POST', '/auth/login', { json: { email, password: PASSWORD } });
-  if (response.status !== 200 || !response.json?.token) {
+  if (response.status !== 200 || !response.cookieToken) {
     return { ok: false, status: response.status, text: response.text };
   }
-  return { ok: true, token: response.json.token, userId: response.json.userId };
+  return { ok: true, token: response.cookieToken, userId: response.json.userId };
 }
 
 async function createRoleUsers(admin) {
