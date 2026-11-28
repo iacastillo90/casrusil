@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useBankConnections, useBankTransactions } from "@/features/banking/hooks/useBanking";
 import { formatCLP } from "@/lib/formatters";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 
 export default function BankingPage() {
     const { data: connections, isLoading: connectionsLoading } = useBankConnections();
@@ -14,9 +15,11 @@ export default function BankingPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold tracking-tight">Tesorería y Bancos</h1>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Conectar Banco
+                <Button asChild>
+                    <Link href="/banking/reconciliation">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Conectar Banco
+                    </Link>
                 </Button>
             </div>
 

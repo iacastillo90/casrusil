@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatCLP, formatDate } from './formatters';
+import { formatCLP, formatDate, validateRut } from './formatters';
 
 describe('formatters', () => {
     describe('formatCLP', () => {
@@ -17,6 +17,30 @@ describe('formatters', () => {
             const formatted = formatCLP(-5000);
             expect(formatted).toContain('5.000');
             expect(formatted).toContain('-');
+        });
+    });
+
+    describe('validateRut', () => {
+        it('accepts valid RUTs with and without formatting', () => {
+            expect(validateRut('11111111-1')).toBe(true);
+            expect(validateRut('12.345.678-5')).toBe(true);
+            expect(validateRut('76086428-5')).toBe(true);
+            expect(validateRut('10000013-K')).toBe(true);
+            expect(validateRut('10000013-k')).toBe(true);
+            expect(validateRut('123456785')).toBe(true);
+        });
+
+        it('rejects RUTs with an invalid check digit', () => {
+            expect(validateRut('11111111-2')).toBe(false);
+            expect(validateRut('12.345.678-9')).toBe(false);
+            expect(validateRut('10000013-0')).toBe(false);
+        });
+
+        it('rejects malformed or empty RUTs', () => {
+            expect(validateRut('')).toBe(false);
+            expect(validateRut('abc')).toBe(false);
+            expect(validateRut('123')).toBe(false);
+            expect(validateRut('1234567890-1')).toBe(false);
         });
     });
 

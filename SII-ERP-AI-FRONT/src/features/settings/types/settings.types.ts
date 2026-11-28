@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validateRut } from "@/lib/formatters";
 
 export interface CompanyProfile {
     name: string;
@@ -46,7 +47,7 @@ export interface NotificationPreferences {
 // Zod Schemas
 export const companyProfileSchema = z.object({
     name: z.string().min(2, "La razón social es requerida"),
-    rut: z.string().regex(/^(\d{1,3}(?:\.\d{3})*)-[\dkK]$/, "RUT inválido (ej: 76.123.456-K)"),
+    rut: z.string().refine(validateRut, "RUT inválido (ej: 76.123.456-K)"),
     address: z.string().min(5, "La dirección es requerida"),
     email: z.string().email("Email inválido"),
     phone: z.string().min(8, "Teléfono inválido"),

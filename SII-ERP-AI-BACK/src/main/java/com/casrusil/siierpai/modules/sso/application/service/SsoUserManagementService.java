@@ -120,6 +120,30 @@ public class SsoUserManagementService implements ManageUserUseCase {
         return userRepository.findAllByCompanyId(companyId);
     }
 
+    /**
+     * Desactiva un usuario (soft delete). No permite que un administrador se
+     * desactive a sí mismo.
+     *
+     * @param id          usuario a desactivar
+     * @param requesterId usuario autenticado que ejecuta la acción
+     * @return usuario desactivado
+     */
+    @Transactional
+    public User deactivateUser(UserId id, UserId requesterId) {
+        if (id.equals(requesterId)) {
+            throw new DomainException("No puedes desactivar tu propio usuario") {
+            };
+        }
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new DomainException("User not found") {
+                });
+        verifyCompanyContext(user.getCompanyId());
+
+        user.deactivate();
+        return userRepository.save(user);
+    }
+
     private void verifyCompanyContext(CompanyId targetCompanyId) {
         CompanyId currentCompanyId = CompanyContext.getCompanyId();
         // If context is not set (e.g. during some background process or super admin),

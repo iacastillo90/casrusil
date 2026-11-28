@@ -47,25 +47,36 @@ export function formatRut(rut: string): string {
     return `${formatted}-${dv}`;
 }
 
+/**
+ * Valida un RUT chileno con su dígito verificador (módulo 11).
+ *
+ * Acepta el RUT con o sin puntos y con guión o sin él. El dígito verificador
+ * puede ser 0-9 o K/k.
+ *
+ * @param rut RUT a validar (ej: "12.345.678-5", "12345678-5", "123456785")
+ * @returns true si el dígito verificador es correcto
+ */
 export function validateRut(rut: string): boolean {
-    // ... existing validation logic is fine ...
-    const clean = rut.replace(/[^0-9kK]/g, '');
-    if (clean.length < 2) return false;
-    const dv = clean.slice(-1).toLowerCase();
-    const num = parseInt(clean.slice(0, -1), 10);
+    if (!rut) return false;
+
+    const clean = rut.replace(/[.\-\s]/g, '').toUpperCase();
+    if (!/^\d+[0-9K]$/.test(clean)) return false;
+
+    const body = clean.slice(0, -1);
+    const dv = clean.slice(-1);
+    if (!/^\d+$/.test(body) || body.length < 1 || body.length > 8) return false;
+
     let sum = 0;
     let multiplier = 2;
-    for (let i = clean.length - 2; i >= 0; i--) {
-        sum += parseInt(clean.charAt(i), 10) * multiplier;
+    for (let i = body.length - 1; i >= 0; i--) {
+        sum += Number(body.charAt(i)) * multiplier;
         multiplier = multiplier === 7 ? 2 : multiplier + 1;
     }
-    const expectedDv = 11 - (sum % 11);
-    let calculatedDv = '';
-    if (expectedDv === 11) calculatedDv = '0';
-    else if (expectedDv === 10) calculatedDv = 'k';
-    else calculatedDv = expectedDv.toString();
-    // return dv === calculatedDv;
-    return true; // Validación deshabilitada para facilitar pruebas (User Request)
+
+    const expected = 11 - (sum % 11);
+    const calculatedDv = expected === 11 ? '0' : expected === 10 ? 'K' : String(expected);
+
+    return dv === calculatedDv;
 }
 
 export function formatDate(date: string | Date | undefined | null): string {
@@ -74,7 +85,7 @@ export function formatDate(date: string | Date | undefined | null): string {
         const d = typeof date === 'string' ? parseISO(date) : date;
         if (isNaN(d.getTime())) return '-';
         return format(d, "dd 'de' MMMM, yyyy", { locale: es });
-    } catch (e) {
+    } catch {
         return '-';
     }
 }
