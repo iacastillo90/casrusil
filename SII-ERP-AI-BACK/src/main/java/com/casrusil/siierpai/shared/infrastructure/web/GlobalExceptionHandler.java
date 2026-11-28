@@ -1,5 +1,6 @@
 package com.casrusil.siierpai.shared.infrastructure.web;
 
+import com.casrusil.siierpai.modules.sso.domain.exception.InvitationNoLongerValidException;
 import com.casrusil.siierpai.shared.domain.exception.DomainException;
 import com.casrusil.siierpai.shared.domain.exception.ResourceNotFoundException;
 import com.casrusil.siierpai.shared.domain.exception.UnprocessableEntityException;
@@ -174,19 +175,98 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
 
+        @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+        public ResponseEntity<ErrorResponse> handleTypeMismatch(
+                        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex,
+                        HttpServletRequest request) {
+                log.warn("Type mismatch for '{}' at {}", ex.getName(), request.getRequestURI());
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.BAD_REQUEST.value(),
+                                "Bad Request",
+                                "Valor inválido para el parámetro '" + ex.getName() + "'",
+                                request.getRequestURI(),
+                                "INVALID_ARGUMENT");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
+        @ExceptionHandler(InvitationNoLongerValidException.class)
+        public ResponseEntity<ErrorResponse> handleInvitationGone(
+                        InvitationNoLongerValidException ex,
+                        HttpServletRequest request) {
+                log.info("Invitation no longer valid at {}", request.getRequestURI());
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.GONE.value(),
+                                "Gone",
+                                ex.getMessage(),
+                                request.getRequestURI(),
+                                "INVITATION_NOT_VALID");
+                return ResponseEntity.status(HttpStatus.GONE).body(error);
+        }
+
+        /**
+         * Excepciones estándar de Spring MVC que ya traen su estado HTTP (ruta inexistente,
+         * método no soportado, ResponseStatusException, parámetro faltante, etc.). Antes
+         * caían en el handler genérico y respondían 500 (R12).
+         */
+        @ExceptionHandler({ org.springframework.web.ErrorResponseException.class,
+                        jakarta.servlet.ServletException.class,
+                        org.springframework.web.multipart.MaxUploadSizeExceededException.class })
+        public ResponseEntity<ErrorResponse> handleSpringErrorResponse(
+                        Exception ex,
+                        HttpServletRequest request) {
+                if (!(ex instanceof org.springframework.web.ErrorResponse springError)) {
+                        return handleGenericException(ex, request);
+                }
+                HttpStatus status = HttpStatus.resolve(springError.getStatusCode().value());
+                if (status == null) {
+                        status = HttpStatus.INTERNAL_SERVER_ERROR;
+                }
+                if (status.is5xxServerError() && status != HttpStatus.SERVICE_UNAVAILABLE) {
+                        return handleGenericException(ex, request);
+                }
+                log.warn("{} at {}: {}", status.value(), request.getRequestURI(), ex.getMessage());
+                String message = switch (status) {
+                        case NOT_FOUND -> "Recurso no encontrado";
+                        case METHOD_NOT_ALLOWED -> "Método no permitido para esta ruta";
+                        case UNSUPPORTED_MEDIA_TYPE -> "Tipo de contenido no soportado";
+                        case TOO_MANY_REQUESTS, UNAUTHORIZED, FORBIDDEN, CONFLICT, BAD_REQUEST,
+                                        SERVICE_UNAVAILABLE ->
+                                springError.getBody().getDetail() != null
+                                                ? springError.getBody().getDetail()
+                                                : status.getReasonPhrase();
+                        default -> status.getReasonPhrase();
+                };
+                ErrorResponse error = new ErrorResponse(
+                                status.value(),
+                                status.getReasonPhrase(),
+                                message,
+                                request.getRequestURI(),
+                                status == HttpStatus.NOT_FOUND ? "NOT_FOUND" : "HTTP_" + status.value());
+                return ResponseEntity.status(status).body(error);
+        }
+
+        /**
+         * Error no previsto: el detalle va solo al log, junto a un id de correlación que
+         * se entrega al usuario para soporte. Nunca se expone el mensaje interno (R12).
+         */
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse> handleGenericException(
                         Exception ex,
                         HttpServletRequest request) {
-                log.error("Unexpected error at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+                String correlationId = CorrelationIds.newId();
+                log.error("Unexpected error [correlationId={}] at {}: {}", correlationId,
+                                request.getRequestURI(), ex.getMessage(), ex);
 
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                                 "Internal Server Error",
-                                "An unexpected error occurred. Please try again later.",
+                                "Ocurrió un error inesperado. Si persiste, informa la referencia "
+                                                + correlationId + " a soporte.",
                                 request.getRequestURI(),
                                 "INTERNAL_ERROR");
 
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .header("X-Correlation-Id", correlationId)
+                                .body(error);
         }
 }
