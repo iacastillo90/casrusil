@@ -37,7 +37,11 @@ npm run web
 - `web/sidebar.spec.ts` — grupos del Sidebar para ADMIN y SALES.
 - `web/navigation.spec.ts` — 5 páginas existentes sin errores de consola.
 - `web/dark-mode.spec.ts` — `html.dark` y fondo oscuro.
-- `web/pending.spec.ts` — `invoices/new`, `invoices/[id]` y `sii/caf` marcados `test.fixme` hasta que C integre sus pantallas.
+- `web/login-real.spec.ts` — login real por UI, sin cookie preparada.
+- `web/pending.spec.ts` — flujo serial: cargar CAF (llave RSA generada en cada corrida) → emitir factura → ver detalle.
+- `web/sesion-expirada.spec.ts` — cookie inválida debe volver a `/login` con aviso.
+
+Los tests que hoy fallan por un bug del producto están marcados `test.fail` con el enlace al issue (#39 CAF del SII, #40 doble emisión, #41 SessionGuard expulsa no-ADMIN, #42 sin aviso de sesión vencida). Cuando el bug se corrija, Playwright los marcará como "expected to fail, but passed": quita el `test.fail` en ese momento.
 
 ## Hallazgos de la ronda H
 
