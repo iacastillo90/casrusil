@@ -6,7 +6,16 @@ import { users } from './helpers';
  * El SessionGuard valida contra /auth/me (o /company/profile) y debe volver a
  * /login con el aviso visible.
  */
+/*
+ * Hoy el aviso no aparece: con la cookie inválida, la primera petición que
+ * responde 401 (p. ej. GET /sii/status del header) dispara el interceptor de
+ * lib/axios.ts:43-47, que llama logout() (no expireSession()) y redirige a
+ * /login abortando las peticiones del SessionGuard. sessionExpired nunca se
+ * marca y LoginForm no muestra el toast.
+ * Bug: https://github.com/iacastillo90/casrusil/issues/42
+ */
 test('sesión expirada vuelve a /login con aviso', async ({ page, context }) => {
+  test.fail(true, 'Bug del producto: https://github.com/iacastillo90/casrusil/issues/42');
   const { admin, companyId } = users();
 
   await context.addCookies([
@@ -14,6 +23,12 @@ test('sesión expirada vuelve a /login con aviso', async ({ page, context }) => 
   ]);
   await context.addInitScript(
     ([user, company]) => {
+      // addInitScript corre en CADA navegación, también en /login después de
+      // la redirección: sin esta guarda volvía a escribir isAuthenticated=true
+      // y sessionExpired=false encima de lo que dejó el SessionGuard, y el
+      // aviso nunca aparecía. Se siembra una sola vez por pestaña.
+      if (window.sessionStorage.getItem('e2e-sembrado')) return;
+      window.sessionStorage.setItem('e2e-sembrado', '1');
       window.localStorage.setItem(
         'sii-erp-auth',
         JSON.stringify({
